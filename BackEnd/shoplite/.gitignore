@@ -42,3 +42,15 @@ application-dev.properties
 # OS / random
 .DS_Store
 
+# Secrets 
+application.properties
+application.yml
+.env
+.env.*
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
