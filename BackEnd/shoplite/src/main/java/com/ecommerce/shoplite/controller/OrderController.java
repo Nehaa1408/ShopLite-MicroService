@@ -73,7 +73,7 @@ public class OrderController {
         return ResponseEntity.ok(orderService.updateOrderStatus(orderId, status));
     }
 
-    // 🔥 ADMIN → GET ALL ORDERS
+    
     @GetMapping("/admin")
     public ResponseEntity<List<OrderResponse>> getAllOrders() {
         return ResponseEntity.ok(orderService.getAllOrders());

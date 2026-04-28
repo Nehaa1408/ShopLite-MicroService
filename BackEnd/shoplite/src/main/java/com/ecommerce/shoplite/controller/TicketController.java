@@ -64,4 +64,9 @@ public class TicketController {
 
         return ticketService.updateStatus(id, status);
     }
+
+    @GetMapping("/{id}")
+    public Ticket getTicketById(@PathVariable Long id) {
+        return ticketService.getTicketById(id);
+    }
 }

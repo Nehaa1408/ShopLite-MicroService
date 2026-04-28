@@ -33,8 +33,13 @@ public class UserService {
             throw new RuntimeException("Email already registered");
         }
 
-        user.setRole(Role.USER);
-        user.setProvider(Provider.LOCAL);
+        if (user.getRole() == null) {
+            user.setRole(Role.USER);
+        }
+
+        if (user.getProvider() == null) {
+            user.setProvider(Provider.LOCAL);
+        }
 
         User savedUser = userRepository.save(user);
 
@@ -54,7 +59,9 @@ public class UserService {
         if (!user.getPassword().equals(password)) {
             throw new RuntimeException("Invalid password");
         }
-
+        if (user.getRole() != Role.ADMIN) {
+            throw new RuntimeException("Access denied: Admin only");
+        }
         String token = jwtUtil.generateToken(user.getEmail());
 
         return new LoginResponse(
@@ -126,5 +133,15 @@ public class UserService {
             e.printStackTrace();
             throw new RuntimeException("Google authentication failed: " + e.getMessage());
         }
+    }
+
+    public User getProfile(String token) {
+
+        token = token.substring(7); // remove "Bearer "
+
+        String email = jwtUtil.extractEmail(token);
+
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
     }
 }

@@ -1,54 +1,103 @@
-import React from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import adminAxios from "../../api/adminAxios";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+
   const isActive = (path) => location.pathname === path;
 
+  // ✅ STATES
+  const [orders, setOrders] = useState([]);
+  const [statsData, setStatsData] = useState({
+    products: 0,
+    orders: 0,
+    users: 0,
+  });
+
+  // ✅ FETCH RECENT ORDERS
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const res = await adminAxios.get("/orders/admin");
+        console.log("ORDERS:", res.data);
+
+        setOrders(res.data.slice(0, 5)); // latest 5 orders
+      } catch (err) {
+        console.error("Orders fetch error:", err);
+      }
+    };
+
+    fetchOrders();
+  }, []);
+
+  // ✅ FETCH DASHBOARD STATS
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await adminAxios.get("/orders/admin/stats");
+
+        console.log("STATS:", res.data); // 🔍 debug
+
+        setStatsData({
+          products: res.data.products,
+          orders: res.data.orders,
+          users: res.data.users,
+        });
+      } catch (err) {
+        console.error("Stats fetch error:", err);
+      }
+    };
+
+    fetchStats();
+  }, []);
+  
+  const handleLogout = () => {
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = () => {
+    sessionStorage.removeItem("adminToken");
+    sessionStorage.removeItem("adminRole"); // keep this
+    navigate("/admin/login", { replace: true });
+  };
+  // ✅ STATS DISPLAY
   const stats = [
     {
       title: "TOTAL PRODUCTS",
-      value: "1,240",
-      growth: "+12%",
+      value: statsData.products,
       icon: "inventory_2",
       bg: "bg-primary-container/20",
       color: "text-primary",
     },
     {
       title: "TOTAL ORDERS",
-      value: "450",
-      growth: "+8%",
+      value: statsData.orders,
       icon: "shopping_cart",
       bg: "bg-secondary-container/20",
       color: "text-secondary",
     },
     {
-      title: "TOTAL REVENUE",
-      value: "$12,500",
-      growth: "+24%",
-      icon: "payments",
+      title: "TOTAL USERS",
+      value: statsData.users,
+      icon: "groups",
       bg: "bg-tertiary-container/20",
       color: "text-tertiary",
     },
   ];
 
-  const orders = [
-    { id: "#ORD-7721", date: "Oct 24, 2023", status: "Delivered" },
-    { id: "#ORD-7722", date: "Oct 24, 2023", status: "Processing" },
-    { id: "#ORD-7723", date: "Oct 23, 2023", status: "Shipped" },
-    { id: "#ORD-7724", date: "Oct 23, 2023", status: "Cancelled" },
-  ];
-
+  // ✅ STATUS STYLE (UPDATED FOR BACKEND ENUMS)
   const getStatusStyle = (status) => {
     switch (status) {
-      case "Delivered":
-        return "bg-emerald-100 text-emerald-700";
-      case "Processing":
-        return "bg-primary-container/20 text-primary";
-      case "Shipped":
+      case "PLACED":
+        return "bg-blue-100 text-blue-700";
+      case "SHIPPED":
         return "bg-amber-100 text-amber-700";
-      case "Cancelled":
+      case "DELIVERED":
+        return "bg-emerald-100 text-emerald-700";
+      case "CANCELLED":
         return "bg-red-100 text-red-600";
       default:
         return "";
@@ -78,7 +127,10 @@ const AdminDashboard = () => {
           <span className="material-symbols-outlined">notifications</span>
           <span className="material-symbols-outlined">settings</span>
 
-          <div className="w-9 h-9 rounded-full flex items-center justify-center bg-primary/10 text-primary cursor-pointer">
+          <div
+            onClick={() => navigate("/admin/profile")}
+            className="w-9 h-9 rounded-full flex items-center justify-center bg-primary/10 text-primary cursor-pointer"
+          >
             <span className="material-symbols-outlined">account_circle</span>
           </div>
         </div>
@@ -168,7 +220,10 @@ const AdminDashboard = () => {
           </button>
 
           <div className="border-t border-outline-variant/10 pt-4">
-            <div className="flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 rounded-lg cursor-pointer">
+            <div
+              onClick={handleLogout}
+              className="flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 rounded-lg cursor-pointer"
+            >
               <span className="material-symbols-outlined">logout</span>
               Logout
             </div>
@@ -247,8 +302,8 @@ const AdminDashboard = () => {
               <tbody>
                 {orders.map((o, i) => (
                   <tr key={i} className="border-t border-outline-variant/10">
-                    <td className="py-4 font-bold">{o.id}</td>
-                    <td>{o.date}</td>
+                    <td className="py-4 font-bold">#{o.orderId}</td>
+                    <td>{new Date(o.orderDate).toLocaleDateString()}</td>
                     <td>
                       <span
                         className={`px-3 py-1 text-xs font-bold rounded-full ${getStatusStyle(o.status)}`}
@@ -257,7 +312,10 @@ const AdminDashboard = () => {
                       </span>
                     </td>
                     <td className="text-right">
-                      <span className="material-symbols-outlined cursor-pointer text-primary">
+                      <span
+                        onClick={() => navigate("/admin/order/" + o.orderId)}
+                        className="material-symbols-outlined cursor-pointer text-primary"
+                      >
                         open_in_new
                       </span>
                     </td>
@@ -343,7 +401,52 @@ shadow-[0px_12px_32px_rgba(43,42,81,0.06)] border border-outline-variant/5"
           </div>
         </div>
       </main>
+
+
+      {/* LOGOUT MODAL */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+
+          <div className="bg-white rounded-2xl shadow-2xl w-[350px] p-6 animate-scaleIn" onClick={(e) => e.stopPropagation()}>
+
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center">
+                <span className="material-symbols-outlined text-red-500 text-3xl">
+                  logout
+                </span>
+              </div>
+            </div>
+
+            <h2 className="text-lg font-bold text-center mb-2">
+              Logout?
+            </h2>
+
+            <p className="text-sm text-gray-500 text-center mb-6">
+              Are you sure you want to logout from your admin account?
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowLogoutModal(false)}
+                className="flex-1 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 transition"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={confirmLogout}
+                className="flex-1 py-2 rounded-xl bg-red-500 text-white hover:bg-red-600 transition"
+              >
+                Logout
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </div>
+
   );
 };
 

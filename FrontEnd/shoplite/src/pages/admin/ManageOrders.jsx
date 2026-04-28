@@ -1,45 +1,46 @@
-import React from "react";
+import { useEffect, useState } from "react";
+import adminAxios from "../../api/adminAxios";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const ManageOrders = () => {
+
   const navigate = useNavigate();
   const location = useLocation();
+
   const isActive = (path) => location.pathname === path;
 
-  const orders = [
-    {
-      id: "#ORD-9021",
-      name: "Jane Doe",
-      initials: "JD",
-      date: "Oct 24, 2023",
-      amount: "$245.00",
-      status: "Placed",
-    },
-    {
-      id: "#ORD-8944",
-      name: "Marcus Smith",
-      initials: "MS",
-      date: "Oct 23, 2023",
-      amount: "$1,120.40",
-      status: "Packed",
-    },
-    {
-      id: "#ORD-8812",
-      name: "Sarah Lee",
-      initials: "SL",
-      date: "Oct 22, 2023",
-      amount: "$89.99",
-      status: "Delivered",
-    },
-  ];
+  const [orders, setOrders] = useState([]);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const ordersPerPage = 6;
+
+  const indexOfLast = currentPage * ordersPerPage;
+  const indexOfFirst = indexOfLast - ordersPerPage;
+
+  const currentOrders = orders.slice(indexOfFirst, indexOfLast);
+
+  const totalPages = Math.ceil(orders.length / ordersPerPage);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const res = await adminAxios.get("/orders/admin");
+        setOrders(res.data);
+      } catch (err) {
+        console.error("Orders fetch error:", err);
+      }
+    };
+
+    fetchOrders();
+  }, []);
 
   const getStatusStyle = (status) => {
     switch (status) {
-      case "Placed":
+      case "PLACED":
         return "bg-primary-container/20 text-primary";
-      case "Packed":
+      case "PACKED":
         return "bg-yellow-100 text-yellow-700";
-      case "Delivered":
+      case "DELIVERED":
         return "bg-emerald-100 text-emerald-700";
       default:
         return "";
@@ -81,20 +82,7 @@ const ManageOrders = () => {
               <span className="material-symbols-outlined">inventory_2</span>
               Manage Products
             </div>
-            {/* Tickets */}
-            <div
-              onClick={() => navigate("/admin/tickets")}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition
-  ${isActive("/admin/tickets")
-                  ? "bg-gradient-to-r from-primary to-primary-container text-white shadow-lg"
-                  : "hover:bg-surface-container"
-                }`}
-            >
-              <span className="material-symbols-outlined">
-                confirmation_number
-              </span>
-              Tickets
-            </div>
+
 
             {/* ADD PRODUCT */}
             <div
@@ -119,6 +107,20 @@ const ManageOrders = () => {
                 shopping_cart
               </span>
               Manage Orders
+            </div>
+            {/* Tickets */}
+            <div
+              onClick={() => navigate("/admin/tickets")}
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition
+  ${isActive("/admin/tickets")
+                  ? "bg-gradient-to-r from-primary to-primary-container text-white shadow-lg"
+                  : "hover:bg-surface-container"
+                }`}
+            >
+              <span className="material-symbols-outlined">
+                confirmation_number
+              </span>
+              Tickets
             </div>
           </nav>
         </div>
@@ -212,61 +214,92 @@ const ManageOrders = () => {
             </thead>
 
             <tbody>
-              {orders.map((o, i) => (
-                <tr key={i} className="border-t">
-                  <td className="p-4 font-bold">{o.id}</td>
+              {currentOrders.map((o, i) => {
+                const total = o.items?.reduce(
+                  (sum, item) => sum + item.price * item.quantity,
+                  0
+                );
 
-                  <td>
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-surface-container-highest rounded-full flex items-center justify-center text-xs font-bold text-primary">
-                        {o.initials}
+                return (
+                  <tr key={i} className="border-t">
+                    {/* ORDER ID */}
+                    <td className="p-4 font-bold">#{o.orderId}</td>
+
+                    {/* CUSTOMER */}
+                    <td>
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-surface-container-highest rounded-full flex items-center justify-center text-xs font-bold text-primary">
+                          {o.user?.name?.charAt(0) || "U"}
+                        </div>
+                        {o.user?.name || "User"}
                       </div>
-                      {o.name}
-                    </div>
-                  </td>
+                    </td>
 
-                  <td>{o.date}</td>
-                  <td className="font-bold">{o.amount}</td>
+                    {/* DATE */}
+                    <td>
+                      {new Date(o.orderDate).toLocaleDateString()}
+                    </td>
 
-                  <td>
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusStyle(o.status)}`}
-                    >
-                      {o.status}
-                    </span>
-                  </td>
+                    {/* TOTAL */}
+                    <td className="font-bold">
+                      ₹{total?.toFixed(2) || 0}
+                    </td>
 
-                  <td className="text-right pr-6">
-                    <div className="flex justify-end gap-2 items-center">
-                      <button className="text-primary text-xs font-bold">
-                        View Details
-                      </button>
+                    {/* STATUS */}
+                    <td>
+                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700">
+                        {o.status}
+                      </span>
+                    </td>
 
-                      <select className="text-xs bg-surface-container-low px-2 py-1 rounded">
-                        <option>Placed</option>
-                        <option>Packed</option>
-                        <option>Shipped</option>
-                        <option>Delivered</option>
-                      </select>
+                    {/* ACTIONS */}
+                    <td className="text-right pr-6">
+                      <div className="flex justify-end gap-2 items-center">
+                        <button className="text-primary text-xs font-bold">
+                          View Details
+                        </button>
 
-                      <button className="bg-primary text-white px-3 py-1 rounded text-xs font-bold">
-                        UPDATE
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                        <select
+                          className="text-xs bg-surface-container-low px-2 py-1 rounded"
+                          defaultValue={o.status}
+                        >
+                          <option value="PLACED">Placed</option>
+                          <option value="PACKED">Packed</option>
+                          <option value="SHIPPED">Shipped</option>
+                          <option value="DELIVERED">Delivered</option>
+                        </select>
+
+                        <button className="bg-primary text-white px-3 py-1 rounded text-xs font-bold">
+                          UPDATE
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
 
           {/* FOOTER */}
           <div className="p-4 flex justify-between text-xs text-on-surface-variant">
-            <span>Showing 1-3 of 1,286 orders</span>
+            <span>
+              Showing {indexOfFirst + 1} -{" "}
+              {Math.min(indexOfLast, orders.length)} of {orders.length} orders
+            </span>
 
             <div className="flex gap-2">
-              <button>1</button>
-              <button>2</button>
-              <button>3</button>
+              {[...Array(totalPages)].map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentPage(i + 1)}
+                  className={`px-3 py-1 rounded ${currentPage === i + 1
+                    ? "bg-primary text-white"
+                    : "bg-gray-200"
+                    }`}
+                >
+                  {i + 1}
+                </button>
+              ))}
             </div>
           </div>
         </div>

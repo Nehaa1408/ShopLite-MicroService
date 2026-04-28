@@ -1,8 +1,9 @@
 package com.ecommerce.shoplite.service;
 
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -16,19 +17,30 @@ public class ProductService {
     @Autowired
     private ProductRepository productRepository;
 
+   
     public Product addProduct(Product product) {
         return productRepository.save(product);
     }
 
-    public List<Product> getAllProducts() {
-        return productRepository.findAll();
+    
+    public Page<Product> getProducts(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return productRepository.findAll(pageable);
     }
 
+    
+    public Page<Product> getProductsByCategory(String category, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return productRepository.findByCategory_Name(category, pageable);
+    }
+
+   
     public Product getProductById(Long id) {
         return productRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found"));
     }
 
+    
     public void deleteProduct(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found"));
@@ -36,6 +48,7 @@ public class ProductService {
         productRepository.delete(product);
     }
 
+    
     public Product updateProduct(Long id, Product updatedProduct) {
 
         Product product = productRepository.findById(id)

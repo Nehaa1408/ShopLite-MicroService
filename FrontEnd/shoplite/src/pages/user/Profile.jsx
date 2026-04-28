@@ -1,23 +1,44 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 const Profile = () => {
   const navigate = useNavigate();
+  const [user, setUser] = useState(null);
 
-  // 🔐 Protect route
   useEffect(() => {
-    const isLoggedIn = localStorage.getItem("userAuth");
-    if (!isLoggedIn) {
-      navigate("/login");
-    }
-  }, []);
+    const token = localStorage.getItem("token");
 
-  // 🚪 Logout
+    console.log("STEP 1 TOKEN:", token);
+
+    if (!token) {
+      console.log("NO TOKEN → redirect");
+      navigate("/login");
+      return;
+    }
+
+    axios.get("http://localhost:8080/api/user/profile", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => {
+        console.log("PROFILE SUCCESS:", res.data);
+        setUser(res.data);
+      })
+      .catch((err) => {
+        console.log("PROFILE ERROR:", err);
+        localStorage.removeItem("token");
+        navigate("/login");
+      });
+
+  }, [navigate]);
+
   const handleLogout = () => {
-    localStorage.removeItem("userAuth");
+    localStorage.removeItem("token");
     navigate("/login");
   };
-
+  if (!user) return <div className="p-10 text-center">Loading profile...</div>;
   return (
     <div className="bg-[#f9f5ff] min-h-screen text-[#2b2a51]">
       {/* NAVBAR */}
@@ -50,12 +71,12 @@ const Profile = () => {
         {/* PROFILE CARD */}
         <div className="bg-white/70 backdrop-blur-xl p-8 rounded-2xl shadow flex flex-col md:flex-row items-center gap-6">
           <div className="flex-1 text-center md:text-left">
-            <h2 className="text-2xl font-bold">User Name</h2>
-            <p className="text-gray-500">user@email.com</p>
+            <h2 className="text-2xl font-bold">{user.name}</h2>
+            <p className="text-gray-500">{user.email}</p>
 
             <div className="flex gap-3 mt-3 justify-center md:justify-start">
               <span className="bg-blue-100 text-blue-700 text-xs px-3 py-1 rounded-full">
-                Member
+                {user.role}
               </span>
             </div>
           </div>
@@ -72,13 +93,13 @@ const Profile = () => {
           <div className="bg-white p-6 rounded-xl shadow grid md:grid-cols-2 gap-4">
             <input
               className="p-3 bg-gray-100 rounded-lg"
-              value="User Name"
+              value={user.name}
               readOnly
             />
 
             <input
               className="p-3 bg-gray-100 rounded-lg"
-              value="user@email.com"
+              value={user.email}
               readOnly
             />
 

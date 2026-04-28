@@ -1,49 +1,34 @@
-import React from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-
+import adminAxios from "../../api/adminAxios";
 const ManageProducts = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isActive = (path) => location.pathname === path;
-  const products = [
-    {
-      id: 1,
-      name: "Luminous Pro Headphones",
-      sku: "LH-90210",
-      category: "Electronics",
-      price: "$299.00",
-      image:
-        "https://lh3.googleusercontent.com/aida-public/AB6AXuBe_YgIV_S6YIOra9z2foFrRyqdgHmkC75HK_D8-x8EIdo4ZKkvUvPC7HPyZQSSR647EjsP-4xqWPZZKB71NjB1mD-V6frLMgUNbyoqdB_ghvQ0tv9iDiQPpXogBkXQ6ulYLt45zX1xuquTGv17Qr5qHFAZrYlGnPSGWmAmgqenti5xu3CFoPvgu4bP7LwqATMCLGGn7k4tAXHzuINLtp98emnTgMUSY-I6JE3_s8z3q-D8Q6jlE-4tKjmssL4nG46uned3v-9sDz8",
-    },
-    {
-      id: 2,
-      name: "Core Watch Series X",
-      sku: "CW-4423",
-      category: "Wearables",
-      price: "$449.00",
-      image:
-        "https://lh3.googleusercontent.com/aida-public/AB6AXuB_W-zVwXPBmUw-V_XNmuyoi0IR6zzKcTRMKM02MdG-0YOTR-W8htMm6fi3wcKCwpARDv8P9XoJuaUQHQWterY1xg9_1op8RMFXwbWG0rAZ_zm9XZz5s8LRVb7UfM5RTPl-sPWtJ0fCYzdVn4RZZY9W2XCoRksksfbK8x1xzG5CrN1VCFa7o3XKj7ZlD9364C1283pFdbK_Ke61ypwCBq-EcwC3tTflkZeeW5tc2dH7VBRkOl4oWMjLCrzaWXP_fUf4FqFn-iQy1y8",
-    },
-    {
-      id: 3,
-      name: "Velocity Knit Sneakers",
-      sku: "VK-3312",
-      category: "Footwear",
-      price: "$120.00",
-      image:
-        "https://lh3.googleusercontent.com/aida-public/AB6AXuB_7C3UAjkwjtYbvFo0K1hX6-MO0oEY4xaYAgzJppO-jlSz_iWzZB-zNduxY6qttp4DfMoiyipnYe-UN5uEV394B0TGjB6wIrQork2lKYfqpFZDYCVIxmhX1m8cZ2G0binuhIK-BpQnVxRHlAuerDV10rwfw_OWv18aYQIVdQ4IZv7WJNEEqVi3WmaG710HHiBK0jzpGSyckRt1lYeSaqZsku9mRvyy67PGmoBqjcgK_OIq5E5-59MtVAvLunK60vbaBeekhhFayKM",
-    },
-    {
-      id: 4,
-      name: "Morning Glow Roast (1lb)",
-      sku: "MG-5501",
-      category: "Groceries",
-      price: "$18.50",
-      image:
-        "https://lh3.googleusercontent.com/aida-public/AB6AXuDQNzJ38c40oW8hUrZ1e50shvKDQWZePPy_RJXJijU8-7n9bAKRlu0u4Ticz3jhTzVOw09zPGzjF9U2QfJD7Wyo17T239Q74VgeDeD1u7JZg4qneX6EJEPdx-XiludVxNQeExMQw5A0nsJdf0Rt84-78t6Z2wZRM6vcsd_ai7GEh9Q3jL_Tm0uM_NKHCbWHi-9x7KUUPMWT4mrcwLLMiHkHhrxMiznfdyPt6aDqAsYi_pCGDLZuNTl8Lf_PLYF90efl5Ey9212Wpis",
-    },
-  ];
+  const [products, setProducts] = useState([]);
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await adminAxios.get("/api/products?page=0&size=100");
+        setProducts(res.data.content);
 
+      } catch (err) {
+        console.error("Products fetch error:", err);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+  const handleDelete = async (id) => {
+    try {
+      await adminAxios.delete(`/api/products/${id}`);
+
+      // refresh UI
+      setProducts(products.filter((p) => p.id !== id));
+    } catch (err) {
+      console.error("Delete error:", err);
+    }
+  };
   return (
     <div className="bg-surface text-on-surface min-h-screen">
       {/* HEADER */}
@@ -147,7 +132,7 @@ const ManageProducts = () => {
               <p className="text-xs text-on-surface-variant font-medium">
                 Total Products
               </p>
-              <p className="text-xl font-bold">1,284</p>
+              <p className="text-xl font-bold">{products.length}</p>
             </div>
           </div>
 
@@ -198,7 +183,14 @@ const ManageProducts = () => {
                   className="border-t hover:bg-surface-container-low"
                 >
                   <td className="p-4">
-                    <img src={p.image} className="w-12 h-12 rounded-lg" />
+                    <img
+                      src={
+                        p.imageUrl.startsWith("http")
+                          ? p.imageUrl
+                          : `/products/${p.imageUrl}`
+                      }
+                      className="w-12 h-12 rounded-lg"
+                    />
                   </td>
 
                   <td className="p-4">
@@ -208,17 +200,23 @@ const ManageProducts = () => {
 
                   <td className="p-4">
                     <span className="px-3 py-1 bg-surface-container-high rounded-full text-xs">
-                      {p.category}
+                      {p.category?.name || p.category || "No Category"}
                     </span>
                   </td>
 
-                  <td className="p-4 text-primary font-bold">{p.price}</td>
+                  <td className="p-4 text-primary font-bold">${p.price}</td>
 
                   <td className="p-4 text-right">
-                    <span className="material-symbols-outlined cursor-pointer mr-2">
+                    <span
+                      onClick={() => navigate("/admin/add-product", { state: p })}
+                      className="material-symbols-outlined cursor-pointer mr-2"
+                    >
                       edit
                     </span>
-                    <span className="material-symbols-outlined cursor-pointer text-red-500">
+                    <span
+                      onClick={() => handleDelete(p.id)}
+                      className="material-symbols-outlined cursor-pointer text-red-500"
+                    >
                       delete
                     </span>
                   </td>

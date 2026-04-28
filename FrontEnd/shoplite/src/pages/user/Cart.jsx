@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
 
 const Cart = () => {
-  const { cart, removeFromCart, increaseQty, decreaseQty,clearCart } = useCart();
+  const { cart, removeFromCart, increaseQty, decreaseQty, clearCart } = useCart();
 
   const subtotal = cart.reduce(
     (sum, item) => sum + item.price * item.quantity,
@@ -33,7 +33,17 @@ const Cart = () => {
               className="glass-panel rounded-xl p-6 flex flex-col md:flex-row gap-6 shadow"
             >
               <div className="w-full md:w-40 h-40 rounded-lg overflow-hidden">
-                <img src={item.image} className="w-full h-full object-cover" />
+                <img
+
+                  src={
+                    item.imageUrl?.startsWith("http")
+                      ? item.imageUrl
+                      : `/products/${item.imageUrl}`
+                  }
+                  alt={item.productName}
+                  className="w-full h-full object-cover"
+
+                />
               </div>
 
               <div className="flex-1 flex flex-col justify-between">

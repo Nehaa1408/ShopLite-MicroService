@@ -13,10 +13,7 @@ export const CartProvider = ({ children }) => {
   const fetchCart = async () => {
     const token = getToken();
 
-    if (!token) {
-      console.error("No token found");
-      return;
-    }
+    if (!token) return;
 
     try {
       const res = await axios.get("http://localhost:8080/cart", {
@@ -35,19 +32,22 @@ export const CartProvider = ({ children }) => {
     fetchCart();
   }, []);
 
-
+ 
   const addToCart = async (product) => {
     const token = getToken();
 
+    // ❗ DO NOT redirect here
     if (!token) {
-      console.error("User not logged in");
-      return;
+      throw new Error("NOT_LOGGED_IN");
     }
 
     try {
       await axios.post(
-        `http://localhost:8080/cart/add?productId=${product.id}&quantity=1`,
-        {},
+        "http://localhost:8080/cart/add",
+        {
+          productId: product.id,
+          quantity: 1,
+        },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -55,24 +55,27 @@ export const CartProvider = ({ children }) => {
         }
       );
 
-      fetchCart();
+      await fetchCart();
     } catch (err) {
-      console.error("Add error:", err);
+     
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        localStorage.removeItem("token");
+        throw new Error("SESSION_EXPIRED");
+      }
+
+      console.error("Add error:", err.response?.data || err.message);
+      throw err;
     }
   };
 
-
+  
   const removeFromCart = async (productId) => {
     const token = getToken();
-
-    if (!token) {
-      console.error("User not logged in");
-      return;
-    }
+    if (!token) return;
 
     try {
       await axios.delete(
-        `http://localhost:8080/cart/remove?productId=${productId}`,
+        `http://localhost:8080/cart/remove/${productId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -86,16 +89,18 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-
+ 
   const increaseQty = async (productId, currentQty) => {
     const token = getToken();
-
     if (!token) return;
 
     try {
       await axios.put(
-        `http://localhost:8080/cart/update?productId=${productId}&quantity=${currentQty + 1}`,
-        {},
+        "http://localhost:8080/cart/update",
+        {
+          productId,
+          quantity: currentQty + 1,
+        },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -109,7 +114,7 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-
+  
   const decreaseQty = async (productId, currentQty) => {
     if (currentQty <= 1) return;
 
@@ -118,8 +123,11 @@ export const CartProvider = ({ children }) => {
 
     try {
       await axios.put(
-        `http://localhost:8080/cart/update?productId=${productId}&quantity=${currentQty - 1}`,
-        {},
+        "http://localhost:8080/cart/update",
+        {
+          productId,
+          quantity: currentQty - 1,
+        },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -133,6 +141,7 @@ export const CartProvider = ({ children }) => {
     }
   };
 
+  
   const clearCart = async () => {
     const token = getToken();
     if (!token) return;
@@ -144,11 +153,12 @@ export const CartProvider = ({ children }) => {
         },
       });
 
-      setCart([]); 
+      setCart([]);
     } catch (err) {
       console.error("Clear cart error:", err);
     }
   };
+
   return (
     <CartContext.Provider
       value={{

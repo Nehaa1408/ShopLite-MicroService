@@ -1,7 +1,7 @@
 package com.ecommerce.shoplite.service;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -26,102 +26,98 @@ public class CartService {
     @Autowired
     private ProductRepository productRepository;
 
-    public CartResponse addItem(Long userId, Long productId, int quantity) {
-
-        User user = userRepository.findById(userId)
+    private User getUserByEmail(String email) {
+        return userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    public CartResponse addItem(String email, Long productId, int quantity) {
+
+        if (quantity <= 0) {
+            throw new RuntimeException("Quantity must be greater than 0");
+        }
+
+        User user = getUserByEmail(email);
 
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
-        List<Cart> userCart = cartRepository.findByUser(user);
+        Cart cartItem = cartRepository
+                .findByUserAndProduct(user, product)
+                .orElse(null);
 
-        for (Cart item : userCart) {
-            if (item.getProduct().getId().equals(productId)) {
-                item.setQuantity(item.getQuantity() + quantity);
-                return mapToDTO(cartRepository.save(item));
-            }
+        if (cartItem != null) {
+            cartItem.setQuantity(cartItem.getQuantity() + quantity);
+        } else {
+            cartItem = new Cart();
+            cartItem.setUser(user);
+            cartItem.setProduct(product);
+            cartItem.setQuantity(quantity);
         }
 
-        Cart cart = new Cart();
-        cart.setUser(user);
-        cart.setProduct(product);
-        cart.setQuantity(quantity);
-
-        return mapToDTO(cartRepository.save(cart));
+        return mapToDTO(cartRepository.save(cartItem));
     }
 
-    public List<CartResponse> getCart(Long userId) {
+    public List<CartResponse> getCart(String email) {
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        User user = getUserByEmail(email);
 
-        List<Cart> cartItems = cartRepository.findByUser(user);
-
-        List<CartResponse> response = new ArrayList<>();
-
-        for (Cart item : cartItems) {
-            response.add(mapToDTO(item));
-        }
-
-        return response;
+        return cartRepository.findByUser(user)
+                .stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
     }
 
-    public CartResponse updateQuantity(Long userId, Long productId, int quantity) {
+    public CartResponse updateQuantity(String email, Long productId, int quantity) {
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        List<Cart> userCart = cartRepository.findByUser(user);
-
-        for (Cart item : userCart) {
-            if (item.getProduct().getId().equals(productId)) {
-                item.setQuantity(quantity);
-                return mapToDTO(cartRepository.save(item));
-            }
+        if (quantity <= 0) {
+            throw new RuntimeException("Quantity must be greater than 0");
         }
 
-        throw new RuntimeException("Product not in cart");
+        User user = getUserByEmail(email);
+
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+
+        Cart cartItem = cartRepository
+                .findByUserAndProduct(user, product)
+                .orElseThrow(() -> new RuntimeException("Product not in cart"));
+
+        cartItem.setQuantity(quantity);
+
+        return mapToDTO(cartRepository.save(cartItem));
     }
 
-    public void removeItem(Long userId, Long productId) {
+    public void removeItem(String email, Long productId) {
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        User user = getUserByEmail(email);
 
-        List<Cart> cartItems = cartRepository.findByUser(user);
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
 
-        Cart itemToDelete = null;
+        Cart cartItem = cartRepository
+                .findByUserAndProduct(user, product)
+                .orElseThrow(() -> new RuntimeException("Item not found in cart"));
 
-        for (Cart item : cartItems) {
-            if (item.getProduct().getId().equals(productId)) {
-                itemToDelete = item;
-                break;
-            }
-        }
-
-        if (itemToDelete == null) {
-            throw new RuntimeException("Item not found in cart");
-        }
-
-        cartRepository.delete(itemToDelete);
+        cartRepository.delete(cartItem);
     }
 
-    public void clearCart(Long userId) {
+    public void clearCart(String email) {
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
+        User user = getUserByEmail(email);
         cartRepository.deleteByUser(user);
     }
 
     private CartResponse mapToDTO(Cart item) {
+
         CartResponse dto = new CartResponse();
+
         dto.setProductId(item.getProduct().getId());
         dto.setProductName(item.getProduct().getName());
         dto.setPrice(item.getProduct().getPrice());
         dto.setQuantity(item.getQuantity());
-        dto.setImage(item.getProduct().getImageUrl());
+        dto.setImageUrl(item.getProduct().getImageUrl());
+
         return dto;
     }
 }

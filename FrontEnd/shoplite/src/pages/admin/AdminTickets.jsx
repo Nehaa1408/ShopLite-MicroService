@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-
+import adminAxios from "../../api/adminAxios";
 const AdminTickets = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -11,13 +11,20 @@ const AdminTickets = () => {
   const [statusFilter, setStatusFilter] = useState("All");
   const [priorityFilter, setPriorityFilter] = useState("All");
 
-  // 🎯 Load tickets
   useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem("tickets")) || [];
-    setTickets(stored);
+    const fetchTickets = async () => {
+      try {
+        const res = await adminAxios.get("/tickets/admin");
+        setTickets(res.data);
+      } catch (err) {
+        console.error("Tickets fetch error:", err);
+      }
+    };
+
+    fetchTickets();
   }, []);
 
-  // 🎯 Filter logic
+
   const filteredTickets = tickets.filter((t) => {
     return (
       (statusFilter === "All" || t.status === statusFilter) &&
@@ -25,7 +32,7 @@ const AdminTickets = () => {
     );
   });
 
-  // 🎨 Styles
+
   const getStatusStyle = (status) => {
     switch (status) {
       case "Open":
@@ -216,16 +223,16 @@ const AdminTickets = () => {
             </thead>
 
             <tbody>
-              {filteredTickets.map((t, i) => (
+              {tickets.map((t, i) => (
                 <tr
                   key={i}
-                  onClick={() => navigate(`/admin/ticket/${t.id.replace("#", "")}`)}
+                  onClick={() => navigate(`/admin/ticket/${t.id}`)}
                   className="border-t cursor-pointer hover:bg-gray-50 transition-all hover:scale-[1.01]"
                 >
                   <td className="p-4 font-bold text-blue-600">
-                    #{t.id.replace("#", "")}
+                    #{t.id}
                   </td>
-                  <td>{t.user || "User"}</td>
+                  <td>{t.user?.name || "User"}</td>
                   <td>{t.subject}</td>
 
                   <td>
@@ -248,7 +255,7 @@ const AdminTickets = () => {
                     </span>
                   </td>
 
-                  <td>{t.date}</td>
+                  <td>{new Date().toLocaleDateString()}</td>
                 </tr>
               ))}
             </tbody>
@@ -256,7 +263,7 @@ const AdminTickets = () => {
         </div>
 
         {/* EMPTY STATE */}
-        {filteredTickets.length === 0 && (
+        {tickets.length === 0 && (
           <p className="text-center mt-10 text-gray-400">
             No tickets found
           </p>

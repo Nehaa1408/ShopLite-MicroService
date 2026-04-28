@@ -6,10 +6,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.ecommerce.shoplite.dto.CartRequest;
 import com.ecommerce.shoplite.dto.CartResponse;
-import com.ecommerce.shoplite.repository.UserRepository;
-import com.ecommerce.shoplite.security.JwtUtil;
 import com.ecommerce.shoplite.service.CartService;
+import com.ecommerce.shoplite.security.JwtUtil;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/cart")
@@ -20,67 +22,79 @@ public class CartController {
     private JwtUtil jwtUtil;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private CartService cartService;
 
-    private Long getUserIdFromToken(String token) {
-        token = token.replace("Bearer ", "");
-        String email = jwtUtil.extractEmail(token);
-
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"))
-                .getId();
+  
+    private String extractUserEmail(String token) {
+        if (token == null || !token.startsWith("Bearer ")) {
+            throw new RuntimeException("Invalid or missing token");
+        }
+        return jwtUtil.extractEmail(token.substring(7));
     }
 
+    
     @PostMapping("/add")
     public ResponseEntity<CartResponse> addToCart(
-            @RequestParam Long productId,
-            @RequestParam int quantity,
+            @Valid @RequestBody CartRequest request,
             @RequestHeader("Authorization") String token) {
 
-        Long userId = getUserIdFromToken(token);
-        return ResponseEntity.ok(cartService.addItem(userId, productId, quantity));
+        String email = extractUserEmail(token);
+
+        CartResponse response = cartService.addItem(
+                email,
+                request.getProductId(),
+                request.getQuantity()
+        );
+
+        return ResponseEntity.ok(response);
     }
 
+    
     @GetMapping
     public ResponseEntity<List<CartResponse>> getCart(
             @RequestHeader("Authorization") String token) {
 
-        Long userId = getUserIdFromToken(token);
-        return ResponseEntity.ok(cartService.getCart(userId));
+        String email = extractUserEmail(token);
+        return ResponseEntity.ok(cartService.getCart(email));
     }
 
+    
     @PutMapping("/update")
     public ResponseEntity<CartResponse> updateQuantity(
-            @RequestParam Long productId,
-            @RequestParam int quantity,
+            @Valid @RequestBody CartRequest request,
             @RequestHeader("Authorization") String token) {
 
-        Long userId = getUserIdFromToken(token);
-        return ResponseEntity.ok(
-                cartService.updateQuantity(userId, productId, quantity));
+        String email = extractUserEmail(token);
+
+        CartResponse response = cartService.updateQuantity(
+                email,
+                request.getProductId(),
+                request.getQuantity()
+        );
+
+        return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/remove")
+
+    @DeleteMapping("/remove/{productId}")
     public ResponseEntity<String> removeItem(
-            @RequestParam Long productId,
+            @PathVariable Long productId,
             @RequestHeader("Authorization") String token) {
 
-        Long userId = getUserIdFromToken(token);
-        cartService.removeItem(userId, productId);
+        String email = extractUserEmail(token);
+        cartService.removeItem(email, productId);
 
-        return ResponseEntity.ok("Item removed");
+        return ResponseEntity.ok("Item removed successfully");
     }
 
+   
     @DeleteMapping("/clear")
     public ResponseEntity<String> clearCart(
             @RequestHeader("Authorization") String token) {
 
-        Long userId = getUserIdFromToken(token);
-        cartService.clearCart(userId);
+        String email = extractUserEmail(token);
+        cartService.clearCart(email);
 
-        return ResponseEntity.ok("Cart cleared");
+        return ResponseEntity.ok("Cart cleared successfully");
     }
 }

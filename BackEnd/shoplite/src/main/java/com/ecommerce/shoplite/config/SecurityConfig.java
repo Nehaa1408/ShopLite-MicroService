@@ -39,8 +39,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PUT, "/api/products/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/products/**").hasRole("ADMIN")
 
-                // CART (IMPORTANT FIX)
-                .requestMatchers("/cart/**").authenticated()
+               
+                .requestMatchers("/cart/**").permitAll()
 
                 // ORDERS
                 .requestMatchers(HttpMethod.PUT, "/orders/*/status").hasRole("ADMIN")

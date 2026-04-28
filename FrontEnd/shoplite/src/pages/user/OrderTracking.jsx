@@ -170,7 +170,11 @@ const OrderTracking = () => {
               className="glass-panel border p-5 rounded-2xl flex items-center gap-6 hover:shadow-md transition"
             >
               <div className="w-20 h-20 rounded-xl overflow-hidden bg-surface-container-low">
-                <img src={item.image} className="w-full h-full object-cover" />
+                <img src={
+                  item.image?.startsWith("http")
+                    ? item.image
+                    : `/products/${item.image}`
+                } className="w-full h-full object-cover" />
               </div>
 
               <div className="flex-grow">

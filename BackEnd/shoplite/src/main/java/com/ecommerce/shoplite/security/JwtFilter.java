@@ -34,8 +34,6 @@ public class JwtFilter extends OncePerRequestFilter {
             FilterChain filterChain)
             throws ServletException, IOException {
 
-        System.out.println("JWT FILTER HIT");
-
         String path = request.getRequestURI();
 
         // Skip auth endpoints
@@ -52,43 +50,39 @@ public class JwtFilter extends OncePerRequestFilter {
 
             try {
                 String email = jwtUtil.extractEmail(token);
-                System.out.println("TOKEN EMAIL: " + email);
 
-                if (email != null) {
+                if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
                     User user = userRepository.findByEmail(email).orElse(null);
-                    System.out.println("USER FOUND: " + user);
 
                     if (user != null) {
 
-                        List<SimpleGrantedAuthority> authorities = List.of(
-                                new SimpleGrantedAuthority("ROLE_" + user.getRole()));
+                        String role = user.getRole().name();
 
-                        UsernamePasswordAuthenticationToken authToken =
-                                new UsernamePasswordAuthenticationToken(
-                                        user.getEmail(),
-                                        null,
-                                        authorities
-                                );
+                        if (!role.startsWith("ROLE_")) {
+                            role = "ROLE_" + role;
+                        }
+
+                        List<SimpleGrantedAuthority> authorities = List.of(
+                                new SimpleGrantedAuthority(role));
+
+                        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                                user,
+                                null,
+                                authorities);
 
                         authToken.setDetails(
                                 new org.springframework.security.web.authentication.WebAuthenticationDetailsSource()
-                                        .buildDetails(request)
-                        );
-
+                                        .buildDetails(request));
 
                         SecurityContextHolder.getContext().setAuthentication(authToken);
-
-                        System.out.println("AUTH SUCCESS");
                     }
                 }
 
             } catch (Exception e) {
-                System.out.println("TOKEN ERROR: " + e.getMessage());
+                System.out.println("JWT ERROR: " + e.getMessage());
             }
         }
-
-        System.out.println("FINAL AUTH: " + SecurityContextHolder.getContext().getAuthentication());
 
         filterChain.doFilter(request, response);
     }

@@ -17,7 +17,7 @@ const OrderConfirmation = () => {
   const tax = subtotal * 0.04;
   const total = subtotal + tax;
 
-
+  console.log("ORDER ITEMS:", order.items);
   return (
     <div className="bg-surface text-on-surface min-h-screen glow-bg pb-24 md:pb-0">
       {/* NAVBAR */}
@@ -97,7 +97,11 @@ const OrderConfirmation = () => {
               >
                 <div className="w-24 h-24 rounded-lg overflow-hidden">
                   <img
-                    src={item.image}
+                    src={
+                      item.image?.startsWith("http")
+                        ? item.image
+                        : `/products/${item.image}`
+                    }
                     className="w-full h-full object-cover"
                   />
                 </div>
