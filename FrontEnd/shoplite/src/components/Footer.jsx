@@ -63,7 +63,7 @@ const Footer = () => {
 
                 {/* BOTTOM */}
                 <div className="mt-12 pt-6 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-400">
-                    <p>© 2024 ShopLite. Ethereal Commerce.</p>
+                    <p>© ShopLite. Ethereal Commerce.</p>
 
                     <div className="flex gap-6">
                         <span className="hover:text-indigo-600 cursor-pointer">Instagram</span>

@@ -46,4 +46,7 @@ public class Product {
 
     @Column(name = "type")
     private String type;
+
+    @Column(nullable = false)
+    private boolean isActive = true;
 }

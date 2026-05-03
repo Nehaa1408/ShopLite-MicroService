@@ -9,4 +9,6 @@ import com.ecommerce.shoplite.entity.User;
 
 public interface TicketRepository extends JpaRepository<Ticket, Long> {
     List<Ticket> findByUser(User user);
+
+    long countByStatus(String status);
 }

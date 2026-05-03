@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useCart } from "../../context/CartContext";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -55,17 +55,21 @@ const Home = () => {
     navigate(token ? "/profile" : "/login");
   };
 
-  const handleAddToCart = (e, product) => {
+  const handleAddToCart = async (e, product) => {
     e.stopPropagation();
 
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      setShowLoginPopup(true);
-      return;
+    try {
+      await addToCart(product);
+    } catch (err) {
+      if (
+        err.message === "NOT_LOGGED_IN" ||
+        err.message === "SESSION_EXPIRED"
+      ) {
+        setShowLoginPopup(true);
+      } else {
+        console.error(err);
+      }
     }
-
-    addToCart(product);
   };
 
   // Reset page when category changes
@@ -87,41 +91,57 @@ const Home = () => {
     loadCategories();
   }, []);
 
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [smoothPos, setSmoothPos] = useState({ x: 0, y: 0 });
+
+  const handleMouseMove = (e) => {
+    setMousePos({
+      x: e.clientX,
+      y: e.clientY,
+    });
+  };
+
+  useEffect(() => {
+    let animationFrame;
+
+    const smoothFollow = () => {
+      setSmoothPos((prev) => ({
+        x: prev.x + (mousePos.x - prev.x) * 0.08,
+        y: prev.y + (mousePos.y - prev.y) * 0.08,
+      }));
+
+      animationFrame = requestAnimationFrame(smoothFollow);
+    };
+
+    smoothFollow();
+
+    return () => cancelAnimationFrame(animationFrame);
+  }, [mousePos]);
+
+  const isAuthenticated = () => {
+    return !!localStorage.getItem("token");
+  };
+
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-[#eef2ff] text-on-background flex flex-col">
+    <div
+      className="relative min-h-screen overflow-hidden"
+      onMouseMove={handleMouseMove}
+    >
 
-      {/* 🌌 BASE (deeper, richer) */}
-      <div className="fixed inset-0 -z-30 
-bg-gradient-to-br from-[#eef2ff] via-white to-[#f5eaff]" />
+      {/*  BASE GRADIENT */}
+      <div className="fixed inset-0 -z-10 
+bg-gradient-to-br from-[#fdfcfb] via-[#f7f1ec] to-[#f3e8ff]" />
 
-      {/* 🌊 WAVE LAYERS */}
-      <div className="fixed inset-0 -z-20 pointer-events-none overflow-hidden">
+      <div className="fixed top-[-120px] left-[-120px] w-[420px] h-[420px]
+bg-[#f5d0c5]/40 rounded-full blur-[140px] -z-10" />
 
-        {/* LEFT */}
-        <div className="absolute top-[-150px] left-[-150px] w-[700px] h-[700px]
-bg-indigo-700/80 blur-[220px] rounded-full
-animate-[waveFloat_18s_ease-in-out_infinite]" />
+      <div className="fixed bottom-[-140px] right-[-120px] w-[420px] h-[420px]
+bg-[#e9d5ff]/40 rounded-full blur-[140px] -z-10" />
 
-        {/* RIGHT */}
-        <div className="absolute bottom-[-150px] right-[-150px] w-[700px] h-[700px]
-bg-purple-700/80 blur-[220px] rounded-full
-animate-[waveFloatReverse_22s_ease-in-out_infinite]" />
+      {/* ✨ FADE ILLUSION */}
+      <div className="fixed inset-0 -z-10 pointer-events-none
+  bg-gradient-to-b from-white/40 via-transparent to-white/50" />
 
-        {/* CENTER SOFT MERGE */}
-        <div className="absolute top-[35%] left-1/2 -translate-x-1/2
-  w-[900px] h-[400px]
-  bg-gradient-to-r from-indigo-400/40 via-purple-400/30 to-indigo-400/40
-  blur-[160px] rounded-full
-  animate-[waveFloat_20s_ease-in-out_infinite]" />
-
-      </div>
-
-      {/* 🧊 GLASS DIFFUSION LAYER (THIS IS THE MAGIC) */}
-      <div className="fixed inset-0 -z-10 backdrop-blur-[20px] bg-white/5" />
-      <div className="fixed inset-0 -z-5 opacity-[0.04] pointer-events-none
-bg-[url('https://www.transparenttextures.com/patterns/noise.png')]" />
-
-      {/* CONTENT WRAPPER */}
       <div className="relative z-10 flex flex-col min-h-screen">
 
         {/* Navbar */}
@@ -134,7 +154,34 @@ bg-[url('https://www.transparenttextures.com/patterns/noise.png')]" />
           setSearchTerm={setSearchTerm}
           setCurrentPage={setCurrentPage}
           handleProfileClick={handleProfileClick}
+          onCartClick={() => {
+            if (!isAuthenticated()) {
+              setShowLoginPopup(true);
+              return;
+            }
+            navigate("/cart");
+          }}
         />
+
+        {/*  MOUSE TRACKING GLOW */}
+        <div
+          className="fixed inset-0 -z-[15] pointer-events-none"
+          style={{
+            background: `
+      radial-gradient(
+        260px at ${mousePos.x}px ${mousePos.y}px,
+        rgba(255, 215, 170, 0.28),
+        transparent 60%
+      ),
+      radial-gradient(
+        420px at ${mousePos.x}px ${mousePos.y}px,
+        rgba(255, 255, 255, 0.18),
+        transparent 75%
+      )
+    `,
+          }}
+        />
+
         {/* Main */}
         <main className="flex-grow pt-32 md:pt-36 w-full">
 

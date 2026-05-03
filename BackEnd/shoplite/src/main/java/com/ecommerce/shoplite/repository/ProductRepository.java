@@ -9,11 +9,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
-    List<Product> findByBrand(String brand);
 
-    Page<Product> findByBrandAndType(String brand, String type, Pageable pageable);
+    Page<Product> findByIsActiveTrue(Pageable pageable);
 
-    Page<Product> findByCategory_Name(String categoryName, Pageable pageable);
+    Page<Product> findByBrandAndTypeAndIsActiveTrue(String brand, String type, Pageable pageable);
 
-    Page<Product> findByType(String type, Pageable pageable);
+    Page<Product> findByCategory_NameAndIsActiveTrue(String categoryName, Pageable pageable);
+
+    Page<Product> findByTypeAndIsActiveTrue(String type, Pageable pageable);
+
+    List<Product> findByBrandAndIsActiveTrue(String brand);
 }

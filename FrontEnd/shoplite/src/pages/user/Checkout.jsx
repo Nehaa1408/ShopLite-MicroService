@@ -375,7 +375,7 @@ const Checkout = () => {
           </div>
 
           <div className="text-xs uppercase tracking-wide text-[#2b2a51]/60 text-center md:text-right">
-            © 2024 ShopLite Luminous Editorial. All rights reserved.
+            © ShopLite Luminous Editorial. All rights reserved.
           </div>
         </div>
       </footer>

@@ -415,7 +415,7 @@ const OrderHistory = () => {
 
       {/* FOOTER */}
       < footer className="mt-20 py-10 border-t text-center text-text-muted" >
-        © 2024 ShopLite Luxury E-commerce.
+        © ShopLite Luxury E-commerce.
       </footer >
     </div >
   );

@@ -89,7 +89,7 @@ const Categories = () => {
         {/* HEADER */}
         <div className="mb-16">
           <p className="text-xs font-bold text-primary mb-4">
-            COLLECTIONS 2024
+            COLLECTIONS 
           </p>
 
           <h1 className="text-5xl md:text-6xl font-black mb-6">

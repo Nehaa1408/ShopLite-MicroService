@@ -21,40 +21,35 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-            .cors(cors -> {})
-            .csrf(csrf -> csrf.disable())
+                .cors(cors -> {
+                })
+                .csrf(csrf -> csrf.disable())
 
-            .sessionManagement(session -> session
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-            .authorizeHttpRequests(auth -> auth
+                .authorizeHttpRequests(auth -> auth
 
-                // AUTH
-                .requestMatchers("/api/auth/**").permitAll()
+                        // AUTH
+                        .requestMatchers("/api/auth/**").permitAll()
 
-                // PRODUCTS
-                .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/products/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/api/products/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/products/**").hasRole("ADMIN")
+                        // PRODUCTS
+                        .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/products/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/products/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/products/**").hasRole("ADMIN")
 
-               
-                .requestMatchers("/cart/**").permitAll()
+                        // ORDERS (FIXED)
+                        .requestMatchers(HttpMethod.PUT, "/api/orders/*/status").hasRole("ADMIN")
+                        .requestMatchers("/api/orders/admin/**").hasRole("ADMIN")
 
-                // ORDERS
-                .requestMatchers(HttpMethod.PUT, "/orders/*/status").hasRole("ADMIN")
-                .requestMatchers("/orders/admin/**").hasRole("ADMIN")
+                        // TICKETS (FIXED)
+                        .requestMatchers("/api/tickets/admin/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/tickets/**").hasRole("ADMIN")
 
-                // TICKETS
-                .requestMatchers("/tickets/admin").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/tickets/**").hasRole("ADMIN")
+                        .anyRequest().permitAll())
 
-                
-                .anyRequest().permitAll()
-            )
-
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -69,8 +64,7 @@ public class SecurityConfig {
         config.setAllowedHeaders(java.util.List.of("*"));
         config.setAllowCredentials(true);
 
-        org.springframework.web.cors.UrlBasedCorsConfigurationSource source =
-                new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
+        org.springframework.web.cors.UrlBasedCorsConfigurationSource source = new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
 
         source.registerCorsConfiguration("/**", config);
 

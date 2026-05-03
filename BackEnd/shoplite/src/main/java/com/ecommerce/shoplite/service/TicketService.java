@@ -58,4 +58,8 @@ public class TicketService {
         return ticketRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Ticket not found"));
     }
+
+    public long getOpenTicketsCount() {
+        return ticketRepository.countByStatus("OPEN");
+    }
 }

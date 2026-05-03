@@ -13,7 +13,7 @@ import com.ecommerce.shoplite.security.JwtUtil;
 import com.ecommerce.shoplite.service.OrderService;
 
 @RestController
-@RequestMapping("/orders")
+@RequestMapping("/api/orders")
 @CrossOrigin(origins = "*")
 public class OrderController {
 

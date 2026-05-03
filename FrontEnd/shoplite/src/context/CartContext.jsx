@@ -32,7 +32,7 @@ export const CartProvider = ({ children }) => {
     fetchCart();
   }, []);
 
- 
+
   const addToCart = async (product) => {
     const token = getToken();
 
@@ -57,8 +57,12 @@ export const CartProvider = ({ children }) => {
 
       await fetchCart();
     } catch (err) {
-     
-      if (err.response?.status === 401 || err.response?.status === 403) {
+
+      if (
+        err.response?.status === 401 ||
+        err.response?.status === 403 ||
+        err.response?.status === 400
+      ) {
         localStorage.removeItem("token");
         throw new Error("SESSION_EXPIRED");
       }
@@ -68,7 +72,7 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  
+
   const removeFromCart = async (productId) => {
     const token = getToken();
     if (!token) return;
@@ -89,7 +93,7 @@ export const CartProvider = ({ children }) => {
     }
   };
 
- 
+
   const increaseQty = async (productId, currentQty) => {
     const token = getToken();
     if (!token) return;
@@ -114,7 +118,7 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  
+
   const decreaseQty = async (productId, currentQty) => {
     if (currentQty <= 1) return;
 
@@ -141,7 +145,7 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  
+
   const clearCart = async () => {
     const token = getToken();
     if (!token) return;

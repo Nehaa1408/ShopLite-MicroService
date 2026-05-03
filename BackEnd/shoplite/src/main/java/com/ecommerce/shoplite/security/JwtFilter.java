@@ -36,7 +36,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String path = request.getRequestURI();
 
-        // Skip auth endpoints
+        // Skip authentication endpoints
         if (path.startsWith("/api/auth")) {
             filterChain.doFilter(request, response);
             return;
@@ -49,22 +49,19 @@ public class JwtFilter extends OncePerRequestFilter {
             String token = authHeader.substring(7);
 
             try {
+
                 String email = jwtUtil.extractEmail(token);
 
+                
                 if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
                     User user = userRepository.findByEmail(email).orElse(null);
 
                     if (user != null) {
 
-                        String role = user.getRole().name();
+                        String role = "ROLE_" + user.getRole().name();
 
-                        if (!role.startsWith("ROLE_")) {
-                            role = "ROLE_" + role;
-                        }
-
-                        List<SimpleGrantedAuthority> authorities = List.of(
-                                new SimpleGrantedAuthority(role));
+                        List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(role));
 
                         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                                 user,
@@ -76,6 +73,9 @@ public class JwtFilter extends OncePerRequestFilter {
                                         .buildDetails(request));
 
                         SecurityContextHolder.getContext().setAuthentication(authToken);
+
+                        // Debug log (remove later)
+                        System.out.println("AUTH SUCCESS → " + email + " | " + role);
                     }
                 }
 

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import adminAxios from "../../api/adminAxios";
 import { useLocation, useNavigate } from "react-router-dom";
+import AdminHeader from "../../components/AdminHeader";
+import AdminSidebar from "../../components/AdminSidebar";
 
 const ManageOrders = () => {
 
@@ -37,273 +39,245 @@ const ManageOrders = () => {
   const getStatusStyle = (status) => {
     switch (status) {
       case "PLACED":
-        return "bg-primary-container/20 text-primary";
-      case "PACKED":
-        return "bg-yellow-100 text-yellow-700";
+        return "bg-blue-100 text-blue-600";
+      case "SHIPPED":
+        return "bg-yellow-100 text-yellow-600";
       case "DELIVERED":
-        return "bg-emerald-100 text-emerald-700";
+        return "bg-green-100 text-green-600";
+      case "CANCELLED":
+        return "bg-red-100 text-red-600";
       default:
-        return "";
+        return "bg-gray-100 text-gray-600";
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    navigate("/login");
+  };
+
+
   return (
-    <div className="bg-surface min-h-screen text-on-surface">
-      {/* SIDEBAR */}
-      <aside className="fixed left-0 top-0 h-full w-64 bg-white/80 backdrop-blur-xl border-r border-outline-variant/20 p-6 hidden md:flex flex-col justify-between rounded-r-3xl">
-        {/* TOP */}
-        <div>
-          {/* LOGO */}
-          <div className="mb-10">
-            <h1 className="text-2xl font-black text-primary">ShopLite</h1>
-            <p className="text-xs text-on-surface-variant mt-1">
-              Management Portal
-            </p>
+    <div className="min-h-screen text-gray-800 relative overflow-hidden">
+      <div className="fixed inset-0 -z-10 
+    bg-gradient-to-br from-[#fdfcfb] via-[#f7f1ec] to-[#f3e8ff]" />
+
+      <div className="fixed top-[-120px] left-[-120px] w-[420px] h-[420px]
+    bg-[#f5d0c5]/40 rounded-full blur-[140px] -z-10" />
+
+      <div className="fixed bottom-[-140px] right-[-120px] w-[420px] h-[420px]
+    bg-[#e9d5ff]/40 rounded-full blur-[140px] -z-10" />
+      <div className="relative z-10">
+        <AdminHeader />
+
+        {/* SIDEBAR */}
+        <AdminSidebar handleLogout={handleLogout} />
+
+        {/* HEADER */}
+        <header className="md:ml-64 h-16 flex justify-between items-center px-6 bg-surface/80 backdrop-blur-xl shadow">
+          <input
+            placeholder="Search orders..."
+            className="hidden md:block bg-surface-container-low px-4 py-2 rounded-lg outline-none"
+          />
+
+          <div className="flex items-center gap-4">
+            <span className="material-symbols-outlined">notifications</span>
+            <span className="material-symbols-outlined">settings</span>
+
+            {/* PROFILE ICON (fixed) */}
+            <div className="w-9 h-9 rounded-full flex items-center justify-center bg-primary/10 text-primary">
+              <span className="material-symbols-outlined">person</span>
+            </div>
           </div>
+        </header>
 
-          {/* NAV */}
-          <nav className="space-y-2">
-            {/* DASHBOARD */}
-            <div
-              onClick={() => navigate("/admin")}
-              className="flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer 
-        text-on-surface-variant hover:bg-surface-container hover:text-primary transition-all"
-            >
-              <span className="material-symbols-outlined">dashboard</span>
-              Dashboard
+        {/* MAIN */}
+        <main className="md:ml-64 p-6">
+          {/* TITLE */}
+          <h1 className="text-3xl font-extrabold mb-2">Manage Orders</h1>
+          <p className="text-on-surface-variant mb-6">
+            Track and update customer order statuses.
+          </p>
+
+          {/* STATS */}
+          <div className="grid md:grid-cols-3 gap-6 mb-8">
+            <div className="bg-white p-6 rounded-2xl 
+shadow-[0px_10px_30px_rgba(0,0,0,0.06)]
+transition-all duration-300
+hover:shadow-[0px_20px_50px_rgba(168,85,247,0.25)]
+hover:-translate-y-1 flex gap-4 items-center">
+              <div className="w-12 h-12 bg-primary/10 text-primary flex items-center justify-center rounded-lg">
+                <span className="material-symbols-outlined">pending_actions</span>
+              </div>
+              <div>
+                <p className="text-xs text-on-surface-variant uppercase">
+                  Pending Orders
+                </p>
+                <h2 className="text-2xl font-bold">24</h2>
+              </div>
             </div>
 
-            {/* PRODUCTS */}
-            <div
-              onClick={() => navigate("/admin/products")}
-              className="flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer 
-        text-on-surface-variant hover:bg-surface-container hover:text-primary transition-all"
-            >
-              <span className="material-symbols-outlined">inventory_2</span>
-              Manage Products
+            <div className="bg-white p-6 rounded-2xl 
+shadow-[0px_10px_30px_rgba(0,0,0,0.06)]
+transition-all duration-300
+hover:shadow-[0px_20px_50px_rgba(168,85,247,0.25)]
+hover:-translate-y-1 flex gap-4 items-center">
+              <div className="w-12 h-12 bg-secondary-container/20 text-secondary flex items-center justify-center rounded-lg">
+                <span className="material-symbols-outlined">local_shipping</span>
+              </div>
+              <div>
+                <p className="text-xs text-on-surface-variant uppercase">
+                  In Transit
+                </p>
+                <h2 className="text-2xl font-bold">58</h2>
+              </div>
             </div>
 
-
-            {/* ADD PRODUCT */}
-            <div
-              onClick={() => navigate("/admin/add-product")}
-              className="flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer 
-        text-on-surface-variant hover:bg-surface-container hover:text-primary transition-all"
-            >
-              <span className="material-symbols-outlined">add_box</span>
-              Add Product
-            </div>
-
-            {/* ACTIVE: MANAGE ORDERS */}
-            <div
-              onClick={() => navigate("/manage-orders")}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer 
-        bg-gradient-to-r from-primary to-primary-container text-white shadow-lg"
-            >
-              <span
-                className="material-symbols-outlined"
-                style={{ fontVariationSettings: "'FILL' 1" }}
-              >
-                shopping_cart
-              </span>
-              Manage Orders
-            </div>
-            {/* Tickets */}
-            <div
-              onClick={() => navigate("/admin/tickets")}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition
-  ${isActive("/admin/tickets")
-                  ? "bg-gradient-to-r from-primary to-primary-container text-white shadow-lg"
-                  : "hover:bg-surface-container"
-                }`}
-            >
-              <span className="material-symbols-outlined">
-                confirmation_number
-              </span>
-              Tickets
-            </div>
-          </nav>
-        </div>
-
-        {/* BOTTOM */}
-        <div className="pt-6 border-t border-outline-variant/20">
-          <div className="flex items-center gap-3 px-4 py-3 text-error cursor-pointer hover:bg-red-50 rounded-lg transition-all">
-            <span className="material-symbols-outlined">logout</span>
-            Logout
-          </div>
-        </div>
-      </aside>
-
-      {/* HEADER */}
-      <header className="md:ml-64 h-16 flex justify-between items-center px-6 bg-surface/80 backdrop-blur-xl shadow">
-        <input
-          placeholder="Search orders..."
-          className="hidden md:block bg-surface-container-low px-4 py-2 rounded-lg outline-none"
-        />
-
-        <div className="flex items-center gap-4">
-          <span className="material-symbols-outlined">notifications</span>
-          <span className="material-symbols-outlined">settings</span>
-
-          {/* PROFILE ICON (fixed) */}
-          <div className="w-9 h-9 rounded-full flex items-center justify-center bg-primary/10 text-primary">
-            <span className="material-symbols-outlined">person</span>
-          </div>
-        </div>
-      </header>
-
-      {/* MAIN */}
-      <main className="md:ml-64 p-6">
-        {/* TITLE */}
-        <h1 className="text-3xl font-extrabold mb-2">Manage Orders</h1>
-        <p className="text-on-surface-variant mb-6">
-          Track and update customer order statuses.
-        </p>
-
-        {/* STATS */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-surface-container-lowest p-6 rounded-xl shadow flex gap-4 items-center">
-            <div className="w-12 h-12 bg-primary/10 text-primary flex items-center justify-center rounded-lg">
-              <span className="material-symbols-outlined">pending_actions</span>
-            </div>
-            <div>
-              <p className="text-xs text-on-surface-variant uppercase">
-                Pending Orders
-              </p>
-              <h2 className="text-2xl font-bold">24</h2>
+            <div className="bg-white p-6 rounded-2xl 
+shadow-[0px_10px_30px_rgba(0,0,0,0.06)]
+transition-all duration-300
+hover:shadow-[0px_20px_50px_rgba(168,85,247,0.25)]
+hover:-translate-y-1 flex gap-4 items-center">
+              <div className="w-12 h-12 bg-tertiary-container/20 text-tertiary flex items-center justify-center rounded-lg">
+                <span className="material-symbols-outlined">check_circle</span>
+              </div>
+              <div>
+                <p className="text-xs text-on-surface-variant uppercase">
+                  Completed
+                </p>
+                <h2 className="text-2xl font-bold">1,204</h2>
+              </div>
             </div>
           </div>
 
-          <div className="bg-surface-container-lowest p-6 rounded-xl shadow flex gap-4 items-center">
-            <div className="w-12 h-12 bg-secondary-container/20 text-secondary flex items-center justify-center rounded-lg">
-              <span className="material-symbols-outlined">local_shipping</span>
-            </div>
-            <div>
-              <p className="text-xs text-on-surface-variant uppercase">
-                In Transit
-              </p>
-              <h2 className="text-2xl font-bold">58</h2>
-            </div>
-          </div>
+          {/* TABLE */}
+          <div className="bg-white/70 backdrop-blur-xl rounded-2xl 
+shadow-[0px_20px_50px_rgba(0,0,0,0.08)] 
+border border-white/40 overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-white/60 backdrop-blur-md text-gray-500 text-xs uppercase tracking-wide">
+                <tr className="border-t border-white/30 
+transition-all duration-300
+hover:bg-white/60 
+hover:shadow-[0px_10px_30px_rgba(168,85,247,0.15)]
+hover:-translate-y-[2px]">
+                  <th className="p-4 text-left">Order ID</th>
+                  <th>Customer</th>
+                  <th>Date</th>
+                  <th>Total</th>
+                  <th>Status</th>
+                  <th className="text-right pr-6">Actions</th>
+                </tr>
+              </thead>
 
-          <div className="bg-surface-container-lowest p-6 rounded-xl shadow flex gap-4 items-center">
-            <div className="w-12 h-12 bg-tertiary-container/20 text-tertiary flex items-center justify-center rounded-lg">
-              <span className="material-symbols-outlined">check_circle</span>
-            </div>
-            <div>
-              <p className="text-xs text-on-surface-variant uppercase">
-                Completed
-              </p>
-              <h2 className="text-2xl font-bold">1,204</h2>
-            </div>
-          </div>
-        </div>
+              <tbody>
+                {currentOrders.map((o, i) => {
+                  const total = o.items?.reduce(
+                    (sum, item) => sum + item.price * item.quantity,
+                    0
+                  );
 
-        {/* TABLE */}
-        <div className="bg-surface-container-lowest rounded-xl shadow overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-surface-container-low">
-              <tr>
-                <th className="p-4 text-left">Order ID</th>
-                <th>Customer</th>
-                <th>Date</th>
-                <th>Total</th>
-                <th>Status</th>
-                <th className="text-right pr-6">Actions</th>
-              </tr>
-            </thead>
+                  return (
+                    <tr
+                      key={i}
+                      className="border-t border-white/30 
+  transition-all duration-300
+  hover:bg-white/60 
+  hover:shadow-[0px_10px_30px_rgba(168,85,247,0.15)]
+  hover:-translate-y-[2px]"
+                    >
+                      {/* ORDER ID */}
+                      <td className="p-4 font-bold">#{o.orderId}</td>
 
-            <tbody>
-              {currentOrders.map((o, i) => {
-                const total = o.items?.reduce(
-                  (sum, item) => sum + item.price * item.quantity,
-                  0
-                );
-
-                return (
-                  <tr key={i} className="border-t">
-                    {/* ORDER ID */}
-                    <td className="p-4 font-bold">#{o.orderId}</td>
-
-                    {/* CUSTOMER */}
-                    <td>
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-surface-container-highest rounded-full flex items-center justify-center text-xs font-bold text-primary">
-                          {o.user?.name?.charAt(0) || "U"}
+                      {/* CUSTOMER */}
+                      <td>
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 bg-surface-container-highest rounded-full flex items-center justify-center text-xs font-bold text-primary">
+                            {o.user?.name?.charAt(0) || "U"}
+                          </div>
+                          {o.user?.name || "User"}
                         </div>
-                        {o.user?.name || "User"}
-                      </div>
-                    </td>
+                      </td>
 
-                    {/* DATE */}
-                    <td>
-                      {new Date(o.orderDate).toLocaleDateString()}
-                    </td>
+                      {/* DATE */}
+                      <td>
+                        {new Date(o.orderDate).toLocaleDateString()}
+                      </td>
 
-                    {/* TOTAL */}
-                    <td className="font-bold">
-                      ₹{total?.toFixed(2) || 0}
-                    </td>
+                      {/* TOTAL */}
+                      <td className="font-bold">
+                        ₹{total?.toFixed(2) || 0}
+                      </td>
 
-                    {/* STATUS */}
-                    <td>
-                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700">
-                        {o.status}
-                      </span>
-                    </td>
-
-                    {/* ACTIONS */}
-                    <td className="text-right pr-6">
-                      <div className="flex justify-end gap-2 items-center">
-                        <button className="text-primary text-xs font-bold">
-                          View Details
-                        </button>
-
-                        <select
-                          className="text-xs bg-surface-container-low px-2 py-1 rounded"
-                          defaultValue={o.status}
+                      {/* STATUS */}
+                      <td>
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusStyle(
+                            o.status
+                          )}`}
                         >
-                          <option value="PLACED">Placed</option>
-                          <option value="PACKED">Packed</option>
-                          <option value="SHIPPED">Shipped</option>
-                          <option value="DELIVERED">Delivered</option>
-                        </select>
+                          {o.status}
+                        </span>
+                      </td>
 
-                        <button className="bg-primary text-white px-3 py-1 rounded text-xs font-bold">
-                          UPDATE
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      {/* ACTIONS */}
+                      <td className="p-4 text-right">
+                        <div className="flex items-center justify-end gap-3">
 
-          {/* FOOTER */}
-          <div className="p-4 flex justify-between text-xs text-on-surface-variant">
-            <span>
-              Showing {indexOfFirst + 1} -{" "}
-              {Math.min(indexOfLast, orders.length)} of {orders.length} orders
-            </span>
+                          {/* View */}
+                          <button className="text-indigo-600 text-sm font-medium hover:underline">
+                            View
+                          </button>
 
-            <div className="flex gap-2">
-              {[...Array(totalPages)].map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCurrentPage(i + 1)}
-                  className={`px-3 py-1 rounded ${currentPage === i + 1
-                    ? "bg-primary text-white"
-                    : "bg-gray-200"
-                    }`}
-                >
-                  {i + 1}
-                </button>
-              ))}
+                          {/* Status Dropdown */}
+                          <select className="px-3 py-1.5 rounded-lg text-sm 
+    bg-white/60 backdrop-blur-md border border-white/40 
+    focus:outline-none">
+                            <option>Placed</option>
+                            <option>Shipped</option>
+                            <option>Delivered</option>
+                          </select>
+
+                          {/* Update Button */}
+                          <button className="px-4 py-1.5 rounded-lg text-sm font-semibold text-white
+    bg-gradient-to-r from-[#6366f1] to-[#a855f7]
+    shadow-md hover:shadow-lg transition">
+                            Update
+                          </button>
+
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+
+            {/* FOOTER */}
+            <div className="p-4 flex justify-between text-xs text-on-surface-variant">
+              <span>
+                Showing {indexOfFirst + 1} -{" "}
+                {Math.min(indexOfLast, orders.length)} of {orders.length} orders
+              </span>
+
+              <div className="flex gap-2">
+                {[...Array(totalPages)].map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setCurrentPage(i + 1)}
+                    className={`px-3 py-1 rounded ${currentPage === i + 1
+                      ? "bg-primary text-white"
+                      : "bg-gray-200"
+                      }`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 };

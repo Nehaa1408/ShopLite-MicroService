@@ -11,7 +11,7 @@ import com.ecommerce.shoplite.security.JwtUtil;
 import com.ecommerce.shoplite.service.TicketService;
 
 @RestController
-@RequestMapping("/tickets")
+@RequestMapping("/api/tickets")
 @CrossOrigin(origins = "*")
 public class TicketController {
 
@@ -68,5 +68,10 @@ public class TicketController {
     @GetMapping("/{id}")
     public Ticket getTicketById(@PathVariable Long id) {
         return ticketService.getTicketById(id);
+    }
+
+    @GetMapping("/admin/count")
+    public long getOpenTicketsCount() {
+        return ticketService.getOpenTicketsCount();
     }
 }

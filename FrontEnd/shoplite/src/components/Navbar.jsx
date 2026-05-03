@@ -8,10 +8,11 @@ const Navbar = ({
     searchTerm,
     setSearchTerm,
     setCurrentPage,
-    handleProfileClick
+    handleProfileClick,
+    onCartClick
 }) => {
     return (
-        <nav className="fixed top-0 left-0 w-full z-50 backdrop-blur-xl bg-white/70 border-b border-white/40">
+        <nav className="fixed top-0 left-0 w-full z-50 backdrop-blur-xl bg-white/60 border-b border-white/40">
             <div className="max-w-[1400px] mx-auto px-6 md:px-12 h-20 flex items-center justify-between">
 
                 {/* LOGO */}
@@ -42,10 +43,10 @@ const Navbar = ({
                                 key={i}
                                 onClick={() => onNavigate(item.path)}
                                 className={`relative transition ${isActive
-                                        ? "text-indigo-600"
-                                        : item.secondary
-                                            ? "text-gray-400 hover:text-indigo-500"
-                                            : "text-gray-600 hover:text-indigo-600"
+                                    ? "text-indigo-600"
+                                    : item.secondary
+                                        ? "text-gray-400 hover:text-indigo-500"
+                                        : "text-gray-600 hover:text-indigo-600"
                                     }`}
                             >
                                 {item.name}
@@ -78,7 +79,7 @@ const Navbar = ({
 
                     {/* CART */}
                     <button
-                        onClick={() => onNavigate("/cart")}
+                        onClick={onCartClick}
                         className="relative p-2 rounded-full hover:bg-gray-100 transition"
                     >
                         <MdShoppingCart size={22} />

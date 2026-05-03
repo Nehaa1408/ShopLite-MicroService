@@ -1,15 +1,26 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import adminAxios from "../../api/adminAxios";
+
+import AdminSidebar from "../../components/AdminSidebar";
+import AdminHeader from "../../components/AdminHeader";
+
+
 const ManageProducts = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isActive = (path) => location.pathname === path;
   const [products, setProducts] = useState([]);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    navigate("/login");
+  };
+
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await adminAxios.get("/api/products?page=0&size=100");
+        const res = await adminAxios.get("/products?page=0&size=100");
         setProducts(res.data.content);
 
       } catch (err) {
@@ -20,212 +31,177 @@ const ManageProducts = () => {
     fetchProducts();
   }, []);
   const handleDelete = async (id) => {
-    try {
-      await adminAxios.delete(`/api/products/${id}`);
+    console.log("Deleting:", id);
 
-      // refresh UI
-      setProducts(products.filter((p) => p.id !== id));
+    try {
+      await adminAxios.delete(`/products/${id}`);
+
+      // remove from UI immediately
+      setProducts(prev => prev.filter(p => p.id !== id));
+
     } catch (err) {
-      console.error("Delete error:", err);
+      console.error("Delete error:", err.response?.data || err.message);
     }
   };
+  console.log("ADMIN TOKEN:", sessionStorage.getItem("adminToken"));
   return (
-    <div className="bg-surface text-on-surface min-h-screen">
-      {/* HEADER */}
-      <header className="fixed top-0 w-full h-16 flex justify-between items-center px-6 bg-surface/80 backdrop-blur-xl shadow z-50">
-        <h1 className="text-xl font-bold text-primary">ShopLite Admin</h1>
+    <div className="min-h-screen text-gray-800 relative overflow-hidden">
 
-        <div className="flex items-center gap-4">
-          <input
-            placeholder="Search products..."
-            className="hidden md:block px-4 py-2 rounded-lg bg-surface-container-low"
-          />
-          <span className="material-symbols-outlined">notifications</span>
-          <span className="material-symbols-outlined">settings</span>
-        </div>
-      </header>
+      <div className="fixed inset-0 -z-10 
+bg-gradient-to-br from-[#fdfcfb] via-[#f7f1ec] to-[#f3e8ff]" />
 
-      {/* SIDEBAR */}
-      <aside className="fixed left-0 top-16 w-64 h-full bg-surface border-r hidden md:flex flex-col p-4">
-        <div className="mb-6">
-          <h2 className="font-bold text-primary">ShopLite</h2>
-          <p className="text-xs text-on-surface-variant">ADMIN CONSOLE</p>
-        </div>
+      <div className="fixed top-[-120px] left-[-120px] w-[420px] h-[420px]
+bg-[#f5d0c5]/40 rounded-full blur-[140px] -z-10" />
 
-        <div className="space-y-2">
-          <div className="p-3 hover:bg-surface-container rounded-lg cursor-pointer">
-            <div
-              onClick={() => navigate("/admin")}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition
-               ${isActive("/admin")
-                  ? "bg-gradient-to-r from-primary to-primary-container text-white shadow-lg"
-                  : "hover:bg-surface-container"
-                }`}
-            >
-              <span className="material-symbols-outlined">dashboard</span>
-              Dashboard
-            </div>
-          </div>
+      <div className="fixed bottom-[-140px] right-[-120px] w-[420px] h-[420px]
+bg-[#e9d5ff]/40 rounded-full blur-[140px] -z-10" />
 
-          <div className="p-3 bg-blue-50 text-primary font-bold border-r-4 border-primary rounded-l-lg">
-            Manage Products
-          </div>
 
-          <div
-            onClick={() => navigate("/admin/add-product")}
-            className="flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer hover:bg-surface-container"
-          >
-            <span className="material-symbols-outlined">add_box</span>
-            Add Product
-          </div>
-          <div className="flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer hover:bg-surface-container">
-            <span className="material-symbols-outlined">shopping_cart</span>
-            Manage Orders
-          </div>
-          {/* Tickets */}
-          <div
-            onClick={() => navigate("/admin/tickets")}
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition
-  ${isActive("/admin/tickets")
-                ? "bg-gradient-to-r from-primary to-primary-container text-white shadow-lg"
-                : "hover:bg-surface-container"
-              }`}
-          >
-            <span className="material-symbols-outlined">
-              confirmation_number
-            </span>
-            Tickets
-          </div>
-          <div className="border-t border-outline-variant/10 pt-4">
-            <div className="flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 rounded-lg cursor-pointer">
-              <span className="material-symbols-outlined">logout</span>
-              Logout
-            </div>
-          </div>
-        </div>
-      </aside>
+      <div className="relative z-10">
+        <AdminHeader />
 
-      {/* MAIN */}
-      <main className="md:ml-64 pt-24 px-6">
-        {/* TITLE */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-extrabold">Manage Products</h1>
-            <p className="text-sm text-on-surface-variant">
-              Review, update, and organize your product inventory.
-            </p>
-          </div>
+        {/* SIDEBAR */}
+        <AdminSidebar handleLogout={handleLogout} />
 
-          <button className="flex items-center gap-2 px-6 py-3 bg-gradient-to-br from-primary to-primary-container text-white rounded-xl">
-            <span className="material-symbols-outlined">add</span>
-            Add New Product
-          </button>
-        </div>
-        {/* STATS */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-          {/* TOTAL PRODUCTS */}
-          <div className="bg-surface-container-lowest p-6 rounded-2xl shadow-[0px_12px_32px_rgba(43,42,81,0.06)] flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-primary">
-              <span className="material-symbols-outlined">inventory</span>
-            </div>
+        {/* MAIN */}
+        <main className="md:ml-64 pt-24 px-6">
+          {/* TITLE */}
+          <div className="flex justify-between items-center mb-8">
             <div>
-              <p className="text-xs text-on-surface-variant font-medium">
-                Total Products
+              <h1 className="text-3xl font-extrabold">Manage Products</h1>
+              <p className="text-sm text-on-surface-variant">
+                Review, update, and organize your product inventory.
               </p>
-              <p className="text-xl font-bold">{products.length}</p>
+            </div>
+
+          </div>
+          {/* STATS */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+            {/* TOTAL PRODUCTS */}
+            <div className="bg-white p-6 rounded-2xl 
+shadow-[0px_10px_30px_rgba(0,0,0,0.06)] 
+transition-all duration-300 
+hover:shadow-[0px_20px_50px_rgba(99,102,241,0.25)] 
+hover:-translate-y-1 
+hover:ring-1 hover:ring-indigo-200 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-primary">
+                <span className="material-symbols-outlined">inventory</span>
+              </div>
+              <div>
+                <p className="text-xs text-on-surface-variant font-medium">
+                  Total Products
+                </p>
+                <p className="text-xl font-bold">{products.length}</p>
+              </div>
+            </div>
+
+            {/* CATEGORIES */}
+            <div className="bg-white p-6 rounded-2xl 
+shadow-[0px_10px_30px_rgba(0,0,0,0.06)] 
+transition-all duration-300 
+hover:shadow-[0px_20px_50px_rgba(99,102,241,0.25)] 
+hover:-translate-y-1 
+hover:ring-1 hover:ring-indigo-200 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-secondary-container/20 flex items-center justify-center text-secondary">
+                <span className="material-symbols-outlined">category</span>
+              </div>
+              <div>
+                <p className="text-xs text-on-surface-variant font-medium">
+                  Categories
+                </p>
+                <p className="text-xl font-bold">24 Active</p>
+              </div>
+            </div>
+
+            {/* STOCK */}
+            <div className="bg-white p-6 rounded-2xl 
+shadow-[0px_10px_30px_rgba(0,0,0,0.06)] 
+transition-all duration-300 
+hover:shadow-[0px_20px_50px_rgba(99,102,241,0.25)] 
+hover:-translate-y-1 
+hover:ring-1 hover:ring-indigo-200 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center text-green-600">
+                <span className="material-symbols-outlined">check_circle</span>
+              </div>
+              <div>
+                <p className="text-xs text-on-surface-variant font-medium">
+                  In Stock
+                </p>
+                <p className="text-xl font-bold">92% Availability</p>
+              </div>
             </div>
           </div>
 
-          {/* CATEGORIES */}
-          <div className="bg-surface-container-lowest p-6 rounded-2xl shadow-[0px_12px_32px_rgba(43,42,81,0.06)] flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-secondary-container/20 flex items-center justify-center text-secondary">
-              <span className="material-symbols-outlined">category</span>
-            </div>
-            <div>
-              <p className="text-xs text-on-surface-variant font-medium">
-                Categories
-              </p>
-              <p className="text-xl font-bold">24 Active</p>
-            </div>
-          </div>
-
-          {/* STOCK */}
-          <div className="bg-surface-container-lowest p-6 rounded-2xl shadow-[0px_12px_32px_rgba(43,42,81,0.06)] flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center text-green-600">
-              <span className="material-symbols-outlined">check_circle</span>
-            </div>
-            <div>
-              <p className="text-xs text-on-surface-variant font-medium">
-                In Stock
-              </p>
-              <p className="text-xl font-bold">92% Availability</p>
-            </div>
-          </div>
-        </div>
-
-        {/* TABLE */}
-        <div className="bg-surface-container-lowest rounded-2xl shadow overflow-hidden">
-          <table className="w-full text-left">
-            <thead className="bg-surface-container-low">
-              <tr>
-                <th className="p-4 text-xs">IMAGE</th>
-                <th className="p-4 text-xs">PRODUCT</th>
-                <th className="p-4 text-xs">CATEGORY</th>
-                <th className="p-4 text-xs">PRICE</th>
-                <th className="p-4 text-xs text-right">ACTIONS</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {products.map((p) => (
-                <tr
-                  key={p.id}
-                  className="border-t hover:bg-surface-container-low"
-                >
-                  <td className="p-4">
-                    <img
-                      src={
-                        p.imageUrl.startsWith("http")
-                          ? p.imageUrl
-                          : `/products/${p.imageUrl}`
-                      }
-                      className="w-12 h-12 rounded-lg"
-                    />
-                  </td>
-
-                  <td className="p-4">
-                    <p className="font-semibold">{p.name}</p>
-                    <p className="text-xs text-gray-500">SKU: {p.sku}</p>
-                  </td>
-
-                  <td className="p-4">
-                    <span className="px-3 py-1 bg-surface-container-high rounded-full text-xs">
-                      {p.category?.name || p.category || "No Category"}
-                    </span>
-                  </td>
-
-                  <td className="p-4 text-primary font-bold">${p.price}</td>
-
-                  <td className="p-4 text-right">
-                    <span
-                      onClick={() => navigate("/admin/add-product", { state: p })}
-                      className="material-symbols-outlined cursor-pointer mr-2"
-                    >
-                      edit
-                    </span>
-                    <span
-                      onClick={() => handleDelete(p.id)}
-                      className="material-symbols-outlined cursor-pointer text-red-500"
-                    >
-                      delete
-                    </span>
-                  </td>
+          {/* TABLE */}
+          <div className="bg-white/70 backdrop-blur-xl rounded-2xl 
+shadow-[0px_20px_50px_rgba(0,0,0,0.08)] 
+border border-white/40 overflow-hidden">
+            <table className="w-full text-left">
+              <thead className="bg-white/60 backdrop-blur-md text-gray-500 text-xs uppercase tracking-wide">
+                <tr>
+                  <th className="p-4 text-xs">IMAGE</th>
+                  <th className="p-4 text-xs">PRODUCT</th>
+                  <th className="p-4 text-xs">CATEGORY</th>
+                  <th className="p-4 text-xs">PRICE</th>
+                  <th className="p-4 text-xs text-right">ACTIONS</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </main>
+              </thead>
+
+              <tbody>
+                {products.map((p) => (
+                  <tr
+                    key={p.id}
+                    className="border-t border-white/30 
+  transition-all duration-300 cursor-pointer
+  hover:bg-white/60 
+  hover:shadow-[0px_10px_30px_rgba(99,102,241,0.15)] 
+  hover:-translate-y-[2px]"
+                  >
+                    <td className="p-4">
+                      <img
+                        src={
+                          p.imageUrl.startsWith("http")
+                            ? p.imageUrl
+                            : `/products/${p.imageUrl}`
+                        }
+                        className="w-12 h-12 rounded-lg"
+                      />
+                    </td>
+
+                    <td className="p-4">
+                      <p className="font-semibold">{p.name}</p>
+                      <p className="text-xs text-gray-500">SKU: {p.sku}</p>
+                    </td>
+
+                    <td className="p-4">
+                      <span className="px-3 py-1 bg-surface-container-high rounded-full text-xs">
+                        {p.category?.name || p.category || "No Category"}
+                      </span>
+                    </td>
+
+                    <td className="p-4 text-primary font-bold">${p.price}</td>
+
+                    <td className="p-4 text-right">
+                      <span
+                        onClick={() => navigate("/admin/add-product", { state: p })}
+                        className="material-symbols-outlined cursor-pointer mr-2"
+                      >
+                        edit
+                      </span>
+                      <span
+                        onClick={() => handleDelete(p.id)}
+                        className="material-symbols-outlined cursor-pointer text-red-500"
+                      >
+                        delete
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </main>
+      </div>
     </div>
   );
 };

@@ -25,25 +25,25 @@ public class ProductService {
     // All Products (paginated)
     public Page<Product> getProducts(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return productRepository.findAll(pageable);
+        return productRepository.findByIsActiveTrue(pageable);
     }
 
     // Category Products
     public Page<Product> getProductsByCategory(String category, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return productRepository.findByCategory_Name(category, pageable);
+        return productRepository.findByCategory_NameAndIsActiveTrue(category, pageable);
     }
 
     // HOME Products
     public Page<Product> getHomeProducts(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return productRepository.findByType("HOME", pageable);
+        return productRepository.findByTypeAndIsActiveTrue("HOME", pageable);
     }
 
     // BRAND Products
     public Page<Product> getBrandProducts(String brand, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return productRepository.findByBrandAndType(brand, "BRAND", pageable);
+        return productRepository.findByBrandAndTypeAndIsActiveTrue(brand, "BRAND", pageable);
     }
 
     // Get by ID
@@ -57,7 +57,8 @@ public class ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found"));
 
-        productRepository.delete(product);
+        product.setActive(false);
+        productRepository.save(product);
     }
 
     // Update
