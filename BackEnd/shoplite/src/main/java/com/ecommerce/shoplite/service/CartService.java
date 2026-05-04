@@ -12,7 +12,6 @@ import com.ecommerce.shoplite.entity.Product;
 import com.ecommerce.shoplite.entity.User;
 import com.ecommerce.shoplite.repository.CartRepository;
 import com.ecommerce.shoplite.repository.ProductRepository;
-import com.ecommerce.shoplite.repository.UserRepository;
 
 @Service
 public class CartService {
@@ -21,23 +20,14 @@ public class CartService {
     private CartRepository cartRepository;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private ProductRepository productRepository;
 
-    private User getUserByEmail(String email) {
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-    }
-
-    public CartResponse addItem(String email, Long productId, int quantity) {
+    // ================= ADD ITEM =================
+    public CartResponse addItem(User user, Long productId, int quantity) {
 
         if (quantity <= 0) {
             throw new RuntimeException("Quantity must be greater than 0");
         }
-
-        User user = getUserByEmail(email);
 
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
@@ -58,9 +48,8 @@ public class CartService {
         return mapToDTO(cartRepository.save(cartItem));
     }
 
-    public List<CartResponse> getCart(String email) {
-
-        User user = getUserByEmail(email);
+    // ================= GET CART =================
+    public List<CartResponse> getCart(User user) {
 
         return cartRepository.findByUser(user)
                 .stream()
@@ -68,13 +57,12 @@ public class CartService {
                 .collect(Collectors.toList());
     }
 
-    public CartResponse updateQuantity(String email, Long productId, int quantity) {
+    // ================= UPDATE QUANTITY =================
+    public CartResponse updateQuantity(User user, Long productId, int quantity) {
 
         if (quantity <= 0) {
             throw new RuntimeException("Quantity must be greater than 0");
         }
-
-        User user = getUserByEmail(email);
 
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
@@ -88,9 +76,8 @@ public class CartService {
         return mapToDTO(cartRepository.save(cartItem));
     }
 
-    public void removeItem(String email, Long productId) {
-
-        User user = getUserByEmail(email);
+    // ================= REMOVE ITEM =================
+    public void removeItem(User user, Long productId) {
 
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
@@ -102,12 +89,12 @@ public class CartService {
         cartRepository.delete(cartItem);
     }
 
-    public void clearCart(String email) {
-
-        User user = getUserByEmail(email);
+    // ================= CLEAR CART =================
+    public void clearCart(User user) {
         cartRepository.deleteByUser(user);
     }
 
+    // ================= DTO MAPPER =================
     private CartResponse mapToDTO(Cart item) {
 
         CartResponse dto = new CartResponse();

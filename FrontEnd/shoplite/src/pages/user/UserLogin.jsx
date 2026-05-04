@@ -186,7 +186,7 @@ bg-gradient-to-br from-[#f9f5ff] via-[#ece8ff] to-[#859aff]"
                 onSuccess={async (credentialResponse) => {
                   try {
                     const res = await axios.post(
-                      "http://localhost:8080/api/auth/oauth/google",
+                      "http://localhost:8080/api/auth/google",
                       {
                         token: credentialResponse.credential,
                       }

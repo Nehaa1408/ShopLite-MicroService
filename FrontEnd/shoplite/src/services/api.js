@@ -1,17 +1,27 @@
-import axios from "axios";
+import userAxios from "../api/userAxios";
 
-const API = import.meta.env.VITE_API_URL;
-
+// ================= PRODUCTS =================
 export const fetchProducts = async ({ category, page }) => {
-    const url = category
-        ? `${API}/api/products?category=${category}&page=${page}&size=6`
-        : `${API}/api/products?type=HOME&page=${page}&size=6`;
+    try {
+        const url = category
+            ? `/products?category=${category}&page=${page}&size=6`
+            : `/products?page=${page}&size=6`;
 
-    const res = await axios.get(url);
-    return res.data;
+        const res = await userAxios.get(url);
+        return res.data;
+    } catch (err) {
+        console.error("Product fetch error:", err);
+        throw err;
+    }
 };
 
+// ================= CATEGORIES =================
 export const fetchCategories = async () => {
-    const res = await axios.get(`${API}/categories`);
-    return res.data;
+    try {
+        const res = await userAxios.get("/categories");
+        return res.data;
+    } catch (err) {
+        console.error("Category fetch error:", err);
+        throw err;
+    }
 };

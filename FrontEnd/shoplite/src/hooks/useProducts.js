@@ -9,16 +9,25 @@ const useProducts = (category, currentPage, searchTerm) => {
     React.useEffect(() => {
         const loadProducts = async () => {
             setLoading(true);
+
             try {
                 const data = await fetchProducts({
                     category,
                     page: currentPage - 1
                 });
 
-                setProducts(data.content);
-                setTotalPages(data.totalPages);
+                console.log("API RESPONSE:", data);
+
+
+                const productList = data?.content || data || [];
+                const pages = data?.totalPages || 1;
+
+                setProducts(productList);
+                setTotalPages(pages);
+
             } catch (err) {
                 console.error("Product fetch error:", err);
+                setProducts([]);
             } finally {
                 setLoading(false);
             }
@@ -34,16 +43,18 @@ const useProducts = (category, currentPage, searchTerm) => {
                 name: p.name,
                 desc: p.description,
                 priceValue: p.price,
-                image: p.imageUrl?.startsWith("http")
-                    ? p.imageUrl
-                    : `/products/${p.imageUrl}`
+                image: p.imageUrl
+                    ? (p.imageUrl.startsWith("http")
+                        ? p.imageUrl
+                        : `/products/${p.imageUrl}`)
+                    : "/fallback.png"
             }))
             .filter((product) => {
                 if (!searchTerm) return true;
 
                 return (
-                    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    product.desc.toLowerCase().includes(searchTerm.toLowerCase())
+                    product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    product.desc?.toLowerCase().includes(searchTerm.toLowerCase())
                 );
             });
     }, [products, searchTerm]);

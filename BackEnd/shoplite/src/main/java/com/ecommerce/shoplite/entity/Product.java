@@ -1,13 +1,8 @@
 package com.ecommerce.shoplite.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
@@ -16,37 +11,52 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+
+
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Product {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    // NAME
+    @Column(nullable = false, length = 150)
     private String name;
 
-    @Column(nullable = false)
+    // DESCRIPTION
+    @Column(nullable = false, length = 1000)
     private String description;
 
+    // PRICE
     @Column(nullable = false)
     private double price;
 
+    // QUANTITY
     @Column(nullable = false)
     private int quantity;
 
-    @Column(nullable = false)
+    // IMAGE URL
+    @Column(nullable = false, length = 1000)
     private String imageUrl;
 
-    @ManyToOne
+    // CATEGORY
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
+
+    
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Category category;
 
-    @Column(name = "brand")
+    // BRAND
+    @Column(length = 100)
     private String brand;
 
-    @Column(name = "type")
+    // TYPE (HOME / BRAND)
+    @Column(length = 50)
     private String type;
 
+    // SOFT DELETE
     @Column(nullable = false)
-    private boolean isActive = true;
+    private boolean active = true;
 }

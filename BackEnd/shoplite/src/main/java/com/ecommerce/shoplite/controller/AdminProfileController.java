@@ -8,7 +8,7 @@ import com.ecommerce.shoplite.repository.UserRepository;
 import com.ecommerce.shoplite.security.JwtUtil;
 
 @RestController
-@RequestMapping("/admin")
+@RequestMapping("/api/admin")
 @CrossOrigin(origins = "*")
 public class AdminProfileController {
 

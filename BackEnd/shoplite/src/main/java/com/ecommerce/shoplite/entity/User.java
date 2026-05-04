@@ -13,28 +13,32 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-
 public class User {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
-    @Column(nullable = false)
+    // NAME
+    @Column(nullable = false, length = 100)
     private String name;
 
-    @Column(nullable = false, unique = true)
+    // EMAIL
+    @Column(nullable = false, unique = true, length = 150)
     private String email;
 
+    // PASSWORD (SECURE)
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 255)
     private String password;
 
+    // ROLE
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
 
+    // PROVIDER
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Provider provider;
-
 }

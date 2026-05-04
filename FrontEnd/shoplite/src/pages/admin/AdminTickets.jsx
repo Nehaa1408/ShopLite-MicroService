@@ -11,13 +11,19 @@ const AdminTickets = () => {
 
   const [tickets, setTickets] = useState([]);
   const [statusFilter, setStatusFilter] = useState("All");
-  const [priorityFilter, setPriorityFilter] = useState("All");
 
   useEffect(() => {
     const fetchTickets = async () => {
       try {
         const res = await adminAxios.get("/tickets/admin");
-        setTickets(res.data);
+        console.log("RAW TICKETS:", res.data);
+        if (Array.isArray(res.data)) {
+          setTickets(res.data);
+        } else if (Array.isArray(res.data.tickets)) {
+          setTickets(res.data.tickets);
+        } else {
+          setTickets([]);
+        }
       } catch (err) {
         console.error("Tickets fetch error:", err);
       }
@@ -27,12 +33,13 @@ const AdminTickets = () => {
   }, []);
 
 
-  const filteredTickets = tickets.filter((t) => {
-    return (
-      (statusFilter === "All" || t.status === statusFilter) &&
-      (priorityFilter === "All" || t.priority === priorityFilter)
-    );
-  });
+  const filteredTickets = Array.isArray(tickets)
+    ? tickets.filter((t) => {
+      return (
+        (statusFilter === "All" || t.status === statusFilter)
+      );
+    })
+    : [];
 
 
   const getStatusStyle = (status) => {
@@ -48,18 +55,6 @@ const AdminTickets = () => {
     }
   };
 
-  const getPriorityStyle = (priority) => {
-    switch (priority) {
-      case "High":
-        return "bg-red-100 text-red-600";
-      case "Medium":
-        return "bg-purple-100 text-purple-600";
-      case "Low":
-        return "bg-gray-200 text-gray-600";
-      default:
-        return "";
-    }
-  };
   const handleLogout = () => {
     localStorage.removeItem("token");
     navigate("/login");
@@ -104,14 +99,13 @@ border border-white/40 overflow-hidden">
                   <th className="p-4 text-left">ID</th>
                   <th>User</th>
                   <th>Subject</th>
-                  <th>Priority</th>
                   <th>Status</th>
                   <th>Date</th>
                 </tr>
               </thead>
 
               <tbody>
-                {tickets.map((t, i) => (
+                {filteredTickets.map((t, i) => (
                   <tr
                     key={i}
                     onClick={() => navigate(`/admin/ticket/${t.id}`)}
@@ -124,18 +118,8 @@ hover:-translate-y-[2px]"
                     <td className="p-4 font-bold text-blue-600">
                       #{t.id}
                     </td>
-                    <td>{t.user?.name || "User"}</td>
+                    <td>{t.userName || "User"}</td>
                     <td>{t.subject}</td>
-
-                    <td>
-                      <span
-                        className={`px-2 py-1 rounded text-xs font-bold ${getPriorityStyle(
-                          t.priority
-                        )}`}
-                      >
-                        {t.priority}
-                      </span>
-                    </td>
 
                     <td>
                       <span

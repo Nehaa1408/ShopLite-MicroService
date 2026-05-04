@@ -122,6 +122,14 @@ const Home = () => {
     return !!localStorage.getItem("token");
   };
 
+  const handleTicketsClick = () => {
+    if (!isAuthenticated()) {
+      setShowLoginPopup(true);
+      return;
+    }
+    navigate("/tickets");
+  };
+
   return (
     <div
       className="relative min-h-screen overflow-hidden"
@@ -161,8 +169,8 @@ bg-[#e9d5ff]/40 rounded-full blur-[140px] -z-10" />
             }
             navigate("/cart");
           }}
+          onTicketsClick={handleTicketsClick}
         />
-
         {/*  MOUSE TRACKING GLOW */}
         <div
           className="fixed inset-0 -z-[15] pointer-events-none"

@@ -310,7 +310,7 @@ const Checkout = () => {
                       const token = localStorage.getItem("token");
 
                       const res = await axios.post(
-                        "http://localhost:8080/orders/place",
+                        "http://localhost:8080/api/orders",
                         {},
                         {
                           headers: {

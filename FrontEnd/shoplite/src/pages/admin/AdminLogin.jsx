@@ -27,17 +27,26 @@ const AdminLogin = () => {
     try {
       const res = await axios.post(
         "http://localhost:8080/api/auth/login",
-        form
+        {
+          email: form.email,
+          password: form.password,
+          role: "ADMIN",
+          provider: "LOCAL"
+        }
       );
-
-
       sessionStorage.setItem("adminToken", res.data.token);
       sessionStorage.setItem("adminRole", res.data.role);
 
       navigate("/admin");
 
     } catch (err) {
-      console.error(err);
+      console.error("FULL ERROR:", err);
+
+      if (err.response) {
+        console.log("STATUS:", err.response.status);
+        console.log("DATA:", err.response.data);   // 🔥 MOST IMPORTANT
+      }
+
       alert(err.response?.data || "Login failed");
     }
   };

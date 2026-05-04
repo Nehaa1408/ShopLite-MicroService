@@ -31,6 +31,7 @@ import AdminTickets from "./pages/admin/AdminTickets";
 import AdminTicketDetails from "./pages/admin/AdminTicketDetails";
 import AdminProfile from "./pages/admin/AdminProfile";
 import BrandDetails from "./pages/user/BrandDetails";
+import UserTicketDetails from "./pages/user/UserTicketDetails";
 
 
 function App() {
@@ -61,6 +62,7 @@ function App() {
           <Route path="/order-tracking" element={<OrderTracking />} />
           <Route path="/orders" element={<OrderHistory />} />
           <Route path="/tickets" element={<TicketManagement />} />
+          <Route path="/tickets/:id" element={<UserTicketDetails />} />
 
 
 

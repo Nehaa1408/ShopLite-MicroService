@@ -9,7 +9,8 @@ const Navbar = ({
     setSearchTerm,
     setCurrentPage,
     handleProfileClick,
-    onCartClick
+    onCartClick,
+    onTicketsClick
 }) => {
     return (
         <nav className="fixed top-0 left-0 w-full z-50 backdrop-blur-xl bg-white/60 border-b border-white/40">
@@ -41,7 +42,13 @@ const Navbar = ({
                         return (
                             <button
                                 key={i}
-                                onClick={() => onNavigate(item.path)}
+                                onClick={() => {
+                                    if (item.name === "Tickets") {
+                                        onTicketsClick();
+                                    } else {
+                                        onNavigate(item.path);
+                                    }
+                                }}
                                 className={`relative transition ${isActive
                                     ? "text-indigo-600"
                                     : item.secondary

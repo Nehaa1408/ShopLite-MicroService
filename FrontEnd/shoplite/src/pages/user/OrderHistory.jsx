@@ -17,7 +17,7 @@ const OrderHistory = () => {
       try {
         const token = localStorage.getItem("token");
 
-        const res = await axios.get("http://localhost:8080/orders", {
+        const res = await axios.get("http://localhost:8080/api/orders", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -136,14 +136,14 @@ const OrderHistory = () => {
 
           {/* NAV ITEMS */}
           <div className="hidden lg:flex items-center gap-8 text-sm font-medium text-gray-600">
-             {[
-                { name: "Home", path: "/" },
-                { name: "Categories", path: "/categories" },
-                { name: "Brands", path: "/brand/aurel" },
-                { name: "Deals", path: "/top-deals" },
-                { name: "Orders", path: "/orders" },
-                { name: "Tickets", path: "/tickets", secondary: true }
-              ].map((item, i) => {
+            {[
+              { name: "Home", path: "/" },
+              { name: "Categories", path: "/categories" },
+              { name: "Brands", path: "/brand/aurel" },
+              { name: "Deals", path: "/top-deals" },
+              { name: "Orders", path: "/orders" },
+              { name: "Tickets", path: "/tickets", secondary: true }
+            ].map((item, i) => {
               const isActive = location.pathname === item.path;
 
               return (

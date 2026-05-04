@@ -23,20 +23,17 @@ public class OrderService {
     private CartRepository cartRepository;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private OrderRepository orderRepository;
 
     @Autowired
     private ProductRepository productRepository;
 
-    // PLACE ORDER
-    @Transactional
-    public OrderResponse placeOrder(Long userId) {
+    @Autowired
+    private UserRepository userRepository; // only used for admin stats
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    // ================= PLACE ORDER =================
+    @Transactional
+    public OrderResponse placeOrder(User user) {
 
         List<Cart> cartItems = cartRepository.findByUser(user);
 
@@ -75,28 +72,18 @@ public class OrderService {
         return mapToResponse(savedOrder);
     }
 
-    // USER ORDERS
-    public List<OrderResponse> getUserOrders(Long userId) {
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    // ================= USER ORDERS =================
+    public List<OrderResponse> getUserOrders(User user) {
 
         List<Order> orders = orderRepository.findByUserOrderByOrderDateDesc(user);
 
-        List<OrderResponse> responseList = new ArrayList<>();
-
-        for (Order order : orders) {
-            responseList.add(mapToResponse(order));
-        }
-
-        return responseList;
+        return orders.stream()
+                .map(this::mapToResponse)
+                .toList();
     }
 
-    // GET ORDER BY ID
-    public OrderResponse getOrderById(Long userId, Long orderId) {
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    // ================= GET ORDER BY ID =================
+    public OrderResponse getOrderById(User user, Long orderId) {
 
         Order order = orderRepository.findByIdAndUser(orderId, user)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
@@ -104,7 +91,7 @@ public class OrderService {
         return mapToResponse(order);
     }
 
-    // UPDATE STATUS (ADMIN)
+    // ================= UPDATE STATUS (ADMIN) =================
     @Transactional
     public OrderResponse updateOrderStatus(Long orderId, String status) {
 
@@ -120,26 +107,19 @@ public class OrderService {
 
         order.setStatus(enumStatus);
 
-        Order updated = orderRepository.save(order);
-
-        return mapToResponse(updated);
+        return mapToResponse(orderRepository.save(order));
     }
 
-    // ADMIN → GET ALL ORDERS
+    // ================= ADMIN → GET ALL =================
     public List<OrderResponse> getAllOrders() {
 
-        List<Order> orders = orderRepository.findAll();
-
-        List<OrderResponse> response = new ArrayList<>();
-
-        for (Order order : orders) {
-            response.add(mapToResponse(order));
-        }
-
-        return response;
+        return orderRepository.findAll()
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
     }
 
-    // ADMIN DASHBOARD STATS
+    // ================= ADMIN STATS =================
     public Map<String, Long> getAdminStats() {
 
         Map<String, Long> stats = new HashMap<>();
@@ -151,20 +131,20 @@ public class OrderService {
         return stats;
     }
 
-    // 🔧 COMMON MAPPER
+    // ================= DTO MAPPER =================
     private OrderResponse mapToResponse(Order order) {
 
-        List<OrderItemResponse> itemResponses = new ArrayList<>();
-
-        for (OrderItem item : order.getItems()) {
-            OrderItemResponse dto = new OrderItemResponse();
-            dto.setProductName(item.getProduct().getName());
-            dto.setPrice(item.getPrice());
-            dto.setQuantity(item.getQuantity());
-            dto.setImage(item.getProduct().getImageUrl());
-            itemResponses.add(dto);
-            
-        }
+        List<OrderItemResponse> itemResponses = order.getItems()
+                .stream()
+                .map(item -> {
+                    OrderItemResponse dto = new OrderItemResponse();
+                    dto.setProductName(item.getProduct().getName());
+                    dto.setPrice(item.getPrice());
+                    dto.setQuantity(item.getQuantity());
+                    dto.setImage(item.getProduct().getImageUrl());
+                    return dto;
+                })
+                .toList();
 
         OrderResponse response = new OrderResponse();
         response.setOrderId(order.getId());

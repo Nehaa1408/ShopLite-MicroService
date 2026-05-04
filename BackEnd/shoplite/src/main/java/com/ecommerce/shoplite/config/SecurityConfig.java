@@ -30,24 +30,29 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
 
-                        // AUTH
+                        // ===== PUBLIC =====
                         .requestMatchers("/api/auth/**").permitAll()
-
-                        // PRODUCTS
                         .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/products/**").hasRole("ADMIN")
+                        .requestMatchers("/api/categories/**").permitAll()
+
+                        // ===== USER =====
+                        .requestMatchers("/api/cart/**").authenticated()
+                        .requestMatchers("/api/orders/**").authenticated()
+                        .requestMatchers("/api/tickets/**").authenticated()
+                        .requestMatchers("/api/users/**").authenticated()
+
+                        // ===== ADMIN =====
+                        .requestMatchers(HttpMethod.POST, "/api/products").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/products/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/products/**").hasRole("ADMIN")
 
-                        // ORDERS (FIXED)
-                        .requestMatchers(HttpMethod.PUT, "/api/orders/*/status").hasRole("ADMIN")
                         .requestMatchers("/api/orders/admin/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/orders/*/status").hasRole("ADMIN")
 
-                        // TICKETS (FIXED)
                         .requestMatchers("/api/tickets/admin/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/tickets/**").hasRole("ADMIN")
 
-                        .anyRequest().permitAll())
+                        // ===== FALLBACK =====
+                        .anyRequest().authenticated())
 
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
@@ -69,5 +74,10 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", config);
 
         return source;
+    }
+
+    @Bean
+    public org.springframework.security.crypto.password.PasswordEncoder passwordEncoder() {
+        return new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
     }
 }

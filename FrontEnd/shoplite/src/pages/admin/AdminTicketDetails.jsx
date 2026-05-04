@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import adminAxios from "../../api/adminAxios";
 import { toast } from "react-toastify";
 import AdminSidebar from "../../components/AdminSidebar";
 import AdminHeader from "../../components/AdminHeader";
-
 
 const AdminTicketDetails = () => {
 
@@ -12,13 +11,54 @@ const AdminTicketDetails = () => {
     const navigate = useNavigate();
 
     const { id } = useParams();
-    const isActive = (path) => location.pathname === path;
 
     const [message, setMessage] = useState("");
+    const [messages, setMessages] = useState([]);
+    const [ticket, setTicket] = useState(null);
+
+    const chatEndRef = useRef(null);
 
     const showMessage = (msg) => {
         setMessage(msg);
     };
+
+    const sendReply = async () => {
+        if (!reply.trim()) {
+            showMessage("Reply cannot be empty");
+            return;
+        }
+
+        try {
+            await adminAxios.post(
+                `/tickets/${id}/messages`,
+                null,
+                {
+                    params: { content: reply }
+                }
+            );
+
+            setReply("");
+            fetchMessages();
+            showMessage("Reply sent");
+        } catch (err) {
+            console.error(err);
+            showMessage("Failed to send reply");
+        }
+    };
+
+    const fetchMessages = async () => {
+        try {
+            const res = await adminAxios.get(`/tickets/${id}/messages`);
+            setMessages(res.data || []);
+        } catch (err) {
+            console.error("Fetch messages error:", err);
+        }
+    };
+
+
+    useEffect(() => {
+        fetchMessages();
+    }, [id]);
 
 
     useEffect(() => {
@@ -30,7 +70,7 @@ const AdminTicketDetails = () => {
 
         return () => clearTimeout(timer);
     }, [message]);
-    const [ticket, setTicket] = useState(null);
+
 
     useEffect(() => {
         const fetchTicket = async () => {
@@ -46,6 +86,17 @@ const AdminTicketDetails = () => {
     }, [id]);
 
 
+    useEffect(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messages]);
+
+    const handleLogout = () => {
+        sessionStorage.removeItem("adminToken");
+        sessionStorage.removeItem("adminRole");
+        navigate("/login");
+    };
+
+
     if (!ticket) {
         return (
             <div className="p-10 text-center text-gray-500">
@@ -53,12 +104,6 @@ const AdminTicketDetails = () => {
             </div>
         );
     }
-
-    const handleLogout = () => {
-        localStorage.removeItem("token");
-        navigate("/login");
-    };
-
 
     return (
         <div className="min-h-screen text-gray-800 relative overflow-hidden">
@@ -109,26 +154,29 @@ const AdminTicketDetails = () => {
                             {/* DESCRIPTION */}
                             <div className="bg-white p-6 rounded-xl shadow">
                                 <p className="text-sm text-gray-500 mb-2">Initial Request</p>
-                                <p>{ticket.message || "No message"}</p>
+                                <p>Initial message is in chat below</p>
                             </div>
 
-                            {/* CHAT */}
-                            <div className="space-y-4">
-
-                                <div className="bg-white p-4 rounded-xl shadow">
-                                    <p className="text-sm font-bold">{ticket.user?.name || "User"}</p>
-                                    <p className="text-sm mt-1">
-                                        {ticket.message || "User message"}
-                                    </p>
-                                </div>
-
-                                <div className="bg-blue-100 p-4 rounded-xl shadow">
-                                    <p className="text-sm font-bold text-blue-600">Admin</p>
-                                    <p className="text-sm mt-1">
-                                        We are checking your issue.
-                                    </p>
-                                </div>
-
+                            <div className="space-y-4 max-h-[400px] overflow-y-auto">
+                                {messages.length === 0 ? (
+                                    <p className="text-gray-500 text-center">No messages yet</p>
+                                ) : (
+                                    messages.map((msg) => (
+                                        <div
+                                            key={msg.id}
+                                            className={`p-4 rounded-xl shadow ${msg.sender === "ADMIN"
+                                                ? "bg-blue-100 text-right"
+                                                : "bg-white"
+                                                }`}
+                                        >
+                                            <p className="text-sm font-bold">
+                                                {msg.sender === "ADMIN" ? "Admin" : ticket.user?.name || "User"}
+                                            </p>
+                                            <p className="text-sm mt-1">{msg.content}</p>
+                                        </div>
+                                    ))
+                                )}
+                                <div ref={chatEndRef}></div>
                             </div>
 
                             {/* REPLY BOX */}
@@ -141,15 +189,7 @@ const AdminTicketDetails = () => {
                                 />
 
                                 <button
-                                    onClick={() => {
-                                        if (!reply.trim()) {
-                                            showMessage(" Reply cannot be empty");
-                                            return;
-                                        }
-
-                                        showMessage(" Reply sent successfully");
-                                        setReply("");
-                                    }}
+                                    onClick={sendReply}
                                     className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg"
                                 >
                                     Send
@@ -170,56 +210,57 @@ const AdminTicketDetails = () => {
                             <div className="bg-white p-6 rounded-xl shadow">
                                 <h3 className="font-bold mb-4">Ticket Actions</h3>
 
-                                <select
-                                    className="w-full mb-3 p-2 border rounded"
-                                    value={ticket.status}
-                                    onChange={async (e) => {
-                                        try {
-                                            const value = e.target.value;
-
-                                            const res = await adminAxios.put(
-                                                `/tickets/${ticket.id}?status=${value}`
-                                            );
-
-                                            setTicket(res.data);
-                                            showMessage(`✅ Status updated to ${value.replace("_", " ")}`);
-                                        } catch (err) {
-                                            console.error(err);
-                                            showMessage("❌ Failed to update status");
-                                        }
-                                    }}
-                                >
-                                    <option value="OPEN">Open</option>
-                                    <option value="IN_PROGRESS">In Progress</option>
-                                    <option value="RESOLVED">Resolved</option>
-                                </select>
-
                                 <button
                                     onClick={async () => {
-                                        try {
-                                            await adminAxios.put(`/tickets/${ticket.id}?status=RESOLVED`);
-                                            setTicket({ ...ticket, status: "RESOLVED" });
+                                        let res;
 
-                                            showMessage(" Ticket resolved successfully");
+                                        try {
+                                            res = await adminAxios.put(
+                                                `/tickets/${ticket.id}`,
+                                                { status: "CLOSED" }
+                                            );
                                         } catch (err) {
-                                            console.error(err);
+                                            console.error("REAL API ERROR:", err);
                                             showMessage("❌ Failed to resolve ticket");
+                                            return;
+                                        }
+
+                                        // 🔥 Handle UI update OUTSIDE try
+                                        try {
+                                            console.log("API SUCCESS:", res.data);
+
+                                            if (res && res.data) {
+                                                setTicket(res.data);
+                                            } else {
+                                                // fallback (safe)
+                                                setTicket(prev => ({
+                                                    ...prev,
+                                                    status: "CLOSED"
+                                                }));
+                                            }
+
+                                            showMessage("✅ Ticket resolved successfully");
+
+                                        } catch (uiErr) {
+                                            console.error("UI ERROR:", uiErr);
+
+                                           
+                                            setTicket(prev => ({
+                                                ...prev,
+                                                status: "CLOSED"
+                                            }));
+
+                                            showMessage("✅ Ticket resolved successfully");
                                         }
                                     }}
-                                    className="w-full bg-blue-600 text-white py-2 rounded-lg"
+                                    className="w-full py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700"
                                 >
                                     Resolve Ticket
                                 </button>
+
                             </div>
 
-                            {/* USER */}
-                            <div className="bg-white p-6 rounded-xl shadow">
-                                <h3 className="font-bold mb-2">Customer</h3>
-                                <p>{ticket.user?.name || "User"}</p>
-                                <p className="text-sm text-gray-500">
-                                    Priority: Normal
-                                </p>
-                            </div>
+                            
 
                         </div>
                     </div>

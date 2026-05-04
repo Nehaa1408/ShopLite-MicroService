@@ -1,22 +1,20 @@
 package com.ecommerce.shoplite.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.ecommerce.shoplite.dto.LoginResponse;
-import com.ecommerce.shoplite.dto.RegisterResponse;
-import com.ecommerce.shoplite.entity.Provider;
-import com.ecommerce.shoplite.entity.Role;
-import com.ecommerce.shoplite.entity.User;
+
+import com.ecommerce.shoplite.dto.*;
+import com.ecommerce.shoplite.entity.*;
 import com.ecommerce.shoplite.repository.UserRepository;
 import com.ecommerce.shoplite.security.JwtUtil;
 
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import java.util.Collections;
+
+import com.google.api.client.googleapis.auth.oauth2.*;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.http.javanet.NetHttpTransport;
-
-import java.util.Collections;
 
 @Service
 public class UserService {
@@ -27,19 +25,26 @@ public class UserService {
     @Autowired
     private JwtUtil jwtUtil;
 
-    public RegisterResponse register(User user) {
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
-        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
+    // ================= REGISTER =================
+    public RegisterResponse register(RegisterRequest request) {
+
+        if (request.getEmail() == null || request.getPassword() == null) {
+            throw new RuntimeException("Invalid input");
+        }
+
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new RuntimeException("Email already registered");
         }
 
-        if (user.getRole() == null) {
-            user.setRole(Role.USER);
-        }
-
-        if (user.getProvider() == null) {
-            user.setProvider(Provider.LOCAL);
-        }
+        User user = new User();
+        user.setName(request.getName());
+        user.setEmail(request.getEmail());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setRole(Role.USER);
+        user.setProvider(Provider.LOCAL);
 
         User savedUser = userRepository.save(user);
 
@@ -51,17 +56,16 @@ public class UserService {
                 savedUser.getProvider());
     }
 
+    // ================= LOGIN =================
     public LoginResponse login(String email, String password) {
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (!user.getPassword().equals(password)) {
+        if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new RuntimeException("Invalid password");
         }
-        if (user.getRole() != Role.ADMIN) {
-            throw new RuntimeException("Access denied: Admin only");
-        }
+
         String token = jwtUtil.generateToken(user.getEmail());
 
         return new LoginResponse(
@@ -73,6 +77,7 @@ public class UserService {
                 token);
     }
 
+    // ================= GOOGLE LOGIN =================
     public LoginResponse googleLogin(String token) {
 
         try {
@@ -92,7 +97,7 @@ public class UserService {
             GoogleIdToken.Payload payload = idToken.getPayload();
 
             if (!Boolean.TRUE.equals(payload.getEmailVerified())) {
-                throw new RuntimeException("Email not verified by Google");
+                throw new RuntimeException("Email not verified");
             }
 
             String email = payload.getEmail();
@@ -101,21 +106,18 @@ public class UserService {
             User user = userRepository.findByEmail(email).orElse(null);
 
             if (user == null) {
-
                 user = new User();
                 user.setEmail(email);
                 user.setName(name);
-                user.setPassword("");
+                user.setPassword(null);
                 user.setRole(Role.USER);
                 user.setProvider(Provider.GOOGLE);
 
                 user = userRepository.save(user);
-
             } else {
-
                 if (user.getProvider() == Provider.LOCAL) {
                     throw new RuntimeException(
-                            "This email is registered with password. Use normal login.");
+                            "Use email/password login for this account");
                 }
             }
 
@@ -130,18 +132,8 @@ public class UserService {
                     jwt);
 
         } catch (Exception e) {
-            e.printStackTrace();
+            e.printStackTrace(); // keep this for debugging
             throw new RuntimeException("Google authentication failed: " + e.getMessage());
         }
-    }
-
-    public User getProfile(String token) {
-
-        token = token.substring(7); // remove "Bearer "
-
-        String email = jwtUtil.extractEmail(token);
-
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
     }
 }

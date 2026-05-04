@@ -36,52 +36,49 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String path = request.getRequestURI();
 
-        // Skip authentication endpoints
-        if (path.startsWith("/api/auth")) {
+        // skip truly public endpoints
+        if (path.startsWith("/api/auth")
+                || path.startsWith("/api/categories")) {
+
             filterChain.doFilter(request, response);
             return;
         }
 
         String authHeader = request.getHeader("Authorization");
 
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+        // No token → continue (public endpoints may still work)
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
-            String token = authHeader.substring(7);
+        String token = authHeader.substring(7);
 
-            try {
+        try {
+            String email = jwtUtil.extractEmail(token);
 
-                String email = jwtUtil.extractEmail(token);
+            if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-                
-                if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                User user = userRepository.findByEmail(email)
+                        .orElseThrow(() -> new RuntimeException("User not found"));
 
-                    User user = userRepository.findByEmail(email).orElse(null);
+                String role = "ROLE_" + user.getRole().name();
 
-                    if (user != null) {
+                List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(role));
 
-                        String role = "ROLE_" + user.getRole().name();
+                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(user, null,
+                        authorities);
 
-                        List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(role));
+                authToken.setDetails(
+                        new org.springframework.security.web.authentication.WebAuthenticationDetailsSource()
+                                .buildDetails(request));
 
-                        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                                user,
-                                null,
-                                authorities);
-
-                        authToken.setDetails(
-                                new org.springframework.security.web.authentication.WebAuthenticationDetailsSource()
-                                        .buildDetails(request));
-
-                        SecurityContextHolder.getContext().setAuthentication(authToken);
-
-                        // Debug log (remove later)
-                        System.out.println("AUTH SUCCESS → " + email + " | " + role);
-                    }
-                }
-
-            } catch (Exception e) {
-                System.out.println("JWT ERROR: " + e.getMessage());
+                SecurityContextHolder.getContext().setAuthentication(authToken);
             }
+
+        } catch (Exception e) {
+            System.out.println("JWT ERROR: " + e.getMessage());
+            SecurityContextHolder.clearContext();
         }
 
         filterChain.doFilter(request, response);

@@ -1,31 +1,21 @@
 package com.ecommerce.shoplite.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import com.ecommerce.shoplite.entity.User;
-import com.ecommerce.shoplite.repository.UserRepository;
-import com.ecommerce.shoplite.security.JwtUtil;
 
 @RestController
-@RequestMapping("/api/user")
+@RequestMapping("/api/users")
 @CrossOrigin(origins = "*")
 public class ProfileController {
 
-    @Autowired
-    private JwtUtil jwtUtil;
-
-    @Autowired
-    private UserRepository userRepository;
-
     @GetMapping("/profile")
-    public User getProfile(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<User> getProfile(Authentication authentication) {
 
-        token = token.substring(7); // remove "Bearer "
+        User user = (User) authentication.getPrincipal();
 
-        String email = jwtUtil.extractEmail(token);
-
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        return ResponseEntity.ok(user);
     }
 }

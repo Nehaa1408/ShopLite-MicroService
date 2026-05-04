@@ -103,11 +103,11 @@ const UserSignup = () => {
             <div className="grid grid-cols-2 gap-4 mb-6">
               {/* GOOGLE */}
               <GoogleLogin
-               text="signup_with"
+                text="signup_with"
                 onSuccess={async (credentialResponse) => {
                   try {
                     const res = await axios.post(
-                      "http://localhost:8080/api/auth/oauth/google",
+                      "http://localhost:8080/api/auth/google",
                       {
                         token: credentialResponse.credential,
                       }
