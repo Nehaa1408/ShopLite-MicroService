@@ -29,7 +29,7 @@ public class OrderService {
     private ProductRepository productRepository;
 
     @Autowired
-    private UserRepository userRepository; // only used for admin stats
+    private UserRepository userRepository;
 
     // ================= PLACE ORDER =================
     @Transactional
@@ -131,6 +131,69 @@ public class OrderService {
         return stats;
     }
 
+    // ================= DELIVERY → ACTIVE =================
+    public List<OrderResponse> getOrdersForDelivery(User deliveryUser) {
+
+        List<Order> orders = orderRepository
+                .findByDeliveryAgentAndStatus(deliveryUser, OrderStatus.OUT_FOR_DELIVERY);
+
+        return orders.stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    // ================= DELIVERY → COMPLETED =================
+    public List<OrderResponse> getCompletedOrdersForDelivery(User deliveryUser) {
+
+        List<Order> orders = orderRepository
+                .findByDeliveryAgentAndStatus(deliveryUser, OrderStatus.DELIVERED);
+
+        return orders.stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    // ================= ADMIN → ASSIGN DELIVERY =================
+    @Transactional
+    public OrderResponse assignDeliveryAgent(Long orderId, Long deliveryUserId) {
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        User deliveryUser = userRepository.findById(deliveryUserId)
+                .orElseThrow(() -> new RuntimeException("Delivery user not found"));
+
+        //  IMPORTANT VALIDATION
+        if (deliveryUser.getRole() != Role.DELIVERY) {
+            throw new RuntimeException("User is not a delivery agent");
+        }
+
+        order.setDeliveryAgent(deliveryUser);
+
+        //  CORRECT STATUS
+        order.setStatus(OrderStatus.OUT_FOR_DELIVERY);
+
+        return mapToResponse(orderRepository.save(order));
+    }
+
+    // ================= DELIVERY → MARK DELIVERED =================
+    @Transactional
+    public OrderResponse markAsDelivered(Long orderId, User deliveryUser) {
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        //  SECURITY CHECK
+        if (order.getDeliveryAgent() == null ||
+            !order.getDeliveryAgent().getId().equals(deliveryUser.getId())) {
+            throw new RuntimeException("Unauthorized delivery action");
+        }
+
+        order.setStatus(OrderStatus.DELIVERED);
+
+        return mapToResponse(orderRepository.save(order));
+    }
+
     // ================= DTO MAPPER =================
     private OrderResponse mapToResponse(Order order) {
 
@@ -152,6 +215,11 @@ public class OrderService {
         response.setStatus(order.getStatus().name());
         response.setOrderDate(order.getOrderDate().toString());
         response.setItems(itemResponses);
+
+        // Optional (useful for frontend)
+        if (order.getDeliveryAgent() != null) {
+            response.setDeliveryAgentName(order.getDeliveryAgent().getName());
+        }
 
         return response;
     }

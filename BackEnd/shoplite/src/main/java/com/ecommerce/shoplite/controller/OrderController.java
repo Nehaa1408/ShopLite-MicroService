@@ -20,23 +20,21 @@ public class OrderController {
     @Autowired
     private OrderService orderService;
 
-    // PLACE ORDER
+    // ================= PLACE ORDER =================
     @PostMapping
     public ResponseEntity<OrderResponse> placeOrder(Authentication authentication) {
-
         User user = (User) authentication.getPrincipal();
         return ResponseEntity.ok(orderService.placeOrder(user));
     }
 
-    // USER ORDERS
+    // ================= USER ORDERS =================
     @GetMapping
     public ResponseEntity<List<OrderResponse>> getUserOrders(Authentication authentication) {
-
         User user = (User) authentication.getPrincipal();
         return ResponseEntity.ok(orderService.getUserOrders(user));
     }
 
-    // ORDER DETAILS
+    // ================= ORDER DETAILS =================
     @GetMapping("/{orderId}")
     public ResponseEntity<OrderResponse> getOrderById(
             @PathVariable Long orderId,
@@ -46,7 +44,7 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getOrderById(user, orderId));
     }
 
-    // ADMIN: UPDATE STATUS
+    // ================= ADMIN: UPDATE STATUS =================
     @PutMapping("/{orderId}/status")
     public ResponseEntity<OrderResponse> updateOrderStatus(
             @PathVariable Long orderId,
@@ -55,15 +53,49 @@ public class OrderController {
         return ResponseEntity.ok(orderService.updateOrderStatus(orderId, status));
     }
 
-    // ADMIN: GET ALL ORDERS
+    // ================= ADMIN: GET ALL =================
     @GetMapping("/admin")
     public ResponseEntity<List<OrderResponse>> getAllOrders() {
         return ResponseEntity.ok(orderService.getAllOrders());
     }
 
-    // ADMIN: STATS
+    // ================= ADMIN: STATS =================
     @GetMapping("/admin/stats")
     public ResponseEntity<Map<String, Long>> getAdminStats() {
         return ResponseEntity.ok(orderService.getAdminStats());
+    }
+
+    // ================= DELIVERY: ACTIVE =================
+    @GetMapping("/delivery")
+    public ResponseEntity<List<OrderResponse>> getDeliveryOrders(Authentication authentication) {
+        User user = (User) authentication.getPrincipal();
+        return ResponseEntity.ok(orderService.getOrdersForDelivery(user));
+    }
+
+    // ================= DELIVERY: COMPLETED =================
+    @GetMapping("/delivery/completed")
+    public ResponseEntity<List<OrderResponse>> getCompletedOrders(Authentication authentication) {
+        User user = (User) authentication.getPrincipal();
+        return ResponseEntity.ok(orderService.getCompletedOrdersForDelivery(user));
+    }
+
+    // ================= DELIVERY: MARK DELIVERED =================
+    @PutMapping("/delivery/{orderId}/complete")
+    public ResponseEntity<OrderResponse> markDelivered(
+            @PathVariable Long orderId,
+            Authentication authentication) {
+
+        User user = (User) authentication.getPrincipal();
+        return ResponseEntity.ok(orderService.markAsDelivered(orderId, user));
+    }
+
+    // ================= ADMIN: ASSIGN DELIVERY =================
+    @PutMapping("/admin/{orderId}/assign/{deliveryUserId}")
+    public ResponseEntity<OrderResponse> assignDeliveryAgent(
+            @PathVariable Long orderId,
+            @PathVariable Long deliveryUserId) {
+
+        return ResponseEntity.ok(
+                orderService.assignDeliveryAgent(orderId, deliveryUserId));
     }
 }

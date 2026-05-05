@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-
 import com.ecommerce.shoplite.dto.*;
 import com.ecommerce.shoplite.entity.*;
 import com.ecommerce.shoplite.repository.UserRepository;
@@ -62,8 +61,26 @@ public class UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new RuntimeException("Invalid password");
+        if (user.getProvider() == Provider.GOOGLE) {
+            throw new RuntimeException("Use Google login for this account");
+        }
+
+        String storedPassword = user.getPassword();
+
+        if (storedPassword == null) {
+            throw new RuntimeException("Use Google login for this account");
+        }
+
+        if (storedPassword.startsWith("$2a$")) {
+            if (!passwordEncoder.matches(password, storedPassword)) {
+                throw new RuntimeException("Invalid password");
+            }
+        }
+
+        else {
+            if (!storedPassword.equals(password)) {
+                throw new RuntimeException("Invalid password");
+            }
         }
 
         String token = jwtUtil.generateToken(user.getEmail());

@@ -4,6 +4,8 @@ import lombok.Data;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
+import com.ecommerce.shoplite.entity.Role;
+
 @Data
 public class RegisterRequest {
 
@@ -16,4 +18,6 @@ public class RegisterRequest {
 
     @NotBlank(message = "Password is required")
     private String password;
+
+    private Role role;
 }

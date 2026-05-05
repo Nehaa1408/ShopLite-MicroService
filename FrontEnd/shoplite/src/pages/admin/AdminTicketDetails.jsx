@@ -93,7 +93,7 @@ const AdminTicketDetails = () => {
     const handleLogout = () => {
         sessionStorage.removeItem("adminToken");
         sessionStorage.removeItem("adminRole");
-        navigate("/login");
+        navigate("/admin");
     };
 
 
@@ -244,7 +244,7 @@ const AdminTicketDetails = () => {
                                         } catch (uiErr) {
                                             console.error("UI ERROR:", uiErr);
 
-                                           
+
                                             setTicket(prev => ({
                                                 ...prev,
                                                 status: "CLOSED"
@@ -260,7 +260,7 @@ const AdminTicketDetails = () => {
 
                             </div>
 
-                            
+
 
                         </div>
                     </div>

@@ -33,6 +33,13 @@ import AdminProfile from "./pages/admin/AdminProfile";
 import BrandDetails from "./pages/user/BrandDetails";
 import UserTicketDetails from "./pages/user/UserTicketDetails";
 
+import DeliveryLogin from "./pages/delivery/DeliveryLogin";
+import DeliveryDashboard from "./pages/delivery/DeliveryDashboard";
+import Completed from "./pages/delivery/Completed";
+import DeliveryRoute from "./pages/delivery/DeliveryRoute";
+import Active from "./pages/delivery/Active";
+import DeliveryProfile from "./pages/delivery/DeliveryProfile";
+
 
 function App() {
   return (
@@ -132,6 +139,44 @@ function App() {
               <AdminRoute>
                 <AdminProfile />
               </AdminRoute>
+            }
+          />
+
+          {/* Delivery */}
+          <Route path="/delivery" element={<DeliveryLogin />} />
+          <Route
+            path="/delivery/dashboard"
+            element={
+              <DeliveryRoute>
+                <DeliveryDashboard />
+              </DeliveryRoute>
+            }
+          />
+
+          <Route
+            path="/delivery/active"
+            element={
+              <DeliveryRoute>
+                <Active />
+              </DeliveryRoute>
+            }
+          />
+
+          <Route
+            path="/delivery/completed"
+            element={
+              <DeliveryRoute>
+                <Completed />
+              </DeliveryRoute>
+            }
+          />
+
+          <Route
+            path="/delivery/profile"
+            element={
+              <DeliveryRoute>
+                <DeliveryProfile />
+              </DeliveryRoute>
             }
           />
         </Routes>

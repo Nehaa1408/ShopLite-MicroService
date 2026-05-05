@@ -11,10 +11,11 @@ const ManageProducts = () => {
   const location = useLocation();
   const isActive = (path) => location.pathname === path;
   const [products, setProducts] = useState([]);
-
+  
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/login");
+    sessionStorage.removeItem("adminToken");
+    sessionStorage.removeItem("adminRole");
+    navigate("/admin");
   };
 
   useEffect(() => {

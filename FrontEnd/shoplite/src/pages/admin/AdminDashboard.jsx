@@ -73,7 +73,7 @@ const AdminDashboard = () => {
 
   const confirmLogout = () => {
     sessionStorage.removeItem("adminToken");
-    sessionStorage.removeItem("adminRole"); // keep this
+    sessionStorage.removeItem("adminRole"); 
     navigate("/admin/login", { replace: true });
   };
   // ✅ STATS DISPLAY

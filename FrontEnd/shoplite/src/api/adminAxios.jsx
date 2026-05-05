@@ -30,11 +30,6 @@ adminAxios.interceptors.response.use(
                 sessionStorage.removeItem("adminToken");
                 sessionStorage.removeItem("adminRole");
             }
-
-            // 🔥 KEY FIX: allow 403 to pass through as SUCCESS
-            if (status === 403) {
-                return Promise.resolve(error.response);
-            }
         }
 
         return Promise.reject(error);

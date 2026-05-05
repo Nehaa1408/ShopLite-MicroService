@@ -78,7 +78,8 @@ const AddProduct = () => {
 
   const handleLogout = () => {
     sessionStorage.removeItem("adminToken");
-    navigate("/login");
+    sessionStorage.removeItem("adminRole");
+    navigate("/admin");
   };
 
   return (

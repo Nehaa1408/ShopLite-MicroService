@@ -13,4 +13,5 @@ public class OrderResponse {
     private String status;
     private String orderDate;
     private List<OrderItemResponse> items;
+    private String deliveryAgentName;
 }

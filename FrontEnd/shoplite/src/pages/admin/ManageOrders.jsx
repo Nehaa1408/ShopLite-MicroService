@@ -8,10 +8,15 @@ const ManageOrders = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
-
+  const [selectedDelivery, setSelectedDelivery] = useState({});
   const isActive = (path) => location.pathname === path;
-
+  const [users, setUsers] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [stats, setStats] = useState({
+    pending: 0,
+    inTransit: 0,
+    completed: 0,
+  });
 
   const [currentPage, setCurrentPage] = useState(1);
   const ordersPerPage = 6;
@@ -24,16 +29,40 @@ const ManageOrders = () => {
   const totalPages = Math.ceil(orders.length / ordersPerPage);
 
   useEffect(() => {
-    const fetchOrders = async () => {
+    const fetchData = async () => {
       try {
-        const res = await adminAxios.get("/orders/admin");
-        setOrders(res.data);
+        const ordersRes = await adminAxios.get("/orders/admin");
+        const orders = ordersRes.data;
+
+        setOrders(orders);
+
+        const pending = orders.filter(
+          (o) => o.status === "PLACED" || o.status === "CONFIRMED"
+        ).length;
+
+        const inTransit = orders.filter(
+          (o) => o.status === "OUT_FOR_DELIVERY"
+        ).length;
+
+        const completed = orders.filter(
+          (o) => o.status === "DELIVERED"
+        ).length;
+
+        setStats({
+          pending,
+          inTransit,
+          completed,
+        });
+
+        const usersRes = await adminAxios.get("/users/delivery");
+        setUsers(usersRes.data);
+
       } catch (err) {
-        console.error("Orders fetch error:", err);
+        console.error("Error:", err);
       }
     };
 
-    fetchOrders();
+    fetchData();
   }, []);
 
   const getStatusStyle = (status) => {
@@ -52,10 +81,54 @@ const ManageOrders = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/login");
+    sessionStorage.removeItem("adminToken");
+    sessionStorage.removeItem("adminRole");
+    navigate("/admin");
   };
 
+
+  const handleAssign = async (orderId) => {
+    const deliveryId = selectedDelivery[orderId];
+
+    if (!deliveryId) {
+      alert("Select delivery agent first");
+      return;
+    }
+
+    try {
+      await adminAxios.put(`/orders/admin/${orderId}/assign/${deliveryId}`);
+      alert("Assigned successfully");
+
+      // refresh orders
+      const res = await adminAxios.get("/orders/admin");
+      setOrders(res.data);
+
+
+      const orders = res.data;
+
+      const pending = orders.filter(
+        (o) => o.status === "PLACED" || o.status === "CONFIRMED"
+      ).length;
+
+      const inTransit = orders.filter(
+        (o) => o.status === "OUT_FOR_DELIVERY"
+      ).length;
+
+      const completed = orders.filter(
+        (o) => o.status === "DELIVERED"
+      ).length;
+
+      setStats({
+        pending,
+        inTransit,
+        completed,
+      });
+
+    } catch (err) {
+      console.error(err);
+      alert("Assignment failed");
+    }
+  };
 
   return (
     <div className="min-h-screen text-gray-800 relative overflow-hidden">
@@ -101,53 +174,76 @@ const ManageOrders = () => {
 
           {/* STATS */}
           <div className="grid md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white p-6 rounded-2xl 
-shadow-[0px_10px_30px_rgba(0,0,0,0.06)]
-transition-all duration-300
-hover:shadow-[0px_20px_50px_rgba(168,85,247,0.25)]
-hover:-translate-y-1 flex gap-4 items-center">
-              <div className="w-12 h-12 bg-primary/10 text-primary flex items-center justify-center rounded-lg">
+
+            {/* Pending */}
+            <div className="group p-6 rounded-2xl bg-white/70 backdrop-blur-md 
+  border border-white/40 shadow-md 
+  transition-all duration-300 
+  hover:shadow-[0_0_25px_rgba(59,130,246,0.25)] 
+  hover:border-blue-300 flex gap-4 items-center">
+
+              <div className="w-12 h-12 flex items-center justify-center rounded-xl 
+    bg-blue-50 text-blue-600 
+    group-hover:bg-blue-100 group-hover:text-blue-700 transition">
                 <span className="material-symbols-outlined">pending_actions</span>
               </div>
+
               <div>
-                <p className="text-xs text-on-surface-variant uppercase">
+                <p className="text-xs text-gray-500 uppercase tracking-wide">
                   Pending Orders
                 </p>
-                <h2 className="text-2xl font-bold">24</h2>
+                <h2 className="text-3xl font-semibold text-gray-800">
+                  {stats.pending}
+                </h2>
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl 
-shadow-[0px_10px_30px_rgba(0,0,0,0.06)]
-transition-all duration-300
-hover:shadow-[0px_20px_50px_rgba(168,85,247,0.25)]
-hover:-translate-y-1 flex gap-4 items-center">
-              <div className="w-12 h-12 bg-secondary-container/20 text-secondary flex items-center justify-center rounded-lg">
+            {/* In Transit */}
+            <div className="group p-6 rounded-2xl bg-white/70 backdrop-blur-md 
+  border border-white/40 shadow-md 
+  transition-all duration-300 
+  hover:shadow-[0_0_25px_rgba(139,92,246,0.25)] 
+  hover:border-purple-300 flex gap-4 items-center">
+
+              <div className="w-12 h-12 flex items-center justify-center rounded-xl 
+    bg-purple-50 text-purple-600 
+    group-hover:bg-purple-100 group-hover:text-purple-700 transition">
                 <span className="material-symbols-outlined">local_shipping</span>
               </div>
+
               <div>
-                <p className="text-xs text-on-surface-variant uppercase">
+                <p className="text-xs text-gray-500 uppercase tracking-wide">
                   In Transit
                 </p>
-                <h2 className="text-2xl font-bold">58</h2>
+                <h2 className="text-3xl font-semibold text-gray-800">
+                  {stats.inTransit}
+                </h2>
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl 
-shadow-[0px_10px_30px_rgba(0,0,0,0.06)]
-transition-all duration-300
-hover:shadow-[0px_20px_50px_rgba(168,85,247,0.25)]
-hover:-translate-y-1 flex gap-4 items-center">
-              <div className="w-12 h-12 bg-tertiary-container/20 text-tertiary flex items-center justify-center rounded-lg">
+            {/* Completed */}
+            <div className="group p-6 rounded-2xl bg-white/70 backdrop-blur-md 
+  border border-white/40 shadow-md 
+  transition-all duration-300 
+  hover:shadow-[0_0_25px_rgba(34,197,94,0.25)] 
+  hover:border-green-300 flex gap-4 items-center">
+
+              <div className="w-12 h-12 flex items-center justify-center rounded-xl 
+    bg-green-50 text-green-600 
+    group-hover:bg-green-100 group-hover:text-green-700 transition">
                 <span className="material-symbols-outlined">check_circle</span>
               </div>
+
               <div>
-                <p className="text-xs text-on-surface-variant uppercase">
+                <p className="text-xs text-gray-500 uppercase tracking-wide">
                   Completed
                 </p>
-                <h2 className="text-2xl font-bold">1,204</h2>
+                <h2 className="text-3xl font-semibold text-gray-800">
+                  {stats.completed}
+                </h2>
               </div>
             </div>
+
           </div>
 
           {/* TABLE */}
@@ -221,6 +317,7 @@ hover:-translate-y-[2px]">
                       </td>
 
                       {/* ACTIONS */}
+                      {/* ACTIONS */}
                       <td className="p-4 text-right">
                         <div className="flex items-center justify-end gap-3">
 
@@ -229,20 +326,32 @@ hover:-translate-y-[2px]">
                             View
                           </button>
 
-                          {/* Status Dropdown */}
-                          <select className="px-3 py-1.5 rounded-lg text-sm 
-    bg-white/60 backdrop-blur-md border border-white/40 
-    focus:outline-none">
-                            <option>Placed</option>
-                            <option>Shipped</option>
-                            <option>Delivered</option>
-                          </select>
+                          {/* Delivery Dropdown */}
+                          <select
+                            className="px-3 py-1.5 rounded-lg text-sm bg-white border"
+                            value={selectedDelivery[o.orderId] || ""}
+                            onChange={(e) =>
+                              setSelectedDelivery({
+                                ...selectedDelivery,
+                                [o.orderId]: e.target.value,
+                              })
+                            }
+                          >
+                            <option value="">Select Delivery</option>
 
-                          {/* Update Button */}
-                          <button className="px-4 py-1.5 rounded-lg text-sm font-semibold text-white
-    bg-gradient-to-r from-[#6366f1] to-[#a855f7]
-    shadow-md hover:shadow-lg transition">
-                            Update
+                            {users.map((u) => (
+                              <option key={u.id} value={u.id}>
+                                {u.name} ({u.email})
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            onClick={() => handleAssign(o.orderId)}
+                            className="px-4 py-1.5 rounded-lg text-sm font-semibold text-white
+  bg-gradient-to-r from-[#6366f1] to-[#a855f7]
+  shadow-md hover:shadow-lg transition"
+                          >
+                            Assign
                           </button>
 
                         </div>

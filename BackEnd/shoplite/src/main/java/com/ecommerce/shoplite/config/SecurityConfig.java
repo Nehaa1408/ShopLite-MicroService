@@ -35,23 +35,19 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
                         .requestMatchers("/api/categories/**").permitAll()
 
+                        // ===== ADMIN =====
+                        .requestMatchers("/api/orders/admin/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/orders/*/status").hasAuthority("ROLE_ADMIN")
+
+                        // ===== DELIVERY =====
+                        .requestMatchers("/api/orders/delivery/**").hasAuthority("ROLE_DELIVERY")
+
                         // ===== USER =====
                         .requestMatchers("/api/cart/**").authenticated()
                         .requestMatchers("/api/orders/**").authenticated()
                         .requestMatchers("/api/tickets/**").authenticated()
                         .requestMatchers("/api/users/**").authenticated()
 
-                        // ===== ADMIN =====
-                        .requestMatchers(HttpMethod.POST, "/api/products").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/products/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/products/**").hasRole("ADMIN")
-
-                        .requestMatchers("/api/orders/admin/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/orders/*/status").hasRole("ADMIN")
-
-                        .requestMatchers("/api/tickets/admin/**").hasRole("ADMIN")
-
-                        // ===== FALLBACK =====
                         .anyRequest().authenticated())
 
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

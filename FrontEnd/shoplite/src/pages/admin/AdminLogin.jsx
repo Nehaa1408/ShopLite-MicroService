@@ -44,7 +44,7 @@ const AdminLogin = () => {
 
       if (err.response) {
         console.log("STATUS:", err.response.status);
-        console.log("DATA:", err.response.data);   // 🔥 MOST IMPORTANT
+        console.log("DATA:", err.response.data);   
       }
 
       alert(err.response?.data || "Login failed");

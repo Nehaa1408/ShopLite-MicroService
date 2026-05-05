@@ -56,8 +56,9 @@ const AdminTickets = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/login");
+    sessionStorage.removeItem("adminToken");
+    sessionStorage.removeItem("adminRole");
+    navigate("/admin");
   };
 
   return (
