@@ -20,15 +20,27 @@ public class AuthLocalController {
     @Autowired
     private UserService userService;
 
+    // ================= REGISTER =================
     @PostMapping("/register")
-    public ResponseEntity<RegisterResponse> register(@Valid @RequestBody RegisterRequest request) {
-        return ResponseEntity.ok(userService.register(request));
+    public ResponseEntity<RegisterResponse> register(
+            @Valid @RequestBody RegisterRequest request) {
+
+        return ResponseEntity.ok(
+                userService.register(request)
+        );
     }
 
+    // ================= LOGIN =================
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<LoginResponse> login(
+            @Valid @RequestBody LoginRequest request) {
+
         return ResponseEntity.ok(
-                userService.login(request.getEmail(), request.getPassword())
+
+                userService.login(
+                        request.getEmail(),
+                        request.getPassword()
+                )
         );
     }
 }

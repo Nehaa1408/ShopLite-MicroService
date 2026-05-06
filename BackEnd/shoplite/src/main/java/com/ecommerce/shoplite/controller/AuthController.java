@@ -15,6 +15,7 @@ public class AuthController {
     @Autowired
     private UserService userService;
 
+    // ================= GOOGLE LOGIN =================
     @PostMapping("/google")
     public ResponseEntity<LoginResponse> googleLogin(
             @RequestBody java.util.Map<String, String> body) {
@@ -25,6 +26,8 @@ public class AuthController {
             throw new RuntimeException("Google token missing");
         }
 
-        return ResponseEntity.ok(userService.googleLogin(token));
+        return ResponseEntity.ok(
+                userService.googleLogin(token)
+        );
     }
 }

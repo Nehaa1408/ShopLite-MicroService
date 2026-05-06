@@ -17,7 +17,7 @@ const Profile = () => {
       return;
     }
 
-    axios.get("http://localhost:8080/api/user/profile", {
+    axios.get("http://localhost:8080/api/users/profile", {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -132,7 +132,95 @@ const Profile = () => {
             </div>
           </div>
         </div>
+        {/* BECOME DELIVERY PARTNER */}
+        <div>
+          <h2 className="text-lg font-bold mb-4">
+            Delivery Partner
+          </h2>
 
+          <div
+            className="relative overflow-hidden bg-gradient-to-br from-orange-50 via-rose-50 to-pink-50
+    rounded-3xl p-8 shadow-[0_10px_40px_rgba(244,114,182,0.10)] border border-white/40"
+          >
+
+            {/* SOFT GLOW */}
+            <div className="absolute top-[-40px] right-[-40px] w-40 h-40 bg-pink-200/20 rounded-full blur-3xl"></div>
+
+            <div className="absolute bottom-[-40px] left-[-40px] w-40 h-40 bg-orange-200/20 rounded-full blur-3xl"></div>
+
+            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+
+              {/* LEFT */}
+              <div className="flex-1">
+
+                <div className="flex items-center gap-4 mb-4">
+
+                  <div
+                    className="w-16 h-16 rounded-2xl
+            bg-gradient-to-br from-rose-400 to-orange-400
+            flex items-center justify-center text-white shadow-lg"
+                  >
+                    <span className="material-symbols-outlined text-3xl">
+                      local_shipping
+                    </span>
+                  </div>
+
+                  <div>
+
+                    <h3 className="text-2xl font-black text-gray-800">
+                      Become a Delivery Partner
+                    </h3>
+
+                    <p className="text-sm text-gray-500 mt-1">
+                      Interested in joining the ShopLite delivery network?
+                    </p>
+
+                  </div>
+
+                </div>
+
+                <div className="bg-white/60 backdrop-blur-lg rounded-2xl p-5 border border-white/50">
+
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    Submit your verification details and required documents.
+                    Our admin team will review your application and approve your account.
+                  </p>
+
+                </div>
+
+              </div>
+
+              {/* RIGHT */}
+              <div className="flex flex-col sm:flex-row gap-4">
+
+                {/* CONTINUE SHOPPING */}
+                <button
+                  onClick={() => navigate("/")}
+                  className="px-6 py-3 rounded-2xl
+          bg-white text-gray-700 font-semibold
+          border border-gray-200 hover:bg-gray-50
+          transition-all duration-300"
+                >
+                  Continue Shopping
+                </button>
+
+                {/* APPLY BUTTON */}
+                <button
+                  onClick={() => navigate("/delivery/verification")}
+                  className="px-8 py-3 rounded-2xl text-white font-semibold
+          bg-gradient-to-r from-rose-400 via-pink-500 to-orange-400
+          hover:scale-105 active:scale-95 transition-all duration-300
+          shadow-[0_10px_30px_rgba(244,114,182,0.25)]"
+                >
+                  I&apos;m Interested
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+        </div>
         {/* SETTINGS */}
         <div>
           <h2 className="text-lg font-bold mb-4">Account Settings</h2>

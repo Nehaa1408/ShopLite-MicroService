@@ -20,6 +20,8 @@ import OrderConfirmation from "./pages/user/OrderConfirmation";
 import OrderTracking from "./pages/user/OrderTracking";
 import OrderHistory from "./pages/user/OrderHistory";
 import TicketManagement from "./pages/user/TicketManagement";
+import BrandDetails from "./pages/user/BrandDetails";
+import UserTicketDetails from "./pages/user/UserTicketDetails";
 
 import AdminRoute from "./pages/admin/AdminRoute";
 import ManageProducts from "./pages/admin/ManageProducts";
@@ -30,16 +32,17 @@ import AdminLogin from "./pages/admin/AdminLogin";
 import AdminTickets from "./pages/admin/AdminTickets";
 import AdminTicketDetails from "./pages/admin/AdminTicketDetails";
 import AdminProfile from "./pages/admin/AdminProfile";
-import BrandDetails from "./pages/user/BrandDetails";
-import UserTicketDetails from "./pages/user/UserTicketDetails";
+import ManageDeliveryPartners from "./pages/admin/ManageDeliveryPartners";
+
 
 import DeliveryLogin from "./pages/delivery/DeliveryLogin";
 import DeliveryDashboard from "./pages/delivery/DeliveryDashboard";
 import Completed from "./pages/delivery/Completed";
 import DeliveryRoute from "./pages/delivery/DeliveryRoute";
-import Active from "./pages/delivery/Active";
+import DeliveryPartnerVerification from "./pages/delivery/DeliveryPartnerVerification";
 import DeliveryProfile from "./pages/delivery/DeliveryProfile";
-
+import DeliverySignup from "./pages/delivery/DeliverySignup";
+import ManageDeliveryPartnerDetails from "./pages/admin/ManageDeliveryPartnerDetails";
 
 function App() {
   return (
@@ -101,6 +104,23 @@ function App() {
               </AdminRoute>
             }
           />
+
+          <Route
+            path="/admin/delivery-partners"
+            element={
+              <AdminRoute>
+                <ManageDeliveryPartners />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/delivery-partner/:id"
+            element={
+              <AdminRoute>
+                <ManageDeliveryPartnerDetails />
+              </AdminRoute>
+            }
+          />
           <Route
             path="/admin/tickets"
             element={
@@ -142,22 +162,25 @@ function App() {
             }
           />
 
-          {/* Delivery */}
+          {/* DELIVERY */}
+
           <Route path="/delivery" element={<DeliveryLogin />} />
+
+          <Route
+            path="/delivery/signup"
+            element={<DeliverySignup />}
+          />
+
+          <Route
+            path="/delivery/verification"
+            element={<DeliveryPartnerVerification />}
+          />
+
           <Route
             path="/delivery/dashboard"
             element={
               <DeliveryRoute>
                 <DeliveryDashboard />
-              </DeliveryRoute>
-            }
-          />
-
-          <Route
-            path="/delivery/active"
-            element={
-              <DeliveryRoute>
-                <Active />
               </DeliveryRoute>
             }
           />

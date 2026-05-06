@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import com.ecommerce.shoplite.dto.*;
 import com.ecommerce.shoplite.entity.*;
+import com.ecommerce.shoplite.repository.DeliveryPartnerRepository;
 import com.ecommerce.shoplite.repository.UserRepository;
 import com.ecommerce.shoplite.security.JwtUtil;
 
@@ -22,6 +23,9 @@ public class UserService {
     private UserRepository userRepository;
 
     @Autowired
+    private DeliveryPartnerRepository deliveryPartnerRepository;
+
+    @Autowired
     private JwtUtil jwtUtil;
 
     @Autowired
@@ -30,19 +34,31 @@ public class UserService {
     // ================= REGISTER =================
     public RegisterResponse register(RegisterRequest request) {
 
-        if (request.getEmail() == null || request.getPassword() == null) {
+        if (request.getEmail() == null
+                || request.getPassword() == null) {
+
             throw new RuntimeException("Invalid input");
         }
 
-        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new RuntimeException("Email already registered");
+        if (userRepository.findByEmail(
+                request.getEmail()).isPresent()) {
+
+            throw new RuntimeException(
+                    "Email already registered");
         }
 
         User user = new User();
+
         user.setName(request.getName());
+
         user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
+
+        user.setPassword(
+                passwordEncoder.encode(
+                        request.getPassword()));
+
         user.setRole(Role.USER);
+
         user.setProvider(Provider.LOCAL);
 
         User savedUser = userRepository.save(user);
@@ -52,38 +68,81 @@ public class UserService {
                 savedUser.getName(),
                 savedUser.getEmail(),
                 savedUser.getRole(),
-                savedUser.getProvider());
+                savedUser.getProvider()
+        );
     }
 
     // ================= LOGIN =================
-    public LoginResponse login(String email, String password) {
+    public LoginResponse login(
+            String email,
+            String password) {
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() ->
+                        new RuntimeException("User not found"));
 
+        // GOOGLE ACCOUNT CHECK
         if (user.getProvider() == Provider.GOOGLE) {
-            throw new RuntimeException("Use Google login for this account");
+
+            throw new RuntimeException(
+                    "Use Google login for this account");
         }
 
         String storedPassword = user.getPassword();
 
         if (storedPassword == null) {
-            throw new RuntimeException("Use Google login for this account");
+
+            throw new RuntimeException(
+                    "Use Google login for this account");
         }
 
+        // PASSWORD CHECK
         if (storedPassword.startsWith("$2a$")) {
-            if (!passwordEncoder.matches(password, storedPassword)) {
-                throw new RuntimeException("Invalid password");
-            }
-        }
 
-        else {
+            if (!passwordEncoder.matches(
+                    password,
+                    storedPassword)) {
+
+                throw new RuntimeException(
+                        "Invalid password");
+            }
+
+        } else {
+
             if (!storedPassword.equals(password)) {
-                throw new RuntimeException("Invalid password");
+
+                throw new RuntimeException(
+                        "Invalid password");
             }
         }
 
-        String token = jwtUtil.generateToken(user.getEmail());
+        // ================= DELIVERY APPROVAL =================
+        if (user.getRole() == Role.DELIVERY) {
+
+            DeliveryPartner partner =
+                    deliveryPartnerRepository.findByUser(user)
+                            .orElseThrow(() ->
+                                    new RuntimeException(
+                                            "Delivery profile not found"));
+
+            // NOT APPROVED
+            if (!partner.isApproved()) {
+
+                throw new RuntimeException(
+                        "Your delivery account is waiting for admin approval");
+            }
+
+            // INACTIVE
+            if (!partner.isActive()) {
+
+                throw new RuntimeException(
+                        "Your delivery account is inactive");
+            }
+        }
+
+        // GENERATE TOKEN
+        String token =
+                jwtUtil.generateToken(user.getEmail());
 
         return new LoginResponse(
                 user.getId(),
@@ -91,54 +150,83 @@ public class UserService {
                 user.getEmail(),
                 user.getRole(),
                 user.getProvider(),
-                token);
+                token
+        );
     }
 
     // ================= GOOGLE LOGIN =================
     public LoginResponse googleLogin(String token) {
 
         try {
-            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
-                    new NetHttpTransport(),
-                    GsonFactory.getDefaultInstance())
-                    .setAudience(Collections.singletonList(
-                            "646428028394-gp3mhtk8tvb45rov640k2d11m6qsfpcc.apps.googleusercontent.com"))
-                    .build();
 
-            GoogleIdToken idToken = verifier.verify(token);
+            GoogleIdTokenVerifier verifier =
+                    new GoogleIdTokenVerifier.Builder(
+
+                            new NetHttpTransport(),
+
+                            GsonFactory.getDefaultInstance())
+
+                            .setAudience(Collections.singletonList(
+                                    "646428028394-gp3mhtk8tvb45rov640k2d11m6qsfpcc.apps.googleusercontent.com"))
+
+                            .build();
+
+            GoogleIdToken idToken =
+                    verifier.verify(token);
 
             if (idToken == null) {
-                throw new RuntimeException("Invalid Google token");
+
+                throw new RuntimeException(
+                        "Invalid Google token");
             }
 
-            GoogleIdToken.Payload payload = idToken.getPayload();
+            GoogleIdToken.Payload payload =
+                    idToken.getPayload();
 
-            if (!Boolean.TRUE.equals(payload.getEmailVerified())) {
-                throw new RuntimeException("Email not verified");
+            if (!Boolean.TRUE.equals(
+                    payload.getEmailVerified())) {
+
+                throw new RuntimeException(
+                        "Email not verified");
             }
 
             String email = payload.getEmail();
-            String name = (String) payload.get("name");
 
-            User user = userRepository.findByEmail(email).orElse(null);
+            String name =
+                    (String) payload.get("name");
+
+            User user =
+                    userRepository.findByEmail(email)
+                            .orElse(null);
 
             if (user == null) {
+
                 user = new User();
+
                 user.setEmail(email);
+
                 user.setName(name);
+
                 user.setPassword(null);
+
                 user.setRole(Role.USER);
+
                 user.setProvider(Provider.GOOGLE);
 
                 user = userRepository.save(user);
+
             } else {
-                if (user.getProvider() == Provider.LOCAL) {
+
+                if (user.getProvider()
+                        == Provider.LOCAL) {
+
                     throw new RuntimeException(
                             "Use email/password login for this account");
                 }
             }
 
-            String jwt = jwtUtil.generateToken(user.getEmail());
+            String jwt =
+                    jwtUtil.generateToken(user.getEmail());
 
             return new LoginResponse(
                     user.getId(),
@@ -146,11 +234,16 @@ public class UserService {
                     user.getEmail(),
                     user.getRole(),
                     user.getProvider(),
-                    jwt);
+                    jwt
+            );
 
         } catch (Exception e) {
-            e.printStackTrace(); // keep this for debugging
-            throw new RuntimeException("Google authentication failed: " + e.getMessage());
+
+            e.printStackTrace();
+
+            throw new RuntimeException(
+                    "Google authentication failed: "
+                            + e.getMessage());
         }
     }
 }

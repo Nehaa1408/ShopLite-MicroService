@@ -1,4 +1,3 @@
-
 package com.ecommerce.shoplite.controller;
 
 import java.util.List;
@@ -18,7 +17,8 @@ public class UserController {
     @Autowired
     private UserRepository userRepository;
 
-    // GET ALL USERS (for assigning delivery)
+
+    // GET DELIVERY USERS
     @GetMapping("/delivery")
     public List<User> getDeliveryUsers() {
         return userRepository.findByRole(Role.DELIVERY);

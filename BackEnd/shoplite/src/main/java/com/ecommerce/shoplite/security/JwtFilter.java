@@ -21,66 +21,87 @@ import java.util.List;
 @Component
 public class JwtFilter extends OncePerRequestFilter {
 
-    @Autowired
-    private JwtUtil jwtUtil;
+        @Autowired
+        private JwtUtil jwtUtil;
 
-    @Autowired
-    private UserRepository userRepository;
+        @Autowired
+        private UserRepository userRepository;
 
-    @Override
-    protected void doFilterInternal(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain)
-            throws ServletException, IOException {
+        @Override
+        protected void doFilterInternal(
+                        HttpServletRequest request,
+                        HttpServletResponse response,
+                        FilterChain filterChain)
+                        throws ServletException, IOException {
 
-        String path = request.getRequestURI();
+                String path = request.getRequestURI();
 
-        // skip truly public endpoints
-        if (path.startsWith("/api/auth")
-                || path.startsWith("/api/categories")) {
+                // ================= PUBLIC ENDPOINTS =================
+                if (path.startsWith("/api/auth")
+                                || path.startsWith("/api/categories")
+                                || path.startsWith("/api/delivery/register")
+                                || path.startsWith("/api/products")) {
 
-            filterChain.doFilter(request, response);
-            return;
+                        filterChain.doFilter(request, response);
+                        return;
+                }
+
+                // ================= GET TOKEN =================
+                String authHeader = request.getHeader("Authorization");
+
+                // NO TOKEN
+                if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+
+                        filterChain.doFilter(request, response);
+                        return;
+                }
+
+                String token = authHeader.substring(7);
+
+                try {
+
+                        // ================= EXTRACT EMAIL =================
+                        String email = jwtUtil.extractEmail(token);
+                        System.out.println("JWT TOKEN : " + token);
+                        System.out.println("JWT EMAIL : " + email);
+
+                        // ================= AUTHENTICATE =================
+                        if (email != null
+                                        && SecurityContextHolder
+                                                        .getContext()
+                                                        .getAuthentication() == null) {
+
+                                User user = userRepository.findByEmail(email)
+                                                .orElseThrow(() -> new RuntimeException("User not found"));
+
+                                // ROLE
+                                String role = "ROLE_" + user.getRole().name();
+
+                                List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(role));
+
+                                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                                                user,
+                                                token,
+                                                authorities);
+
+                                authToken.setDetails(
+
+                                                new org.springframework.security.web.authentication.WebAuthenticationDetailsSource()
+
+                                                                .buildDetails(request));
+
+                                SecurityContextHolder
+                                                .getContext()
+                                                .setAuthentication(authToken);
+                        }
+
+                } catch (Exception e) {
+
+                        System.out.println("JWT ERROR: " + e.getMessage());
+
+                        SecurityContextHolder.clearContext();
+                }
+
+                filterChain.doFilter(request, response);
         }
-
-        String authHeader = request.getHeader("Authorization");
-
-        // No token → continue (public endpoints may still work)
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        String token = authHeader.substring(7);
-
-        try {
-            String email = jwtUtil.extractEmail(token);
-
-            if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-
-                User user = userRepository.findByEmail(email)
-                        .orElseThrow(() -> new RuntimeException("User not found"));
-
-                String role = "ROLE_" + user.getRole().name();
-
-                List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(role));
-
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(user, null,
-                        authorities);
-
-                authToken.setDetails(
-                        new org.springframework.security.web.authentication.WebAuthenticationDetailsSource()
-                                .buildDetails(request));
-
-                SecurityContextHolder.getContext().setAuthentication(authToken);
-            }
-
-        } catch (Exception e) {
-            System.out.println("JWT ERROR: " + e.getMessage());
-            SecurityContextHolder.clearContext();
-        }
-
-        filterChain.doFilter(request, response);
-    }
 }

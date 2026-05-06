@@ -6,8 +6,8 @@ import { getDeliveryOrders, updateOrderStatus } from "../../services/deliveryApi
 const DeliveryDashboard = () => {
 
     const [orders, setOrders] = useState([]);
+    const [search, setSearch] = useState("");
 
-    // fetch orders
     const fetchOrders = useCallback(async () => {
         try {
             const res = await getDeliveryOrders();
@@ -22,88 +22,75 @@ const DeliveryDashboard = () => {
         fetchOrders();
     }, [fetchOrders]);
 
-    // update status
     const handleDeliver = async (id) => {
         try {
-            await updateOrderStatus(id); // ✅ FIXED (removed extra param)
+            await updateOrderStatus(id);
             fetchOrders();
         } catch (err) {
             console.error("Error updating status", err);
         }
     };
 
-    // stats
-    const total = orders.length;
+    const filteredOrders = orders.filter((o) =>
+        o.orderId.toString().includes(search)
+    );
+
     const active = orders.filter(o => o.status === "OUT_FOR_DELIVERY").length;
-    const delivered = orders.filter(o => o.status === "DELIVERED").length;
 
     return (
         <DeliveryLayout>
 
             {/* HERO */}
-            <div className="mb-8">
+            <div className="mb-10">
                 <h1 className="text-4xl font-bold mb-2">
-                    Welcome back👋
+                    Welcome back 👋
                 </h1>
                 <p className="text-gray-500">
                     You have <span className="text-purple-600 font-semibold">{active} active deliveries</span>
                 </p>
             </div>
 
-            {/* STATS */}
-            <div className="grid md:grid-cols-3 gap-6 mb-10">
+            {/* HEADER */}
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-10">
 
-                <div className="bg-white p-6 rounded-2xl shadow-sm border">
-                    <p className="text-gray-500 text-sm">Total Assigned</p>
-                    <h2 className="text-2xl font-bold">{total} Orders</h2>
-                </div>
+                <h3 className="text-xl font-bold text-gray-800">
+                    Active Deliveries
+                </h3>
 
-                <div className="bg-white p-6 rounded-2xl shadow-sm border">
-                    <p className="text-gray-500 text-sm">In Progress</p>
-                    <h2 className="text-2xl font-bold text-cyan-500">{active} Orders</h2>
-                </div>
+                <div className="relative w-full md:w-80">
 
-                <div className="bg-white p-6 rounded-2xl shadow-sm border">
-                    <p className="text-gray-500 text-sm">Delivered</p>
-                    <h2 className="text-2xl font-bold text-green-500">{delivered} Orders</h2>
+                    <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                        search
+                    </span>
+
+                    <input
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        placeholder="Search order ID..."
+                        className="w-full pl-12 pr-4 py-3 rounded-2xl 
+                        bg-white/70 backdrop-blur-lg border border-white/40
+                        text-sm text-gray-700 outline-none
+                        focus:ring-2 focus:ring-purple-300
+                        hover:border-purple-200"
+                    />
                 </div>
 
             </div>
 
-            {/* ORDERS */}
-            <div className="bg-white rounded-3xl p-6 shadow-md">
+            {/* CARDS */}
+            <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-10">
 
-                <div className="flex justify-between mb-6 flex-wrap gap-4">
-                    <h3 className="text-xl font-bold">Your Delivery Queue</h3>
-
-                    <input
-                        placeholder="Search Order ID..."
-                        className="border rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-purple-300"
-                    />
-                </div>
-
-                {/* ORDER LIST */}
-                <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-8">
-
-                    {orders.length === 0 ? (
-                        <p className="text-gray-500">No orders assigned</p>
-                    ) : (
-                        orders.map((order) => (
-                            <OrderCard
-                                key={order.orderId}
-                                order={{
-                                    id: order.orderId,
-                                    name: order.items?.[0]?.productName || "Customer",
-                                    address: "Address not available",
-                                    phone: "N/A",
-                                    status: order.status
-                                }}
-                                onDeliver={handleDeliver}
-                            />
-                        ))
-                    )}
-
-                </div>
+                {filteredOrders.length === 0 ? (
+                    <p className="text-gray-500">No matching orders</p>
+                ) : (
+                    filteredOrders.map((order) => (
+                        <OrderCard
+                            key={order.orderId}
+                            order={order}
+                            onDeliver={handleDeliver}
+                        />
+                    ))
+                )}
 
             </div>
 
