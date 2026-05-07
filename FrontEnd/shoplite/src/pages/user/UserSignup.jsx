@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { GoogleLogin } from "@react-oauth/google";
@@ -13,30 +13,118 @@ const UserSignup = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [resendTimer, setResendTimer] = useState(60);
+  const [canResend, setCanResend] = useState(false);
 
-  const handleSignup = async (e) => {
-    e.preventDefault();
+  useEffect(() => {
+
+    let interval;
+
+    if (showOtpModal && resendTimer > 0) {
+
+      interval = setInterval(() => {
+
+        setResendTimer((prev) => prev - 1);
+
+      }, 1000);
+    }
+
+    if (resendTimer === 0) {
+
+      setCanResend(true);
+    }
+
+    return () => clearInterval(interval);
+
+  }, [showOtpModal, resendTimer]);
+
+  const handleSignup = async (e = null) => {
+
+    if (e) e.preventDefault();
 
     if (!name || !email || !password || !confirmPassword) {
+
       toast.error("Please fill all fields");
+
       return;
     }
 
     if (password !== confirmPassword) {
+
       toast.error("Passwords do not match");
+
       return;
     }
 
     try {
-      // REGISTER
+
+      setLoading(true);
+
+      // SEND SIGNUP OTP
       await axios.post(
-        "http://localhost:8080/api/auth/register",
+        "http://localhost:8080/api/auth/send-signup-otp",
         {
           name,
           email,
           password,
         }
       );
+
+      toast.success("OTP sent to your email ✨");
+
+      setShowOtpModal(true);
+
+      // START RESEND TIMER
+      setResendTimer(60);
+
+      setCanResend(false);
+
+    } catch (err) {
+
+      console.error(err);
+
+      if (err.response?.data?.message) {
+
+        toast.error(err.response.data.message);
+
+      } else {
+
+        toast.error("Signup failed");
+      }
+
+    } finally {
+
+      setLoading(false);
+    }
+  };
+  const handleVerifyOtp = async () => {
+
+    if (!otp) {
+
+      toast.error("Enter OTP");
+
+      return;
+    }
+
+    try {
+
+      setLoading(true);
+
+      // VERIFY OTP
+      await axios.post(
+        "http://localhost:8080/api/auth/verify-signup-otp",
+        {
+          email,
+          otp,
+        }
+      );
+
+      toast.success("Account created successfully ✨");
+
+      setShowOtpModal(false);
 
       // AUTO LOGIN
       const loginRes = await axios.post(
@@ -57,20 +145,28 @@ const UserSignup = () => {
         JSON.stringify(loginRes.data)
       );
 
-      toast.success("Welcome to ShopLite ✨");
-
       setTimeout(() => {
+
         navigate("/");
-      }, 1000);
+
+      }, 1200);
 
     } catch (err) {
+
       console.error(err);
 
       if (err.response?.data?.message) {
+
         toast.error(err.response.data.message);
+
       } else {
-        toast.error("Signup failed");
+
+        toast.error("OTP verification failed");
       }
+
+    } finally {
+
+      setLoading(false);
     }
   };
 
@@ -402,7 +498,149 @@ const UserSignup = () => {
         </form>
 
       </div>
+      {/* OTP MODAL */}
+      {showOtpModal && (
 
+        <div
+          className="fixed inset-0 z-50
+
+    bg-black/40 backdrop-blur-sm
+
+    flex items-center justify-center
+
+    px-4"
+        >
+
+          <div
+            className="w-full max-w-md
+
+      bg-white/80 backdrop-blur-2xl
+
+      border border-white/30
+
+      rounded-[30px]
+
+      p-7 shadow-2xl"
+          >
+
+            {/* TITLE */}
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">
+              Verify Your Email
+            </h2>
+
+            <p className="text-sm text-gray-500 mb-6">
+              Enter the OTP sent to your email address.
+            </p>
+
+            {/* OTP INPUT */}
+            <input
+              type="text"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+              placeholder="Enter 6-digit OTP"
+              className="w-full px-5 py-4 rounded-2xl
+
+        border border-gray-200
+
+        outline-none
+
+        focus:ring-2 focus:ring-indigo-300
+
+        text-lg tracking-[6px]
+
+        text-center font-semibold
+
+        mb-6"
+            />
+            {/* RESEND OTP */}
+            <div className="flex items-center justify-between mb-5">
+
+              <p className="text-sm text-gray-500">
+                Didn't receive OTP?
+              </p>
+
+              <button
+                disabled={!canResend || loading}
+                onClick={handleSignup}
+                className={`text-sm font-semibold
+
+    transition-all
+
+    ${canResend
+                    ? "text-indigo-600 hover:text-indigo-700"
+                    : "text-gray-400 cursor-not-allowed"
+                  }`}
+              >
+
+                {loading
+                  ? "Sending..."
+                  : canResend
+                    ? "Resend OTP"
+                    : `Resend in ${resendTimer}s`
+                }
+
+              </button>
+
+            </div>
+            {/* BUTTONS */}
+            <div className="flex gap-3">
+
+              {/* CANCEL */}
+              <button
+                onClick={() => {
+                  setShowOtpModal(false);
+                  setOtp("");
+                }}
+                className="flex-1 py-3 rounded-2xl
+
+          border border-gray-200
+
+          text-gray-600 font-semibold
+
+          hover:bg-gray-50
+
+          transition-all"
+              >
+                Cancel
+              </button>
+
+              {/* VERIFY */}
+              <button
+                onClick={handleVerifyOtp}
+                disabled={loading}
+                className={`flex-1 py-3 rounded-2xl
+
+          text-white font-semibold
+
+          transition-all duration-300
+
+          ${loading
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : `
+              bg-gradient-to-br
+              from-[#6366F1]
+              via-[#7C3AED]
+              to-[#EC4899]
+
+              shadow-[0_10px_30px_rgba(124,58,237,0.35)]
+
+              hover:brightness-110
+              `
+                  }`}
+              >
+
+                {loading
+                  ? "Verifying..."
+                  : "Verify OTP"}
+
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+      )}
       {/* FOOTER */}
       <div className="absolute bottom-0 left-0 w-full px-10 py-6 flex justify-between items-center text-sm text-gray-600">
 

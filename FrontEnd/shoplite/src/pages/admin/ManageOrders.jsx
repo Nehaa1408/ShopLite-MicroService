@@ -12,6 +12,9 @@ const ManageOrders = () => {
   const isActive = (path) => location.pathname === path;
   const [users, setUsers] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+
   const [stats, setStats] = useState({
     pending: 0,
     inTransit: 0,
@@ -268,94 +271,254 @@ hover:-translate-y-[2px]">
 
               <tbody>
                 {currentOrders.map((o, i) => {
+
                   const total = o.items?.reduce(
                     (sum, item) => sum + item.price * item.quantity,
                     0
                   );
 
                   return (
+
                     <tr
                       key={i}
-                      className="border-t border-white/30 
-  transition-all duration-300
-  hover:bg-white/60 
-  hover:shadow-[0px_10px_30px_rgba(168,85,247,0.15)]
-  hover:-translate-y-[2px]"
+                      className="border-t border-white/30
+
+        transition-all duration-300
+
+        hover:bg-white/70
+
+        hover:shadow-[0px_10px_30px_rgba(168,85,247,0.10)]
+
+        hover:-translate-y-[2px]"
                     >
+
                       {/* ORDER ID */}
-                      <td className="p-4 font-bold">#{o.orderId}</td>
+                      <td className="p-5 font-black text-gray-800">
+                        #{o.orderId}
+                      </td>
 
                       {/* CUSTOMER */}
                       <td>
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 bg-surface-container-highest rounded-full flex items-center justify-center text-xs font-bold text-primary">
-                            {o.user?.name?.charAt(0) || "U"}
+
+                        <div className="flex items-center gap-3">
+
+                          <div
+                            className="w-10 h-10 rounded-full
+
+              bg-gradient-to-br
+              from-indigo-500
+              to-purple-500
+
+              text-white
+
+              flex items-center justify-center
+
+              text-sm font-bold
+
+              shadow-md"
+                          >
+                            {o.customerName?.charAt(0) || "U"}
                           </div>
-                          {o.user?.name || "User"}
+
+                          <div>
+
+                            <p className="font-semibold text-gray-800">
+                              {o.customerName || "User"}
+                            </p>
+
+                            <p className="text-xs text-gray-400">
+                              {o.customerEmail || "No email"}
+                            </p>
+
+                          </div>
+
                         </div>
+
                       </td>
 
                       {/* DATE */}
-                      <td>
-                        {new Date(o.orderDate).toLocaleDateString()}
+                      <td className="text-gray-600 font-medium">
+
+                        {new Date(o.orderDate).toLocaleDateString(
+                          "en-IN",
+                          {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          }
+                        )}
+
                       </td>
 
                       {/* TOTAL */}
-                      <td className="font-bold">
-                        ₹{total?.toFixed(2) || 0}
+                      <td>
+
+                        <span
+                          className="px-4 py-2 rounded-xl
+
+            bg-indigo-50
+
+            text-indigo-600
+
+            font-bold"
+                        >
+                          ${total?.toFixed(2) || 0}
+                        </span>
+
                       </td>
 
                       {/* STATUS */}
                       <td>
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusStyle(
-                            o.status
-                          )}`}
-                        >
-                          {o.status}
-                        </span>
-                      </td>
 
-                      {/* ACTIONS */}
-                      {/* ACTIONS */}
-                      <td className="p-4 text-right">
-                        <div className="flex items-center justify-end gap-3">
+                        <div className="flex flex-col gap-2">
 
-                          {/* View */}
-                          <button className="text-indigo-600 text-sm font-medium hover:underline">
-                            View
-                          </button>
-
-                          {/* Delivery Dropdown */}
-                          <select
-                            className="px-3 py-1.5 rounded-lg text-sm bg-white border"
-                            value={selectedDelivery[o.orderId] || ""}
-                            onChange={(e) =>
-                              setSelectedDelivery({
-                                ...selectedDelivery,
-                                [o.orderId]: e.target.value,
-                              })
-                            }
+                          <span
+                            className={`w-fit px-4 py-1.5 rounded-full text-xs font-bold tracking-wide ${getStatusStyle(
+                              o.status
+                            )}`}
                           >
-                            <option value="">Select Delivery</option>
+                            {o.status}
+                          </span>
 
-                            {users.map((u) => (
-                              <option key={u.id} value={u.id}>
-                                {u.name} ({u.email})
-                              </option>
-                            ))}
-                          </select>
-                          <button
-                            onClick={() => handleAssign(o.orderId)}
-                            className="px-4 py-1.5 rounded-lg text-sm font-semibold text-white
-  bg-gradient-to-r from-[#6366f1] to-[#a855f7]
-  shadow-md hover:shadow-lg transition"
-                          >
-                            Assign
-                          </button>
+                          {/* RATING PREVIEW */}
+                          {o.deliveryRating && (
+
+                            <div className="flex gap-[2px]">
+
+                              {[1, 2, 3, 4, 5].map((star) => (
+
+                                <span
+                                  key={star}
+                                  className={
+                                    star <= o.deliveryRating
+                                      ? "text-yellow-400 text-sm"
+                                      : "text-gray-200 text-sm"
+                                  }
+                                >
+                                  ★
+                                </span>
+
+                              ))}
+
+                            </div>
+                          )}
 
                         </div>
+
                       </td>
+
+                      {/* ACTIONS */}
+                      <td className="p-5">
+
+                        <div className="flex items-center justify-end gap-4">
+
+                          {/* DELIVERED → VIEW */}
+                          {o.status === "DELIVERED" && (
+
+                            <button
+                              onClick={() => {
+                                setSelectedOrder(o);
+                                setShowViewModal(true);
+                              }}
+                              className="px-5 py-2 rounded-xl
+
+                bg-gradient-to-r
+                from-indigo-500
+                to-purple-500
+
+                text-white text-sm font-semibold
+
+                shadow-md
+
+                hover:shadow-xl
+
+                hover:scale-[1.03]
+
+                transition-all duration-300"
+                            >
+                              View Details
+                            </button>
+                          )}
+
+                          {/* NOT DELIVERED */}
+                          {o.status !== "DELIVERED" && (
+
+                            <>
+
+                              {/* DROPDOWN */}
+                              <select
+                                className="w-[220px]
+
+                  px-4 py-2.5
+
+                  rounded-2xl
+
+                  text-sm
+
+                  bg-white/90
+
+                  border border-gray-200
+
+                  shadow-sm
+
+                  outline-none
+
+                  focus:ring-2 focus:ring-indigo-200"
+                                value={selectedDelivery[o.orderId] || ""}
+                                onChange={(e) =>
+                                  setSelectedDelivery({
+                                    ...selectedDelivery,
+                                    [o.orderId]: e.target.value,
+                                  })
+                                }
+                              >
+
+                                <option value="">
+                                  Select Delivery Partner
+                                </option>
+
+                                {users.map((u) => (
+
+                                  <option
+                                    key={u.id}
+                                    value={u.id}
+                                  >
+                                    {u.name} ({u.email})
+                                  </option>
+
+                                ))}
+
+                              </select>
+
+                              {/* ASSIGN */}
+                              <button
+                                onClick={() => handleAssign(o.orderId)}
+                                className="px-5 py-2.5 rounded-2xl
+
+                  bg-gradient-to-r
+                  from-[#6366f1]
+                  to-[#a855f7]
+
+                  text-white text-sm font-semibold
+
+                  shadow-md
+
+                  hover:shadow-xl
+
+                  hover:scale-[1.03]
+
+                  transition-all duration-300"
+                              >
+                                Assign
+                              </button>
+
+                            </>
+                          )}
+
+                        </div>
+
+                      </td>
+
                     </tr>
                   );
                 })}
@@ -386,6 +549,247 @@ hover:-translate-y-[2px]">
             </div>
           </div>
         </main>
+        {/* VIEW ORDER MODAL */}
+        {showViewModal && selectedOrder && (
+
+          <div
+            className="fixed inset-0 z-50
+
+    bg-black/40 backdrop-blur-sm
+
+    flex items-center justify-center
+
+    p-4"
+          >
+
+            <div
+              className="w-full max-w-3xl
+
+      max-h-[90vh]
+
+      overflow-y-auto
+
+      rounded-[32px]
+
+      bg-white
+
+      shadow-[0_25px_80px_rgba(0,0,0,0.18)]
+
+      p-8"
+            >
+
+              {/* HEADER */}
+              <div className="flex items-start justify-between mb-8">
+
+                <div>
+
+                  <p className="text-sm text-indigo-500 font-semibold mb-2">
+                    ORDER DETAILS
+                  </p>
+
+                  <h2 className="text-3xl font-black text-gray-800">
+                    Order #{selectedOrder.orderId}
+                  </h2>
+
+                </div>
+
+                <button
+                  onClick={() => setShowViewModal(false)}
+                  className="w-11 h-11 rounded-full bg-gray-100 hover:bg-red-50 hover:text-red-500 transition-all duration-300"
+                >
+                  ✕
+                </button>
+
+              </div>
+
+              {/* STATUS */}
+              <div className="mb-8">
+
+                <span
+                  className={`px-4 py-2 rounded-full text-sm font-semibold ${getStatusStyle(
+                    selectedOrder.status
+                  )}`}
+                >
+                  {selectedOrder.status}
+                </span>
+
+              </div>
+
+              {/* CUSTOMER + DELIVERY */}
+              <div className="grid md:grid-cols-2 gap-6 mb-8">
+
+                {/* CUSTOMER */}
+                <div className="rounded-3xl border border-gray-100 bg-gray-50 p-6">
+
+                  <p className="text-xs uppercase tracking-wider text-gray-400 mb-4">
+                    Customer Information
+                  </p>
+
+                  <h3 className="text-xl font-bold text-gray-800 mb-2">
+                    {selectedOrder.customerName || "Customer"}
+                  </h3>
+
+                  <p className="text-gray-600">
+                    {selectedOrder.customerEmail || "No email"}
+                  </p>
+
+                </div>
+
+                {/* DELIVERY */}
+                <div className="rounded-3xl border border-indigo-100 bg-indigo-50 p-6">
+
+                  <p className="text-xs uppercase tracking-wider text-indigo-400 mb-4">
+                    Delivery Partner
+                  </p>
+
+                  <h3 className="text-xl font-bold text-gray-800 mb-2">
+                    {selectedOrder.deliveryAgentName || "Not Assigned"}
+                  </h3>
+
+                  <p className="text-gray-600">
+                    {selectedOrder.deliveryAgentEmail || "No email"}
+                  </p>
+
+                </div>
+
+              </div>
+
+              {/* PRODUCTS */}
+              <div className="mb-8">
+
+                <h3 className="text-xl font-bold text-gray-800 mb-5">
+                  Ordered Products
+                </h3>
+
+                <div className="space-y-4">
+
+                  {selectedOrder.items?.map((item, i) => (
+
+                    <div
+                      key={i}
+                      className="flex items-center justify-between
+
+  rounded-2xl
+
+  border border-gray-100
+
+  bg-white
+
+  p-4"
+                    >
+
+                      <div className="flex items-center gap-4">
+
+                        <img
+                          src={
+                            item.image?.startsWith("http")
+                              ? item.image
+                              : `/products/${item.image}`
+                          }
+                          alt={item.productName}
+                          className="w-16 h-16 rounded-2xl object-cover border border-gray-100"
+                        />
+
+                        <div>
+
+                          <h4 className="font-semibold text-gray-800">
+                            {item.productName}
+                          </h4>
+
+                          <p className="text-sm text-gray-500">
+                            Quantity: {item.quantity}
+                          </p>
+
+                        </div>
+
+                      </div>
+
+                      <p className="font-bold text-indigo-600">
+                        ${item.price}
+                      </p>
+
+                    </div>
+                  ))}
+
+                </div>
+
+              </div>
+
+              {/* FEEDBACK */}
+              {selectedOrder.deliveryRating && (
+
+                <div
+                  className="rounded-[28px]
+
+          border border-yellow-100
+
+          bg-gradient-to-br
+          from-yellow-50
+          via-white
+          to-orange-50
+
+          p-6"
+                >
+
+                  <div className="flex items-center justify-between mb-4">
+
+                    <div>
+
+                      <p className="text-xs uppercase tracking-widest text-gray-400 mb-2">
+                        Customer Feedback
+                      </p>
+
+                      <h3 className="text-2xl font-black text-gray-800">
+                        Delivery Experience
+                      </h3>
+
+                    </div>
+
+                    <div className="flex gap-1 text-3xl">
+
+                      {[1, 2, 3, 4, 5].map((star) => (
+
+                        <span
+                          key={star}
+                          className={
+                            star <= selectedOrder.deliveryRating
+                              ? "text-yellow-400"
+                              : "text-gray-200"
+                          }
+                        >
+                          ★
+                        </span>
+
+                      ))}
+
+                    </div>
+
+                  </div>
+
+                  <div
+                    className="rounded-2xl
+
+            bg-white/80
+
+            border border-white
+
+            p-5
+
+            text-gray-700"
+                  >
+
+                    {selectedOrder.deliveryFeedback ||
+                      "Customer gave rating without written feedback."}
+
+                  </div>
+
+                </div>
+              )}
+
+            </div>
+
+          </div>
+        )}
       </div>
     </div>
   );

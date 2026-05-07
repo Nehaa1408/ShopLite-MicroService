@@ -299,6 +299,106 @@ const Completed = () => {
 
                 </div>
 
+                {/* CUSTOMER FEEDBACK */}
+                {order.deliveryRating && (
+
+                  <div
+                    className="relative overflow-hidden
+
+    rounded-[24px]
+
+    border border-amber-100
+
+    bg-gradient-to-br
+    from-amber-50/90
+    via-white
+    to-yellow-50/80
+
+    p-4
+
+    mb-5
+
+    shadow-[0_8px_24px_rgba(251,191,36,0.10)]"
+                  >
+
+                    {/* LIGHT GLOW */}
+                    <div
+                      className="absolute -top-8 -right-8
+
+      w-24 h-24
+
+      bg-yellow-200/30
+
+      rounded-full
+
+      blur-2xl"
+                    ></div>
+
+                    <div className="relative z-10">
+
+                      {/* TOP */}
+                      <div className="flex items-start justify-between gap-3 mb-3">
+
+                        <div>
+
+                        
+                          <h3 className="text-[17px] font-bold text-gray-800 leading-none">
+                            Delivery Experience
+                          </h3>
+
+                        </div>
+
+                        {/* STARS */}
+                        <div className="flex gap-[2px] mt-1">
+
+                          {[1, 2, 3, 4, 5].map((star) => (
+
+                            <span
+                              key={star}
+                              className={`text-[20px] ${star <= order.deliveryRating
+                                  ? "text-amber-400"
+                                  : "text-gray-200"
+                                }`}
+                            >
+                              ★
+                            </span>
+
+                          ))}
+
+                        </div>
+
+                      </div>
+
+                      {/* FEEDBACK */}
+                      <div
+                        className="rounded-2xl
+
+        bg-white/85
+
+        border border-white
+
+        px-4 py-3
+
+        text-[14px]
+
+        leading-relaxed
+
+        text-gray-700
+
+        shadow-sm"
+                      >
+
+                        {order.deliveryFeedback?.trim()
+                          ? `“${order.deliveryFeedback}”`
+                          : "Customer gave rating without written feedback."}
+
+                      </div>
+
+                    </div>
+
+                  </div>
+                )}
+
                 {/* BUTTONS */}
                 <div className="flex gap-3">
 

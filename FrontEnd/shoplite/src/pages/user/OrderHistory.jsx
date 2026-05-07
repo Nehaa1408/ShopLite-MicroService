@@ -10,6 +10,9 @@ const OrderHistory = () => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [ratings, setRatings] = useState({});
+  const [feedbacks, setFeedbacks] = useState({});
+  const [submittedFeedbacks, setSubmittedFeedbacks] = useState({});
   const ordersPerPage = 5;
 
   useEffect(() => {
@@ -102,6 +105,53 @@ const OrderHistory = () => {
       return sum + items.reduce((s, i) => s + i.price * i.quantity, 0);
     }, 0);
   }, [orders]);
+
+  const submitFeedback = async (orderId) => {
+    try {
+      const token = localStorage.getItem("token");
+
+      await axios.post(
+        "http://localhost:8080/api/delivery-feedback/add",
+        {
+          orderId,
+          rating: ratings[orderId],
+          feedback: feedbacks[orderId],
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+
+
+      // REFRESH ORDERS
+      const res = await axios.get(
+        "http://localhost:8080/api/orders",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setOrders(res.data);
+
+      setSubmittedFeedbacks({
+        ...submittedFeedbacks,
+        [orderId]: true,
+      });
+
+    } catch (err) {
+      console.error(err);
+
+      alert(
+        err?.response?.data ||
+        "Feedback submission failed"
+      );
+    }
+  };
 
   const deliveredOrders = React.useMemo(() => {
     return orders.filter(
@@ -342,6 +392,175 @@ const OrderHistory = () => {
                     )}
                   </div>
 
+                  {/* DELIVERY FEEDBACK */}
+                  {order.status?.toLowerCase() === "delivered" && (
+
+                    <div className="mt-8">
+
+                      {/* THANK YOU STATE */}
+                      {submittedFeedbacks[order.orderId] ? (
+
+                        <div className="relative overflow-hidden rounded-[32px] border border-green-200/50 bg-gradient-to-br from-green-50 via-emerald-50 to-white p-8 shadow-[0_20px_60px_rgba(16,185,129,0.15)]">
+
+                          <div className="absolute top-0 right-0 w-40 h-40 bg-green-200/30 blur-3xl rounded-full"></div>
+
+                          <div className="relative z-10 text-center">
+
+                            <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-r from-green-400 to-emerald-500 flex items-center justify-center text-4xl shadow-lg mb-5">
+                              ❤️
+                            </div>
+
+                            <h2 className="text-3xl font-black text-gray-800 mb-3">
+                              Thank You for Your Feedback
+                            </h2>
+
+                            <p className="text-gray-600 text-lg leading-relaxed max-w-xl mx-auto">
+                              Your feedback helps us improve the ShopLite delivery experience
+                              and motivates our delivery partners to provide exceptional service.
+                            </p>
+
+                          </div>
+                        </div>
+
+                      ) : order.deliveryRating ? (
+
+                        /* EXISTING FEEDBACK */
+                        <div className="relative overflow-hidden rounded-[32px] border border-yellow-200/40 bg-gradient-to-br from-yellow-50 via-white to-orange-50 p-8 shadow-[0_20px_60px_rgba(251,191,36,0.12)]">
+
+                          <div className="absolute -top-10 -right-10 w-40 h-40 bg-yellow-200/30 rounded-full blur-3xl"></div>
+
+                          <div className="relative z-10">
+
+                            <div className="flex items-center justify-between flex-wrap gap-4 mb-5">
+
+                              <div>
+                                <h3 className="text-2xl font-black text-gray-800">
+                                  Delivery Feedback
+                                </h3>
+
+                                <p className="text-gray-500 mt-1">
+                                  Your submitted delivery experience
+                                </p>
+                              </div>
+
+                              <div className="flex gap-1 text-3xl">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <span
+                                    key={star}
+                                    className={
+                                      star <= order.deliveryRating
+                                        ? "text-yellow-400"
+                                        : "text-gray-200"
+                                    }
+                                  >
+                                    ★
+                                  </span>
+                                ))}
+                              </div>
+
+                            </div>
+
+                            <div className="bg-white/70 backdrop-blur-md border border-white/50 rounded-3xl p-5 text-gray-700 leading-relaxed shadow-sm">
+                              “{order.deliveryFeedback}”
+                            </div>
+
+                          </div>
+                        </div>
+
+                      ) : (
+
+                        /* FEEDBACK FORM */
+                        <div className="relative overflow-hidden rounded-[32px] border border-white/30 bg-white/60 backdrop-blur-2xl p-8 shadow-[0_20px_80px_rgba(99,102,241,0.12)]">
+
+                          {/* BACKGROUND BLOBS */}
+                          <div className="absolute -top-10 right-0 w-52 h-52 bg-indigo-300/20 rounded-full blur-3xl"></div>
+                          <div className="absolute bottom-0 left-0 w-40 h-40 bg-purple-300/20 rounded-full blur-3xl"></div>
+
+                          <div className="relative z-10">
+
+                            {/* HEADER */}
+                            <div className="mb-8">
+
+                              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-100 text-indigo-700 text-sm font-semibold mb-5">
+                                ✨ Delivery Experience
+                              </div>
+
+                              <h2 className="text-3xl font-black text-gray-800 mb-2">
+                                Rate Your Delivery
+                              </h2>
+
+                              <p className="text-gray-500 text-lg">
+                                Share your experience with the ShopLite delivery service
+                              </p>
+
+                            </div>
+
+                            {/* STARS */}
+                            <div className="flex gap-3 mb-8">
+
+                              {[1, 2, 3, 4, 5].map((star) => (
+
+                                <button
+                                  key={star}
+                                  onClick={() =>
+                                    setRatings({
+                                      ...ratings,
+                                      [order.orderId]: star,
+                                    })
+                                  }
+                                  className={`w-16 h-16 rounded-2xl flex items-center justify-center text-4xl transition-all duration-300 transform hover:scale-110 ${ratings[order.orderId] >= star
+                                    ? "bg-gradient-to-br from-yellow-300 to-orange-400 text-white shadow-[0_10px_30px_rgba(251,191,36,0.4)]"
+                                    : "bg-white/70 text-gray-300 border border-gray-200 hover:border-yellow-300"
+                                    }`}
+                                >
+                                  ★
+                                </button>
+
+                              ))}
+
+                            </div>
+
+                            {/* FEEDBACK BOX */}
+                            <div className="mb-6">
+
+                              <textarea
+                                placeholder="Tell us about your delivery experience..."
+                                value={feedbacks[order.orderId] || ""}
+                                onChange={(e) =>
+                                  setFeedbacks({
+                                    ...feedbacks,
+                                    [order.orderId]: e.target.value,
+                                  })
+                                }
+                                rows={5}
+                                className="w-full rounded-3xl border border-white/40 bg-white/70 backdrop-blur-md p-6 text-gray-700 placeholder-gray-400 outline-none focus:ring-4 focus:ring-indigo-200 resize-none shadow-inner"
+                              />
+
+                            </div>
+
+                            {/* SUBMIT BUTTON */}
+                            <button
+                              onClick={() => submitFeedback(order.orderId)}
+                              className="group relative overflow-hidden px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 text-white font-semibold text-sm shadow-[0_10px_25px_rgba(99,102,241,0.28)] transition-all duration-300 hover:scale-[1.02]"
+                            >
+
+                              <span className="relative z-10 flex items-center gap-2">
+                                Submit Feedback
+                                <span className="transition-transform duration-300 group-hover:translate-x-1">
+                                  →
+                                </span>
+                              </span>
+
+                              <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition"></div>
+
+                            </button>
+
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* BUTTON */}
                   <div className="flex justify-end">
                     <button
@@ -359,11 +578,6 @@ const OrderHistory = () => {
           )}
 
         </div>
-
-
-
-
-
 
         {/* PAGINATION */}
         <div className="flex justify-center gap-3 mt-12 items-center">

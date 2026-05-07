@@ -14,339 +14,424 @@ import com.ecommerce.shoplite.repository.OrderRepository;
 import com.ecommerce.shoplite.repository.ProductRepository;
 import com.ecommerce.shoplite.repository.UserRepository;
 import com.ecommerce.shoplite.repository.DeliveryOtpRepository;
+import com.ecommerce.shoplite.dto.DeliveryFeedbackRequest;
+import com.ecommerce.shoplite.repository.DeliveryFeedbackRepository;
 
 import jakarta.transaction.Transactional;
 
 @Service
 public class OrderService {
 
-    @Autowired
-    private CartRepository cartRepository;
+        @Autowired
+        private CartRepository cartRepository;
 
-    @Autowired
-    private OrderRepository orderRepository;
+        @Autowired
+        private OrderRepository orderRepository;
 
-    @Autowired
-    private ProductRepository productRepository;
+        @Autowired
+        private ProductRepository productRepository;
 
-    @Autowired
-    private UserRepository userRepository;
+        @Autowired
+        private UserRepository userRepository;
 
-    @Autowired
-    private DeliveryOtpRepository deliveryOtpRepository;
+        @Autowired
+        private DeliveryOtpRepository deliveryOtpRepository;
 
-    @Autowired
-    private EmailService emailService;
+        @Autowired
+        private EmailService emailService;
+        @Autowired
+        private DeliveryFeedbackRepository deliveryFeedbackRepository;
 
-    // ================= PLACE ORDER =================
-    @Transactional
-    public OrderResponse placeOrder(User user) {
+        // ================= PLACE ORDER =================
+        @Transactional
+        public OrderResponse placeOrder(User user) {
 
-        List<Cart> cartItems = cartRepository.findByUser(user);
+                List<Cart> cartItems = cartRepository.findByUser(user);
 
-        if (cartItems.isEmpty()) {
-            throw new RuntimeException("Cart is empty");
+                if (cartItems.isEmpty()) {
+                        throw new RuntimeException("Cart is empty");
+                }
+
+                Order order = new Order();
+                order.setUser(user);
+                order.setOrderDate(LocalDateTime.now());
+                order.setStatus(OrderStatus.PLACED);
+
+                List<OrderItem> orderItems = new ArrayList<>();
+                double total = 0;
+
+                for (Cart cart : cartItems) {
+
+                        OrderItem item = new OrderItem();
+                        item.setOrder(order);
+                        item.setProduct(cart.getProduct());
+                        item.setQuantity(cart.getQuantity());
+                        item.setPrice(cart.getProduct().getPrice());
+
+                        total += cart.getQuantity() * cart.getProduct().getPrice();
+
+                        orderItems.add(item);
+                }
+
+                order.setItems(orderItems);
+                order.setTotalAmount(total);
+
+                Order savedOrder = orderRepository.save(order);
+
+                cartRepository.deleteByUser(user);
+
+                return mapToResponse(savedOrder);
         }
 
-        Order order = new Order();
-        order.setUser(user);
-        order.setOrderDate(LocalDateTime.now());
-        order.setStatus(OrderStatus.PLACED);
+        // ================= USER ORDERS =================
+        public List<OrderResponse> getUserOrders(User user) {
 
-        List<OrderItem> orderItems = new ArrayList<>();
-        double total = 0;
+                List<Order> orders = orderRepository.findByUserOrderByOrderDateDesc(user);
 
-        for (Cart cart : cartItems) {
-
-            OrderItem item = new OrderItem();
-            item.setOrder(order);
-            item.setProduct(cart.getProduct());
-            item.setQuantity(cart.getQuantity());
-            item.setPrice(cart.getProduct().getPrice());
-
-            total += cart.getQuantity() * cart.getProduct().getPrice();
-
-            orderItems.add(item);
+                return orders.stream()
+                                .map(this::mapToResponse)
+                                .toList();
         }
 
-        order.setItems(orderItems);
-        order.setTotalAmount(total);
+        // ================= GET ORDER BY ID =================
+        public OrderResponse getOrderById(User user, Long orderId) {
 
-        Order savedOrder = orderRepository.save(order);
+                Order order = orderRepository.findByIdAndUser(orderId, user)
+                                .orElseThrow(() -> new RuntimeException("Order not found"));
 
-        cartRepository.deleteByUser(user);
-
-        return mapToResponse(savedOrder);
-    }
-
-    // ================= USER ORDERS =================
-    public List<OrderResponse> getUserOrders(User user) {
-
-        List<Order> orders = orderRepository.findByUserOrderByOrderDateDesc(user);
-
-        return orders.stream()
-                .map(this::mapToResponse)
-                .toList();
-    }
-
-    // ================= GET ORDER BY ID =================
-    public OrderResponse getOrderById(User user, Long orderId) {
-
-        Order order = orderRepository.findByIdAndUser(orderId, user)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
-
-        return mapToResponse(order);
-    }
-
-    // ================= UPDATE STATUS (ADMIN) =================
-    @Transactional
-    public OrderResponse updateOrderStatus(Long orderId, String status) {
-
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
-
-        OrderStatus enumStatus;
-        try {
-            enumStatus = OrderStatus.valueOf(status.toUpperCase());
-        } catch (Exception e) {
-            throw new RuntimeException("Invalid status value");
+                return mapToResponse(order);
         }
 
-        order.setStatus(enumStatus);
+        // ================= UPDATE STATUS (ADMIN) =================
+        @Transactional
+        public OrderResponse updateOrderStatus(Long orderId, String status) {
 
-        return mapToResponse(orderRepository.save(order));
-    }
+                Order order = orderRepository.findById(orderId)
+                                .orElseThrow(() -> new RuntimeException("Order not found"));
 
-    // ================= ADMIN → GET ALL =================
-    public List<OrderResponse> getAllOrders() {
+                OrderStatus enumStatus;
+                try {
+                        enumStatus = OrderStatus.valueOf(status.toUpperCase());
+                } catch (Exception e) {
+                        throw new RuntimeException("Invalid status value");
+                }
 
-        return orderRepository.findAll()
-                .stream()
-                .map(this::mapToResponse)
-                .toList();
-    }
+                order.setStatus(enumStatus);
 
-    // ================= ADMIN STATS =================
-    public Map<String, Long> getAdminStats() {
-
-        Map<String, Long> stats = new HashMap<>();
-
-        stats.put("users", userRepository.count());
-        stats.put("orders", orderRepository.count());
-        stats.put("products", productRepository.count());
-
-        return stats;
-    }
-
-    // ================= DELIVERY → ACTIVE =================
-    public List<OrderResponse> getOrdersForDelivery(User deliveryUser) {
-
-        List<Order> orders = orderRepository
-                .findByDeliveryAgentAndStatus(deliveryUser, OrderStatus.OUT_FOR_DELIVERY);
-
-        return orders.stream()
-                .map(this::mapToResponse)
-                .toList();
-    }
-
-    // ================= DELIVERY → COMPLETED =================
-    public List<OrderResponse> getCompletedOrdersForDelivery(User deliveryUser) {
-
-        List<Order> orders = orderRepository
-                .findByDeliveryAgentAndStatus(deliveryUser, OrderStatus.DELIVERED);
-
-        return orders.stream()
-                .map(this::mapToResponse)
-                .toList();
-    }
-
-    // ================= DELIVERY → SEND OTP =================
-    @Transactional
-    public String sendDeliveryOtp(
-            Long orderId,
-            User deliveryUser) {
-
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
-
-        // SECURITY CHECK
-        if (order.getDeliveryAgent() == null ||
-                !order.getDeliveryAgent()
-                        .getId()
-                        .equals(deliveryUser.getId())) {
-
-            throw new RuntimeException(
-                    "Unauthorized delivery action");
+                return mapToResponse(orderRepository.save(order));
         }
 
-        // GENERATE 6 DIGIT OTP
-        String otp = String.format(
-                "%06d",
-                new Random().nextInt(999999));
+        // ================= ADMIN → GET ALL =================
+        public List<OrderResponse> getAllOrders() {
 
-        // CREATE OTP ENTITY
-        DeliveryOtp deliveryOtp = new DeliveryOtp();
-
-        deliveryOtp.setOrder(order);
-
-        deliveryOtp.setOtp(otp);
-
-        // OTP VALID FOR 5 MINUTES
-        deliveryOtp.setExpiresAt(
-                LocalDateTime.now().plusMinutes(5));
-
-        deliveryOtp.setVerified(false);
-
-        deliveryOtpRepository.save(deliveryOtp);
-
-        // SEND EMAIL TO CUSTOMER
-        emailService.sendDeliveryOtp(
-                order.getUser().getEmail(),
-                order.getUser().getName(),
-                otp);
-
-        return "OTP sent successfully";
-    }
-
-    // ================= DELIVERY → VERIFY OTP =================
-    @Transactional
-    public OrderResponse verifyDeliveryOtp(
-            Long orderId,
-            String enteredOtp,
-            User deliveryUser) {
-
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
-
-        // SECURITY CHECK
-        if (order.getDeliveryAgent() == null ||
-                !order.getDeliveryAgent()
-                        .getId()
-                        .equals(deliveryUser.getId())) {
-
-            throw new RuntimeException(
-                    "Unauthorized delivery action");
+                return orderRepository.findAll()
+                                .stream()
+                                .map(this::mapToResponse)
+                                .toList();
         }
 
-        // GET LATEST OTP
-        DeliveryOtp deliveryOtp = deliveryOtpRepository
-                .findTopByOrderOrderByCreatedAtDesc(order)
-                .orElseThrow(() -> new RuntimeException("OTP not found"));
+        // ================= ADMIN STATS =================
+        public Map<String, Long> getAdminStats() {
 
-        // ALREADY USED
-        if (deliveryOtp.isVerified()) {
+                Map<String, Long> stats = new HashMap<>();
 
-            throw new RuntimeException(
-                    "OTP already used");
+                stats.put("users", userRepository.count());
+                stats.put("orders", orderRepository.count());
+                stats.put("products", productRepository.count());
+
+                return stats;
         }
 
-        // EXPIRED
-        if (deliveryOtp.getExpiresAt()
-                .isBefore(LocalDateTime.now())) {
+        // ================= DELIVERY → ACTIVE =================
+        public List<OrderResponse> getOrdersForDelivery(User deliveryUser) {
 
-            throw new RuntimeException(
-                    "OTP expired");
+                List<Order> orders = orderRepository
+                                .findByDeliveryAgentAndStatus(deliveryUser, OrderStatus.OUT_FOR_DELIVERY);
+
+                return orders.stream()
+                                .map(this::mapToResponse)
+                                .toList();
         }
 
-        // WRONG OTP
-        if (!deliveryOtp.getOtp()
-                .equals(enteredOtp)) {
+        // ================= DELIVERY → COMPLETED =================
+        public List<OrderResponse> getCompletedOrdersForDelivery(User deliveryUser) {
 
-            deliveryOtp.setAttempts(
-                    deliveryOtp.getAttempts() + 1);
+                List<Order> orders = orderRepository
+                                .findByDeliveryAgentAndStatus(deliveryUser, OrderStatus.DELIVERED);
 
-            deliveryOtpRepository.save(deliveryOtp);
-
-            throw new RuntimeException(
-                    "Invalid OTP");
+                return orders.stream()
+                                .map(this::mapToResponse)
+                                .toList();
         }
 
-        // MARK VERIFIED
-        deliveryOtp.setVerified(true);
+        // ================= DELIVERY → SEND OTP =================
+        @Transactional
+        public String sendDeliveryOtp(
+                        Long orderId,
+                        User deliveryUser) {
 
-        deliveryOtpRepository.save(deliveryOtp);
+                Order order = orderRepository.findById(orderId)
+                                .orElseThrow(() -> new RuntimeException("Order not found"));
 
-        // MARK ORDER DELIVERED
-        order.setStatus(OrderStatus.DELIVERED);
+                // SECURITY CHECK
+                if (order.getDeliveryAgent() == null ||
+                                !order.getDeliveryAgent()
+                                                .getId()
+                                                .equals(deliveryUser.getId())) {
 
-        // SEND DELIVERY SUCCESS EMAIL
-        emailService.sendDeliverySuccessEmail(
-                order.getUser().getEmail(),
-                order.getUser().getName(),
-                order);
+                        throw new RuntimeException(
+                                        "Unauthorized delivery action");
+                }
 
-        return mapToResponse(
-                orderRepository.save(order));
-    }
+                // GENERATE 6 DIGIT OTP
+                String otp = String.format(
+                                "%06d",
+                                new Random().nextInt(999999));
 
-    // ================= ADMIN → ASSIGN DELIVERY =================
-    @Transactional
-    public OrderResponse assignDeliveryAgent(Long orderId, Long deliveryUserId) {
+                // CREATE OTP ENTITY
+                DeliveryOtp deliveryOtp = new DeliveryOtp();
 
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                deliveryOtp.setOrder(order);
 
-        User deliveryUser = userRepository.findById(deliveryUserId)
-                .orElseThrow(() -> new RuntimeException("Delivery user not found"));
+                deliveryOtp.setOtp(otp);
 
-        // IMPORTANT VALIDATION
-        if (deliveryUser.getRole() != Role.DELIVERY) {
-            throw new RuntimeException("User is not a delivery agent");
+                // OTP VALID FOR 5 MINUTES
+                deliveryOtp.setExpiresAt(
+                                LocalDateTime.now().plusMinutes(5));
+
+                deliveryOtp.setVerified(false);
+
+                deliveryOtpRepository.save(deliveryOtp);
+
+                // SEND EMAIL TO CUSTOMER
+                emailService.sendDeliveryOtp(
+                                order.getUser().getEmail(),
+                                order.getUser().getName(),
+                                otp);
+
+                return "OTP sent successfully";
         }
 
-        order.setDeliveryAgent(deliveryUser);
+        // ================= DELIVERY → VERIFY OTP =================
+        @Transactional
+        public OrderResponse verifyDeliveryOtp(
+                        Long orderId,
+                        String enteredOtp,
+                        User deliveryUser) {
 
-        // CORRECT STATUS
-        order.setStatus(OrderStatus.OUT_FOR_DELIVERY);
+                Order order = orderRepository.findById(orderId)
+                                .orElseThrow(() -> new RuntimeException("Order not found"));
 
-        return mapToResponse(orderRepository.save(order));
-    }
+                // SECURITY CHECK
+                if (order.getDeliveryAgent() == null ||
+                                !order.getDeliveryAgent()
+                                                .getId()
+                                                .equals(deliveryUser.getId())) {
 
-    // ================= DELIVERY → MARK DELIVERED =================
-    @Transactional
-    public OrderResponse markAsDelivered(Long orderId, User deliveryUser) {
+                        throw new RuntimeException(
+                                        "Unauthorized delivery action");
+                }
 
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                // GET LATEST OTP
+                DeliveryOtp deliveryOtp = deliveryOtpRepository
+                                .findTopByOrderOrderByCreatedAtDesc(order)
+                                .orElseThrow(() -> new RuntimeException("OTP not found"));
 
-        // SECURITY CHECK
-        if (order.getDeliveryAgent() == null ||
-                !order.getDeliveryAgent().getId().equals(deliveryUser.getId())) {
-            throw new RuntimeException("Unauthorized delivery action");
+                // ALREADY USED
+                if (deliveryOtp.isVerified()) {
+
+                        throw new RuntimeException(
+                                        "OTP already used");
+                }
+
+                // EXPIRED
+                if (deliveryOtp.getExpiresAt()
+                                .isBefore(LocalDateTime.now())) {
+
+                        throw new RuntimeException(
+                                        "OTP expired");
+                }
+
+                // WRONG OTP
+                if (!deliveryOtp.getOtp()
+                                .equals(enteredOtp)) {
+
+                        deliveryOtp.setAttempts(
+                                        deliveryOtp.getAttempts() + 1);
+
+                        deliveryOtpRepository.save(deliveryOtp);
+
+                        throw new RuntimeException(
+                                        "Invalid OTP");
+                }
+
+                // MARK VERIFIED
+                deliveryOtp.setVerified(true);
+
+                deliveryOtpRepository.save(deliveryOtp);
+
+                // MARK ORDER DELIVERED
+                order.setStatus(OrderStatus.DELIVERED);
+
+                // SEND DELIVERY SUCCESS EMAIL
+                emailService.sendDeliverySuccessEmail(
+                                order.getUser().getEmail(),
+                                order.getUser().getName(),
+                                order);
+
+                return mapToResponse(
+                                orderRepository.save(order));
         }
 
-        order.setStatus(OrderStatus.DELIVERED);
+        // ================= ADMIN → ASSIGN DELIVERY =================
+        @Transactional
+        public OrderResponse assignDeliveryAgent(Long orderId, Long deliveryUserId) {
 
-        return mapToResponse(orderRepository.save(order));
-    }
+                Order order = orderRepository.findById(orderId)
+                                .orElseThrow(() -> new RuntimeException("Order not found"));
 
-    // ================= DTO MAPPER =================
-    private OrderResponse mapToResponse(Order order) {
+                User deliveryUser = userRepository.findById(deliveryUserId)
+                                .orElseThrow(() -> new RuntimeException("Delivery user not found"));
 
-        List<OrderItemResponse> itemResponses = order.getItems()
-                .stream()
-                .map(item -> {
-                    OrderItemResponse dto = new OrderItemResponse();
-                    dto.setProductName(item.getProduct().getName());
-                    dto.setPrice(item.getPrice());
-                    dto.setQuantity(item.getQuantity());
-                    dto.setImage(item.getProduct().getImageUrl());
-                    return dto;
-                })
-                .toList();
+                // IMPORTANT VALIDATION
+                if (deliveryUser.getRole() != Role.DELIVERY) {
+                        throw new RuntimeException("User is not a delivery agent");
+                }
 
-        OrderResponse response = new OrderResponse();
-        response.setOrderId(order.getId());
-        response.setTotalAmount(order.getTotalAmount());
-        response.setStatus(order.getStatus().name());
-        response.setOrderDate(order.getOrderDate().toString());
-        response.setItems(itemResponses);
+                order.setDeliveryAgent(deliveryUser);
 
-        // Optional (useful for frontend)
-        if (order.getDeliveryAgent() != null) {
-            response.setDeliveryAgentName(order.getDeliveryAgent().getName());
+                // CORRECT STATUS
+                order.setStatus(OrderStatus.OUT_FOR_DELIVERY);
+
+                return mapToResponse(orderRepository.save(order));
         }
 
-        return response;
-    }
+        // ================= DELIVERY → MARK DELIVERED =================
+        @Transactional
+        public OrderResponse markAsDelivered(Long orderId, User deliveryUser) {
+
+                Order order = orderRepository.findById(orderId)
+                                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+                // SECURITY CHECK
+                if (order.getDeliveryAgent() == null ||
+                                !order.getDeliveryAgent().getId().equals(deliveryUser.getId())) {
+                        throw new RuntimeException("Unauthorized delivery action");
+                }
+
+                order.setStatus(OrderStatus.DELIVERED);
+
+                return mapToResponse(orderRepository.save(order));
+        }
+
+        // ================= CUSTOMER → ADD DELIVERY FEEDBACK =================
+        @Transactional
+        public String addDeliveryFeedback(
+                        User customer,
+                        DeliveryFeedbackRequest request) {
+
+                Order order = orderRepository.findById(request.getOrderId())
+                                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+                // SECURITY CHECK
+                if (!order.getUser().getId().equals(customer.getId())) {
+
+                        throw new RuntimeException(
+                                        "Unauthorized feedback action");
+                }
+
+                // ORDER MUST BE DELIVERED
+                if (order.getStatus() != OrderStatus.DELIVERED) {
+
+                        throw new RuntimeException(
+                                        "Feedback allowed only after delivery");
+                }
+
+                // FEEDBACK ALREADY EXISTS
+                if (deliveryFeedbackRepository.findByOrder(order).isPresent()) {
+
+                        throw new RuntimeException(
+                                        "Feedback already submitted");
+                }
+
+                // VALIDATE RATING
+                if (request.getRating() == null ||
+                                request.getRating() < 1 ||
+                                request.getRating() > 5) {
+
+                        throw new RuntimeException(
+                                        "Rating must be between 1 and 5");
+                }
+
+                DeliveryFeedback feedback = new DeliveryFeedback();
+
+                feedback.setOrder(order);
+
+                feedback.setCustomer(customer);
+
+                feedback.setDeliveryPartner(order.getDeliveryAgent());
+
+                feedback.setRating(request.getRating());
+
+                feedback.setFeedback(request.getFeedback());
+
+                deliveryFeedbackRepository.save(feedback);
+
+                return "Delivery feedback submitted successfully";
+        }
+
+        // ================= DTO MAPPER =================
+        private OrderResponse mapToResponse(Order order) {
+
+                List<OrderItemResponse> itemResponses = order.getItems()
+                                .stream()
+                                .map(item -> {
+                                        OrderItemResponse dto = new OrderItemResponse();
+                                        dto.setProductName(item.getProduct().getName());
+                                        dto.setPrice(item.getPrice());
+                                        dto.setQuantity(item.getQuantity());
+                                        dto.setImage(item.getProduct().getImageUrl());
+                                        return dto;
+                                })
+                                .toList();
+
+                OrderResponse response = new OrderResponse();
+                response.setOrderId(order.getId());
+                response.setTotalAmount(order.getTotalAmount());
+                response.setStatus(order.getStatus().name());
+                response.setOrderDate(order.getOrderDate().toString());
+                response.setItems(itemResponses);
+
+                if (order.getUser() != null) {
+
+                        response.setCustomerName(
+                                        order.getUser().getName());
+
+                        response.setCustomerEmail(
+                                        order.getUser().getEmail());
+                }
+
+                if (order.getDeliveryAgent() != null) {
+
+                        response.setDeliveryAgentName(
+                                        order.getDeliveryAgent().getName());
+
+                        response.setDeliveryAgentEmail(
+                                        order.getDeliveryAgent().getEmail());
+                }
+
+                // DELIVERY FEEDBACK
+                deliveryFeedbackRepository
+                                .findByOrder(order)
+                                .ifPresent(feedback -> {
+
+                                        response.setDeliveryRating(
+                                                        feedback.getRating());
+
+                                        response.setDeliveryFeedback(
+                                                        feedback.getFeedback());
+                                });
+
+                return response;
+        }
 }
