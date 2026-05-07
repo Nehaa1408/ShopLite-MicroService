@@ -55,9 +55,8 @@ const Categories = () => {
                 { name: "Home", path: "/" },
                 { name: "Categories", path: "/categories" },
                 { name: "Brands", path: "/brand/aurel" },
-                { name: "Deals", path: "/top-deals" },
-                { name: "Orders", path: "/orders" },
-                { name: "Tickets", path: "/tickets", secondary: true }
+                { name: "Deals", path: "/top-deals" }
+    
               ].map((item, i) => {
               const isActive = location.pathname === item.path;
 

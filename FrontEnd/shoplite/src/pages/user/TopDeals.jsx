@@ -79,8 +79,7 @@ const TopDeals = () => {
                 { name: "Categories", path: "/categories" },
                 { name: "Brands", path: "/brand/aurel" },
                 { name: "Deals", path: "/top-deals" },
-                { name: "Orders", path: "/orders" },
-                { name: "Tickets", path: "/tickets", secondary: true }
+ 
               ].map((item, i) => {
               const isActive = location.pathname === item.path;
 

@@ -1,6 +1,10 @@
 import React from "react";
 
-const OrderCard = ({ order, onDeliver }) => {
+const OrderCard = ({
+  order,
+  onSendOtp,
+  onUnableToDeliver
+}) => {
 
   const items = order.items || [];
 
@@ -206,50 +210,98 @@ const OrderCard = ({ order, onDeliver }) => {
       </div>
 
       {/* BUTTONS */}
-      <div className="flex gap-3">
+      <div className="flex flex-col gap-3">
 
-        {/* NAVIGATE */}
+        {/* TOP BUTTONS */}
+        <div className="flex gap-3">
+
+          {/* NAVIGATE */}
+          <button
+            className="flex-1 py-3 rounded-[22px]
+
+    bg-gradient-to-br
+    from-cyan-500/90
+    via-sky-500/90
+    to-blue-500/90
+
+    backdrop-blur-xl
+
+    border border-white/20
+
+    text-white
+    font-semibold
+
+    shadow-[0_10px_28px_rgba(14,165,233,0.28)]
+
+    hover:shadow-[0_14px_36px_rgba(14,165,233,0.38)]
+
+    hover:brightness-110
+
+    active:scale-[0.98]
+
+    transition-all duration-300"
+          >
+
+            Navigate
+
+          </button>
+
+
+          {/* SEND OTP */}
+          <button
+            onClick={() => onSendOtp(order.orderId)}
+            className="flex-1 py-3 rounded-[22px]
+
+            bg-gradient-to-br
+            from-[#7C83FF]
+            via-[#6366F1]
+            to-[#5B5FEF]
+
+            text-white
+            font-semibold
+
+            border border-white/20
+
+            shadow-[0_10px_30px_rgba(99,102,241,0.35)]
+
+            hover:shadow-[0_14px_40px_rgba(99,102,241,0.45)]
+
+            hover:brightness-110
+
+            active:scale-[0.98]
+
+            transition-all duration-300"
+          >
+
+            Reached Destination
+
+          </button>
+
+        </div>
+
+        {/* UNABLE TO DELIVER */}
         <button
-          className="flex-1 py-3 rounded-2xl
+          onClick={() => onUnableToDeliver(order.orderId)}
+          className="w-full py-3 rounded-[22px]
 
-          bg-white/80
+        bg-red-500/10 backdrop-blur-xl
 
-          border border-gray-100
+        border border-red-200/40
 
-          text-gray-700
-          font-semibold
+        text-red-500
+        font-semibold
 
-          hover:bg-white
+        shadow-[0_8px_24px_rgba(239,68,68,0.12)]
 
-          transition-all duration-300"
+        hover:bg-red-500/15
+        hover:shadow-[0_12px_30px_rgba(239,68,68,0.18)]
+
+        active:scale-[0.99]
+
+        transition-all duration-300"
         >
 
-          Navigate
-
-        </button>
-
-        {/* DELIVER */}
-        <button
-          onClick={() => onDeliver(order.orderId)}
-          className="flex-1 py-3 rounded-2xl
-
-          bg-gradient-to-b
-          from-[#7C83FF]
-          to-[#6366F1]
-
-          text-white
-          font-semibold
-
-          shadow-[0_8px_18px_rgba(99,102,241,0.18)]
-
-          hover:shadow-[0_10px_24px_rgba(99,102,241,0.22)]
-
-          active:scale-[0.99]
-
-          transition-all duration-300"
-        >
-
-          Mark Delivered
+          Unable to Deliver
 
         </button>
 

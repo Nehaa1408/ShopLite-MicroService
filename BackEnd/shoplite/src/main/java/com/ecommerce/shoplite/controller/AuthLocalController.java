@@ -9,7 +9,7 @@ import com.ecommerce.shoplite.dto.LoginResponse;
 import com.ecommerce.shoplite.dto.RegisterRequest;
 import com.ecommerce.shoplite.dto.RegisterResponse;
 import com.ecommerce.shoplite.service.UserService;
-
+import java.util.Map;
 import jakarta.validation.Valid;
 
 @RestController
@@ -17,30 +17,48 @@ import jakarta.validation.Valid;
 @CrossOrigin(origins = "*")
 public class AuthLocalController {
 
-    @Autowired
-    private UserService userService;
+        @Autowired
+        private UserService userService;
 
-    // ================= REGISTER =================
-    @PostMapping("/register")
-    public ResponseEntity<RegisterResponse> register(
-            @Valid @RequestBody RegisterRequest request) {
+        // ================= SEND SIGNUP OTP =================
+        @PostMapping("/send-signup-otp")
+        public ResponseEntity<String> sendSignupOtp(
+                        @Valid @RequestBody RegisterRequest request) {
 
-        return ResponseEntity.ok(
-                userService.register(request)
-        );
-    }
+                return ResponseEntity.ok(
+                                userService.sendSignupOtp(request));
+        }
 
-    // ================= LOGIN =================
-    @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(
-            @Valid @RequestBody LoginRequest request) {
+        // ================= VERIFY SIGNUP OTP =================
+        @PostMapping("/verify-signup-otp")
+        public ResponseEntity<RegisterResponse> verifySignupOtp(
+                        @RequestBody Map<String, String> body) {
 
-        return ResponseEntity.ok(
+                return ResponseEntity.ok(
 
-                userService.login(
-                        request.getEmail(),
-                        request.getPassword()
-                )
-        );
-    }
+                                userService.verifySignupOtp(
+                                                body.get("email"),
+                                                body.get("otp")));
+        }
+
+        // ================= REGISTER =================
+        @PostMapping("/register")
+        public ResponseEntity<RegisterResponse> register(
+                        @Valid @RequestBody RegisterRequest request) {
+
+                return ResponseEntity.ok(
+                                userService.register(request));
+        }
+
+        // ================= LOGIN =================
+        @PostMapping("/login")
+        public ResponseEntity<LoginResponse> login(
+                        @Valid @RequestBody LoginRequest request) {
+
+                return ResponseEntity.ok(
+
+                                userService.login(
+                                                request.getEmail(),
+                                                request.getPassword()));
+        }
 }

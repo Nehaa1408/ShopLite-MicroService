@@ -56,21 +56,14 @@ const Home = () => {
   };
 
   const handleAddToCart = async (e, product) => {
-    e.stopPropagation();
+  e.stopPropagation();
 
-    try {
-      await addToCart(product);
-    } catch (err) {
-      if (
-        err.message === "NOT_LOGGED_IN" ||
-        err.message === "SESSION_EXPIRED"
-      ) {
-        setShowLoginPopup(true);
-      } else {
-        console.error(err);
-      }
-    }
-  };
+  try {
+    await addToCart(product);
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   // Reset page when category changes
   React.useEffect(() => {
@@ -122,13 +115,6 @@ const Home = () => {
     return !!localStorage.getItem("token");
   };
 
-  const handleTicketsClick = () => {
-    if (!isAuthenticated()) {
-      setShowLoginPopup(true);
-      return;
-    }
-    navigate("/tickets");
-  };
 
   return (
     <div
@@ -162,14 +148,7 @@ bg-[#e9d5ff]/40 rounded-full blur-[140px] -z-10" />
           setSearchTerm={setSearchTerm}
           setCurrentPage={setCurrentPage}
           handleProfileClick={handleProfileClick}
-          onCartClick={() => {
-            if (!isAuthenticated()) {
-              setShowLoginPopup(true);
-              return;
-            }
-            navigate("/cart");
-          }}
-          onTicketsClick={handleTicketsClick}
+          onCartClick={() => navigate("/cart")}
         />
         {/*  MOUSE TRACKING GLOW */}
         <div
@@ -264,53 +243,7 @@ bg-[#e9d5ff]/40 rounded-full blur-[140px] -z-10" />
 
         <Footer />
 
-        {
-          showLoginPopup && (
-            <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-
-              {/* CARD */}
-              <div className="bg-white rounded-2xl p-8 w-[90%] max-w-sm shadow-[0_20px_60px_rgba(0,0,0,0.2)] text-center animate-[fadeIn_0.3s_ease]">
-
-                {/* ICON */}
-                <div className="text-4xl mb-4">🔒</div>
-
-                {/* TITLE */}
-                <h2 className="text-xl font-bold mb-2">
-                  Login Required
-                </h2>
-
-                {/* TEXT */}
-                <p className="text-gray-500 mb-6 text-sm">
-                  Please login to continue adding items to your cart.
-                </p>
-
-                {/* BUTTONS */}
-                <div className="flex gap-3 justify-center">
-
-                  <button
-                    onClick={() => {
-                      setShowLoginPopup(false);
-                      navigate("/login");
-                    }}
-                    className="px-5 py-2.5 bg-indigo-600 text-white rounded-lg font-medium hover:scale-105 transition"
-                  >
-                    Login
-                  </button>
-
-                  <button
-                    onClick={() => setShowLoginPopup(false)}
-                    className="px-5 py-2.5 border rounded-lg font-medium hover:bg-gray-100 transition"
-                  >
-                    Cancel
-                  </button>
-
-                </div>
-
-              </div>
-            </div>
-          )
-        }
-
+        
       </div >
     </div >
   );

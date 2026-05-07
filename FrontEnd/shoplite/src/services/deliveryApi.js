@@ -124,12 +124,27 @@ export const getDeliveryOrders = async () => {
     return res.data;
 };
 
-// UPDATE ORDER STATUS
-export const updateOrderStatus = async (orderId) => {
+// SEND DELIVERY OTP
+export const sendDeliveryOtp = async (orderId) => {
 
     const res =
-        await deliveryAxios.put(
-            `/orders/delivery/${orderId}/complete`
+        await deliveryAxios.post(
+            `/orders/delivery/${orderId}/send-otp`
+        );
+
+    return res.data;
+};
+
+// VERIFY DELIVERY OTP
+export const verifyDeliveryOtp = async (
+    orderId,
+    otp
+) => {
+
+    const res =
+        await deliveryAxios.post(
+            `/orders/delivery/${orderId}/verify-otp`,
+            { otp }
         );
 
     return res.data;

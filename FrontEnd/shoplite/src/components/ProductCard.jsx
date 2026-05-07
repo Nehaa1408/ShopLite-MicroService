@@ -21,7 +21,11 @@ const ProductCard = ({ product, onAddToCart, onView }) => {
         h-[300px] md:h-[340px]">
 
                     <img
-                        src={product.image}
+                        src={
+                            product.imageUrl ||
+                            product.image ||
+                            product.imagePath
+                        }
                         alt={product.name}
                         onError={(e) => {
                             e.target.src = "/products/p1.webp";

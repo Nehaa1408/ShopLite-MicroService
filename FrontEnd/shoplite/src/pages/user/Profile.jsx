@@ -36,7 +36,7 @@ const Profile = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    navigate("/login");
+    navigate("/");
   };
   if (!user) return <div className="p-10 text-center">Loading profile...</div>;
   return (
@@ -129,6 +129,12 @@ const Profile = () => {
               className="p-4 bg-white rounded-xl shadow cursor-pointer hover:bg-gray-50"
             >
               Order History →
+            </div>
+            <div
+              onClick={() => navigate("/tickets")}
+              className="p-4 bg-white rounded-xl shadow cursor-pointer hover:bg-gray-50"
+            >
+              Tickets →
             </div>
           </div>
         </div>

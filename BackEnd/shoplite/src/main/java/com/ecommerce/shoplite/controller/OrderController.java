@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import com.ecommerce.shoplite.dto.OrderResponse;
 import com.ecommerce.shoplite.entity.User;
 import com.ecommerce.shoplite.service.OrderService;
+import com.ecommerce.shoplite.dto.VerifyOtpRequest;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -77,6 +78,34 @@ public class OrderController {
     public ResponseEntity<List<OrderResponse>> getCompletedOrders(Authentication authentication) {
         User user = (User) authentication.getPrincipal();
         return ResponseEntity.ok(orderService.getCompletedOrdersForDelivery(user));
+    }
+
+    // ================= DELIVERY: SEND OTP =================
+    @PostMapping("/delivery/{orderId}/send-otp")
+    public ResponseEntity<String> sendDeliveryOtp(
+            @PathVariable Long orderId,
+            Authentication authentication) {
+
+        User user = (User) authentication.getPrincipal();
+
+        return ResponseEntity.ok(
+                orderService.sendDeliveryOtp(orderId, user));
+    }
+
+    // ================= DELIVERY: VERIFY OTP =================
+    @PostMapping("/delivery/{orderId}/verify-otp")
+    public ResponseEntity<OrderResponse> verifyDeliveryOtp(
+            @PathVariable Long orderId,
+            @RequestBody VerifyOtpRequest request,
+            Authentication authentication) {
+
+        User user = (User) authentication.getPrincipal();
+
+        return ResponseEntity.ok(
+                orderService.verifyDeliveryOtp(
+                        orderId,
+                        request.getOtp(),
+                        user));
     }
 
     // ================= DELIVERY: MARK DELIVERED =================

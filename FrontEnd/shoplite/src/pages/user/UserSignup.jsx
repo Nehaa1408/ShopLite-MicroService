@@ -1,34 +1,44 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from 'axios';
+import axios from "axios";
 import { GoogleLogin } from "@react-oauth/google";
 import { toast } from "react-toastify";
 
 const UserSignup = () => {
+  const navigate = useNavigate();
+
+  const [activeTab, setActiveTab] = useState("signup");
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const navigate = useNavigate();
+
   const handleSignup = async (e) => {
     e.preventDefault();
 
-    if (!name || !email || !password) {
-      alert("Please fill all fields");
+    if (!name || !email || !password || !confirmPassword) {
+      toast.error("Please fill all fields");
       return;
     }
+
     if (password !== confirmPassword) {
-      alert("Passwords do not match");
+      toast.error("Passwords do not match");
       return;
     }
 
     try {
-      console.log("DATA:", { name, email, password });
-      await axios.post("http://localhost:8080/api/auth/register", {
-        name,
-        email,
-        password,
-      });
+      // REGISTER
+      await axios.post(
+        "http://localhost:8080/api/auth/register",
+        {
+          name,
+          email,
+          password,
+        }
+      );
+
+      // AUTO LOGIN
       const loginRes = await axios.post(
         "http://localhost:8080/api/auth/login",
         {
@@ -37,183 +47,398 @@ const UserSignup = () => {
         }
       );
 
+      localStorage.setItem(
+        "token",
+        loginRes.data.token
+      );
 
-      localStorage.setItem("token", loginRes.data.token);
-      localStorage.setItem("user", JSON.stringify(loginRes.data));
+      localStorage.setItem(
+        "user",
+        JSON.stringify(loginRes.data)
+      );
 
-      navigate("/");
+      toast.success("Welcome to ShopLite ✨");
+
+      setTimeout(() => {
+        navigate("/");
+      }, 1000);
+
     } catch (err) {
       console.error(err);
 
-      if (err.response && err.response.data) {
-        alert(err.response.data.message);
+      if (err.response?.data?.message) {
+        toast.error(err.response.data.message);
       } else {
-        alert("Signup failed");
+        toast.error("Signup failed");
       }
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f9f5ff] via-[#ece8ff] to-[#859aff] relative overflow-x-hidden font-body text-on-surface">
-      {/* NAVBAR */}
-      <nav className="fixed top-0 w-full backdrop-blur-xl bg-white/60">
-        <div className="flex justify-between items-center px-8 py-4 max-w-7xl mx-auto">
-          <h1 className="text-2xl font-black text-blue-700">ShopLite</h1>
+    <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden bg-gradient-to-br from-[#eef2ff] via-[#f8fafc] to-[#fdf2ff]">
 
-          <div className="hidden md:flex gap-8 items-center">
-            <span className="cursor-pointer text-gray-500 hover:text-blue-500">
-              Shop
-            </span>
-            <span className="cursor-pointer text-gray-500 hover:text-blue-500">
-              Categories
-            </span>
-            <span className="cursor-pointer text-gray-500 hover:text-blue-500">
-              About
-            </span>
+      {/* SOFT GLOW */}
+      <div className="absolute w-[400px] h-[400px] bg-purple-300/20 blur-[120px] top-[-100px] left-[-100px]"></div>
 
-            <button
-              onClick={() => navigate("/login")}
-              className="bg-blue-600 text-white px-6 py-2 rounded-full font-bold"
-            >
-              Login
-            </button>
-          </div>
+      <div className="absolute w-[350px] h-[350px] bg-pink-300/20 blur-[120px] bottom-[-100px] right-[-100px]"></div>
+
+      <div className="absolute w-[500px] h-[500px] bg-violet-300/20 blur-[140px] rounded-full"></div>
+
+      <div className="absolute top-6 left-8">
+
+        <h1
+          onClick={() => navigate("/")}
+          className="text-2xl md:text-3xl font-extrabold tracking-tight cursor-pointer"
+        >
+          <span className="bg-gradient-to-r from-indigo-600 via-violet-500 to-pink-500 bg-clip-text text-transparent">
+            ShopLite
+          </span>
+        </h1>
+
+      </div>
+
+      <div>
+
+        {/* TITLE */}
+        <h2 className="text-2xl font-extrabold text-gray-900 text-center">
+          Create Account
+        </h2>
+
+        {/* SUBTITLE */}
+        <p className="text-sm text-gray-500 mt-1">
+          Start your shopping journey with{" "}
+          <span className="font-semibold text-indigo-600">
+            ShopLite
+          </span>
+        </p>
+
+      </div>
+
+      {/* SIGNUP CARD */}
+      <div className="w-full max-w-4xl bg-white/80 backdrop-blur-xl hover:shadow-[0_30px_80px_rgba(80,90,255,0.25)] transition-all duration-300 p-8 rounded-2xl border border-white/20">
+
+        {/* TOGGLE */}
+        <div className="flex p-1 bg-gray-100 rounded-xl mb-8">
+
+          <button
+            onClick={() => {
+              setActiveTab("login");
+              navigate("/login");
+            }}
+            className={`flex-1 py-2.5 text-sm rounded-lg transition ${activeTab === "login"
+              ? "bg-white shadow font-bold text-indigo-600"
+              : "text-gray-500"
+              }`}
+          >
+            Login
+          </button>
+
+          <button
+            onClick={() => setActiveTab("signup")}
+            className={`flex-1 py-2.5 text-sm rounded-lg transition ${activeTab === "signup"
+              ? "bg-white shadow font-bold text-indigo-600"
+              : "text-gray-500"
+              }`}
+          >
+            Sign Up
+          </button>
+
         </div>
-      </nav>
 
-      {/* GLOW EFFECT */}
-      <div className="absolute -top-32 -left-32 w-96 h-96 bg-blue-200 rounded-full blur-[120px] opacity-40"></div>
-      <div className="absolute top-1/2 -right-32 w-96 h-96 bg-pink-200 rounded-full blur-[120px] opacity-40"></div>
-      <div className="absolute bottom-0 left-1/3 w-96 h-96 bg-purple-200 rounded-full blur-[120px] opacity-40"></div>
 
-      {/* MAIN */}
-      <main className="pt-32 pb-20 px-6 flex flex-col items-center justify-center">
-        <div className="w-full max-w-md">
-          {/* TITLE */}
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-extrabold mb-2">Create an Account</h1>
-            <p className="text-gray-500">
-              Start your simplified shopping experience today.
-            </p>
-          </div>
 
-          {/* CARD */}
-          <div className="bg-white/80 backdrop-blur-xl p-8 rounded-xl shadow">
-            {/* SOCIAL */}
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              {/* GOOGLE */}
-              <GoogleLogin
-                text="signup_with"
-                onSuccess={async (credentialResponse) => {
-                  try {
-                    const res = await axios.post(
-                      "http://localhost:8080/api/auth/google",
-                      {
-                        token: credentialResponse.credential,
-                      }
-                    );
+        {/* GOOGLE */}
+        <div className="flex justify-center mb-8">
 
-                    localStorage.setItem("token", res.data.token);
-                    localStorage.setItem("user", JSON.stringify(res.data));
-
-                    toast.success("Welcome back ShopLite 🚀");
-
-                    setTimeout(() => {
-                      navigate("/");
-                    }, 1000);
-                  } catch (err) {
-                    console.error(err);
-                    toast.error("Google login failed");
+          <GoogleLogin
+            text="signup_with"
+            size="large"
+            theme="outline"
+            onSuccess={async (credentialResponse) => {
+              try {
+                const res = await axios.post(
+                  "http://localhost:8080/api/auth/google",
+                  {
+                    token: credentialResponse.credential,
                   }
-                }}
-                onError={() => {
-                  toast.error("Google Login Failed");
-                }}
-              />
+                );
 
-              {/* iOS */}
-              <button className="flex items-center justify-center py-3 bg-gray-100 rounded-lg hover:bg-gray-200">
-                <span className="text-sm font-medium">iOS</span>
-              </button>
-            </div>
+                localStorage.setItem(
+                  "token",
+                  res.data.token
+                );
 
-            {/* DIVIDER */}
-            <div className="flex items-center gap-3 my-4">
-              <div className="flex-1 h-[1px] bg-gray-200"></div>
-              <span className="text-xs text-gray-400">
-                OR REGISTER WITH EMAIL
-              </span>
-              <div className="flex-1 h-[1px] bg-gray-200"></div>
-            </div>
+                localStorage.setItem(
+                  "user",
+                  JSON.stringify(res.data)
+                );
 
-            {/* FORM */}
-            <form onSubmit={handleSignup} className="space-y-4">
-              {/* NAME */}
-              <div>
-                <label className="text-xs text-gray-500">Full Name</label>
+                toast.success("Welcome to ShopLite ✨");
+
+                setTimeout(() => {
+                  navigate("/");
+                }, 1000);
+
+              } catch (err) {
+                console.error(err);
+
+                toast.error("Google signup failed");
+              }
+            }}
+            onError={() => {
+              toast.error("Google Signup Failed");
+            }}
+          />
+
+        </div>
+
+        {/* DIVIDER */}
+        <div className="flex items-center gap-3 mb-8">
+
+          <div className="flex-1 h-[1px] bg-gray-200"></div>
+
+          <span className="text-xs text-gray-400">
+            OR REGISTER WITH EMAIL
+          </span>
+
+          <div className="flex-1 h-[1px] bg-gray-200"></div>
+
+        </div>
+
+        {/* FORM */}
+        <form onSubmit={handleSignup} className="space-y-6">
+
+          {/* ROW 1 */}
+          <div className="grid md:grid-cols-2 gap-5">
+
+            {/* NAME */}
+            <div>
+
+              <label className="text-sm text-gray-500">
+                Full Name
+              </label>
+
+              <div className="relative mt-2">
+
+                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[20px]">
+                  person
+                </span>
+
                 <input
                   type="text"
                   placeholder="Enter Name"
-                  className="w-full p-3 rounded-lg bg-gray-100 mt-1 outline-none"
+                  value={name}
                   onChange={(e) => setName(e.target.value)}
+                  className="
+                    w-full
+                    pl-10
+                    pr-4
+                    py-3
+                    rounded-xl
+                    bg-white/80
+                    hover:bg-white
+                    transition
+                    border border-gray-200
+                    focus:border-pink-300
+                    focus:ring-2
+                    focus:ring-pink-100
+                    outline-none
+                  "
                 />
-              </div>
 
-              {/* EMAIL */}
-              <div>
-                <label className="text-xs text-gray-500">Email Address</label>
+              </div>
+            </div>
+
+            {/* EMAIL */}
+            <div>
+
+              <label className="text-sm text-gray-500">
+                Email Address
+              </label>
+
+              <div className="relative mt-2">
+
+                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[20px]">
+                  mail
+                </span>
+
                 <input
                   type="email"
                   placeholder="name@example.com"
-                  className="w-full p-3 rounded-lg bg-gray-100 mt-1 outline-none"
+                  value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  className="
+                    w-full
+                    pl-10
+                    pr-4
+                    py-3
+                    rounded-xl
+                    bg-white/80
+                    hover:bg-white
+                    transition
+                    border border-gray-200
+                    focus:border-pink-300
+                    focus:ring-2
+                    focus:ring-pink-100
+                    outline-none
+                  "
                 />
+
               </div>
+            </div>
 
-              {/* PASSWORDS */}
-              <div className="grid grid-cols-2 gap-4">
-                <input
-                  type="password"
-                  placeholder="Password"
-                  className="p-3 rounded-lg bg-gray-100 outline-none"
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-                <input
-                  type="password"
-                  placeholder="Confirm"
-                  className="p-3 rounded-lg bg-gray-100 outline-none"
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                />
-              </div>
-
-              {/* BUTTON */}
-              <button
-                type="submit"
-                className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-400 text-white font-bold rounded-lg shadow hover:opacity-90"
-              >
-                Create & Continue →
-              </button>
-
-              {/* TERMS */}
-              <p className="text-[10px] text-center text-gray-400">
-                By creating an account, you agree to Terms of Service and
-                Privacy Policy.
-              </p>
-            </form>
           </div>
 
-          {/* LOGIN LINK */}
-          <p className="text-center mt-6 text-sm text-gray-500">
-            Already have an account?
-            <span
-              onClick={() => navigate("/login")}
-              className="text-blue-600 font-bold ml-1 cursor-pointer"
-            >
-              Login
+          {/* ROW 2 */}
+          <div className="grid md:grid-cols-2 gap-5">
+
+            {/* PASSWORD */}
+            <div>
+
+              <label className="text-sm text-gray-500">
+                Password
+              </label>
+
+              <div className="relative mt-2">
+
+                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[20px]">
+                  lock
+                </span>
+
+                <input
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="
+                    w-full
+                    pl-10
+                    pr-4
+                    py-3
+                    rounded-xl
+                    bg-white/60
+                    border border-gray-200
+                    focus:border-pink-300
+                    focus:ring-2
+                    focus:ring-pink-100
+                    outline-none
+                    transition
+                  "
+                />
+
+              </div>
+            </div>
+
+            {/* CONFIRM */}
+            <div>
+
+              <label className="text-sm text-gray-500">
+                Confirm Password
+              </label>
+
+              <div className="relative mt-2">
+
+                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[20px]">
+                  verified_user
+                </span>
+
+                <input
+                  type="password"
+                  placeholder="Confirm Password"
+                  value={confirmPassword}
+                  onChange={(e) =>
+                    setConfirmPassword(e.target.value)
+                  }
+                  className="
+                    w-full
+                    pl-10
+                    pr-4
+                    py-3
+                    rounded-xl
+                    bg-white/60
+                    border border-gray-200
+                    focus:border-pink-300
+                    focus:ring-2
+                    focus:ring-pink-100
+                    outline-none
+                    transition
+                  "
+                />
+
+              </div>
+            </div>
+
+          </div>
+
+          {/* BUTTON */}
+          <button
+            type="submit"
+            className="
+              w-full
+              py-3.5
+              rounded-xl
+              text-white
+              font-semibold
+              bg-gradient-to-r
+              from-[#6366f1]
+              via-[#7c3aed]
+              to-[#ec4899]
+              shadow-[0_10px_30px_rgba(124,58,237,0.45)]
+              hover:shadow-[0_10px_30px_rgba(236,72,153,0.35)]
+              hover:scale-[1.01]
+              active:scale-[0.98]
+              transition-all duration-200
+              flex items-center justify-center gap-2
+            "
+          >
+            Create Account
+
+            <span className="material-symbols-outlined text-lg">
+              arrow_forward
             </span>
-          </p>
+
+          </button>
+
+        </form>
+
+      </div>
+
+      {/* FOOTER */}
+      <div className="absolute bottom-0 left-0 w-full px-10 py-6 flex justify-between items-center text-sm text-gray-600">
+
+        {/* LEFT */}
+        <div className="text-lg font-bold tracking-wide">
+
+          <span className="bg-gradient-to-r from-indigo-600 via-violet-500 to-pink-500 bg-clip-text text-transparent">
+            ShopLite
+          </span>
+
         </div>
-      </main>
+
+        {/* CENTER */}
+        <div className="text-sm text-gray-800 text-center hidden md:block font-medium">
+          © ShopLite Shopping. Crafted for seamless buying.
+        </div>
+
+        {/* RIGHT */}
+        <div className="flex gap-6 text-gray-800 font-medium">
+
+          <span className="cursor-pointer hover:text-pink-500 transition">
+            Privacy
+          </span>
+
+          <span className="cursor-pointer hover:text-pink-500 transition">
+            Terms
+          </span>
+
+          <span className="cursor-pointer hover:text-pink-500 transition">
+            Support
+          </span>
+
+        </div>
+
+      </div>
+
     </div>
   );
 };
