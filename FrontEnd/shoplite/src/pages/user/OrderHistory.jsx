@@ -363,7 +363,7 @@ const OrderHistory = () => {
 
                     <div className="text-right">
                       <p className="text-xl font-bold text-indigo-600">
-                        ₹{total.toFixed(2)}
+                        ${total.toFixed(2)}
                       </p>
                       <p className="text-sm text-text-muted">
                         {items.length} Items

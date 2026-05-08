@@ -218,7 +218,7 @@ const Completed = () => {
                 <div className="flex items-center gap-3 mb-5">
 
                   <p className="text-xl font-bold text-indigo-600">
-                    ₹{totalPrice}
+                    ${totalPrice}
                   </p>
 
                   <div className="w-1.5 h-1.5 rounded-full bg-gray-300"></div>

@@ -9,15 +9,16 @@ const AdminDashboard = () => {
   const [ticketCount, setTicketCount] = useState(0);
   const isActive = (path) => location.pathname === path;
 
-  // ✅ STATES
+  // STATES
   const [orders, setOrders] = useState([]);
+  const [topProducts, setTopProducts] = useState([]);
   const [statsData, setStatsData] = useState({
     products: 0,
     orders: 0,
     users: 0,
   });
 
-  // ✅ FETCH RECENT ORDERS
+  //  FETCH RECENT ORDERS
   useEffect(() => {
     const fetchOrders = async () => {
       try {
@@ -33,7 +34,32 @@ const AdminDashboard = () => {
     fetchOrders();
   }, []);
 
-  // ✅ FETCH DASHBOARD STATS
+  // FETCH TOP SELLING PRODUCTS
+  useEffect(() => {
+    const fetchTopProducts = async () => {
+      try {
+
+        const res = await adminAxios.get(
+          "/orders/admin/top-products"
+        );
+
+        console.log("TOP PRODUCTS:", res.data);
+
+        setTopProducts(res.data);
+
+      } catch (err) {
+
+        console.error(
+          "Top products fetch error:",
+          err
+        );
+      }
+    };
+
+    fetchTopProducts();
+  }, []);
+
+  //  FETCH DASHBOARD STATS
   useEffect(() => {
     const fetchStats = async () => {
       try {
@@ -76,7 +102,7 @@ const AdminDashboard = () => {
     sessionStorage.removeItem("adminRole");
     navigate("/admin/login", { replace: true });
   };
-  // ✅ STATS DISPLAY
+  // STATS DISPLAY
   const stats = [
     {
       title: "Total Revenue",
@@ -108,7 +134,7 @@ const AdminDashboard = () => {
     },
   ];
 
-  // ✅ STATUS STYLE (UPDATED FOR BACKEND ENUMS)
+  //  STATUS STYLE 
   const getStatusStyle = (status) => {
     switch (status) {
       case "PLACED":
@@ -423,7 +449,9 @@ shadow-[4px_0_40px_rgba(0,0,0,0.05)]" >
             {/* LEFT - TRENDING PRODUCTS */}
             <div className="lg:col-span-2">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="font-semibold text-gray-700">Trending Products</h2>
+                <h2 className="font-semibold text-gray-700">
+                  Trending Products
+                </h2>
 
                 <span
                   onClick={() => navigate("/admin/products")}
@@ -435,78 +463,68 @@ shadow-[4px_0_40px_rgba(0,0,0,0.05)]" >
 
               <div className="grid md:grid-cols-3 gap-6">
 
-                {/* CARD */}
-                {[
-                  {
-                    name: "Veloce Runner Pro",
-                    price: "$129.99",
-                    status: "In Stock",
-                    statusColor: "text-indigo-600",
-                    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuCKzL4z8IlGybXOVOyLzXfLA3DLqkbwkArFR5JPcO_FA2JJvR-SH21S9MY-_KMpwp9vasJUqzBq3gF00AuMw-OxhmvNp53ZlJviRvhiNDLsAWOuXlmfim3tx-kRgfYKJ-uHotQwK7ynSRvPObFWVggokhN1zB4DxBg_jIF4MIE7jg8Oaf0TncdVKM2yuwOLpKb3oM-JRETCODd5yBHn8oLIlmLQb-Z3qaE_3LNh-GzSY1cUm0RUj0CWFuyDbsDwkL95EbSjXRrHxM4"
-                  },
-                  {
-                    name: "Nova Smart Watch",
-                    price: "$299.00",
-                    status: "In Stock",
-                    statusColor: "text-indigo-600",
-                    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuC99G-HCwabwBpzvYVloM42614z0plTm1o6_eYwSVecUabhzGNSkBu4S1oSf5UoWv_F3XWhPTuimwj2KVcI6eg1mgwsWDJn5O48RKZS0M16AThNJ82Q_lYzp-GFgw5Mqp6hm185DyX1SJViLpCMq-Wx-WDhEA2ueIhcwM-lfVsHbGVD-Dl-R-UgF0DvWo9-JlUsZLtnaqk-_iRucOl0VcuOFMZA4ALW8-tKkApMZ6TjUItVnXNxpeI152WiVuJp5G1ePzmXcxAHt14"
-                  },
-                  {
-                    name: "Sonic Pro Over-Ear",
-                    price: "$349.50",
-                    status: "Low Stock",
-                    statusColor: "text-red-500",
-                    img: "https://lh3.googleusercontent.com/aida-public/AB6AXuCJDf3-0u5zcUnU0Yq3ufuAr0SUow6QE4bxap9Yedo2BOkdmPof22qsnBPNBZmvXAcPWANu5RRcUr0WnYORaGSeaLbe4SMvhCZg_ACqHoTp4blN3_A-L2DLD74T1cI6YcSNloYJY8a5iSxvONFUaN8sqbSYsKsYVF12OHOjXj4hKNLADvL1XUxW51z3jxfBTBD5Mc5xehvsJyV7jJAncCJjrKpn6XVGkhZqM8S9pfR5waCY5AhApmoGI9rW8dnFVjxscp6xwXWDShg"
-                  }
-                ].map((p, i) => (
+                {topProducts.map((p, i) => (
+
                   <div
-                    key={i}
-                    className="group rounded-3xl overflow-hidden bg-white/40 backdrop-blur-xl border border-white/20
-                 transition-all duration-300 hover:shadow-[0_0_25px_rgba(99,102,241,0.25)]"
+                    key={p.id}
+                    className="group rounded-3xl overflow-hidden 
+        bg-white/40 backdrop-blur-xl border border-white/20
+        transition-all duration-300
+        hover:shadow-[0_0_25px_rgba(99,102,241,0.25)]"
                   >
 
                     {/* IMAGE */}
                     <div className="relative overflow-hidden aspect-square">
+
                       <img
-                        src={p.img}
+                        src={
+                          p.imageUrl?.startsWith("http")
+                            ? p.imageUrl
+                            : `/products/${p.imageUrl}`
+                        }
                         alt={p.name}
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        className="w-full h-full object-cover 
+            transition-transform duration-700 
+            group-hover:scale-110"
                       />
 
-                      {/* OVERLAY */}
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100
-                     transition flex items-center justify-center gap-4">
+                      {/* RANK BADGE */}
+                      <div className="absolute top-3 left-3 
+          bg-indigo-600 text-white text-xs font-bold
+          px-3 py-1 rounded-full shadow-lg">
 
-                        <button className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md hover:bg-indigo-500 hover:text-white">
-                          <span className="material-symbols-outlined text-sm">edit</span>
-                        </button>
-
-                        <button className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md hover:bg-red-500 hover:text-white">
-                          <span className="material-symbols-outlined text-sm">delete</span>
-                        </button>
+                        #{i + 1} Top Sold
 
                       </div>
+
                     </div>
 
                     {/* DETAILS */}
                     <div className="p-4">
+
                       <h4 className="font-semibold text-gray-800 truncate">
                         {p.name}
                       </h4>
 
-                      <div className="flex justify-between mt-1">
-                        <span className="text-sm text-gray-500">{p.price}</span>
-                        <span className={`text-xs font-semibold ${p.statusColor}`}>
-                          {p.status}
+                      <div className="flex justify-between mt-2">
+
+                        <span className="text-sm text-gray-500">
+                          ${p.price}
                         </span>
+
+                        <span className="text-xs font-semibold text-indigo-600">
+                          Best Seller
+                        </span>
+
                       </div>
+
                     </div>
 
                   </div>
+
                 ))}
 
               </div>
-
             </div>
             {/* RIGHT - QUICK ACTIONS */}
             <div
@@ -664,7 +682,7 @@ hover:shadow-[0_0_35px_rgba(99,102,241,0.25)]">
 
                         {/* AMOUNT */}
                         <td className="py-4 font-semibold text-gray-800">
-                          ₹{total.toFixed(2)}
+                          ${total.toFixed(2)}
                         </td>
 
                         {/* STATUS */}

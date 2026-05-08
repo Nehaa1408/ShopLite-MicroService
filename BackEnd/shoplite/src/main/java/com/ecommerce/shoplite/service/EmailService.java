@@ -74,7 +74,7 @@ public class EmailService {
 
                                                 + itemsText.toString()
 
-                                                + "\nTotal Amount: ₹"
+                                                + "\nTotal Amount: $"
                                                 + order.getTotalAmount()
 
                                                 + "\n\nThank you for shopping with ShopLite.\n\n"

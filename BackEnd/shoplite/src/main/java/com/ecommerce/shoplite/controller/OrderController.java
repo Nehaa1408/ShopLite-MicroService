@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import com.ecommerce.shoplite.entity.Product;
 import com.ecommerce.shoplite.dto.OrderResponse;
 import com.ecommerce.shoplite.entity.User;
 import com.ecommerce.shoplite.service.OrderService;
@@ -64,6 +65,14 @@ public class OrderController {
     @GetMapping("/admin/stats")
     public ResponseEntity<Map<String, Long>> getAdminStats() {
         return ResponseEntity.ok(orderService.getAdminStats());
+    }
+
+    // ================= ADMIN: TOP PRODUCTS =================
+    @GetMapping("/admin/top-products")
+    public ResponseEntity<List<Product>> getTopProducts() {
+
+        return ResponseEntity.ok(
+                orderService.getTopSellingProducts());
     }
 
     // ================= DELIVERY: ACTIVE =================

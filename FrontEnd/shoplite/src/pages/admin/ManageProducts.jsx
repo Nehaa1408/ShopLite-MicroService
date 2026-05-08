@@ -11,7 +11,7 @@ const ManageProducts = () => {
   const location = useLocation();
   const isActive = (path) => location.pathname === path;
   const [products, setProducts] = useState([]);
-  
+
   const handleLogout = () => {
     sessionStorage.removeItem("adminToken");
     sessionStorage.removeItem("adminRole");
@@ -171,7 +171,9 @@ border border-white/40 overflow-hidden">
 
                     <td className="p-4">
                       <p className="font-semibold">{p.name}</p>
-                      <p className="text-xs text-gray-500">SKU: {p.sku}</p>
+                      <p className="text-xs text-gray-500">
+                        Quantity: {p.quantity}
+                      </p>
                     </td>
 
                     <td className="p-4">

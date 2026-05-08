@@ -16,6 +16,7 @@ import com.ecommerce.shoplite.repository.UserRepository;
 import com.ecommerce.shoplite.repository.DeliveryOtpRepository;
 import com.ecommerce.shoplite.dto.DeliveryFeedbackRequest;
 import com.ecommerce.shoplite.repository.DeliveryFeedbackRepository;
+import org.springframework.data.domain.PageRequest;
 
 import jakarta.transaction.Transactional;
 
@@ -140,6 +141,13 @@ public class OrderService {
                 stats.put("products", productRepository.count());
 
                 return stats;
+        }
+
+        // ================= TOP SELLING PRODUCTS =================
+        public List<Product> getTopSellingProducts() {
+
+                return orderRepository.findTopSellingProducts(
+                                PageRequest.of(0, 3));
         }
 
         // ================= DELIVERY → ACTIVE =================
