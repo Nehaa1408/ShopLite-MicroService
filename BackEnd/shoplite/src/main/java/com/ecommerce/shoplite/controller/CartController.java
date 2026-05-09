@@ -4,96 +4,77 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import com.ecommerce.shoplite.dto.CartRequest;
 import com.ecommerce.shoplite.dto.CartResponse;
+import com.ecommerce.shoplite.entity.User;
 import com.ecommerce.shoplite.service.CartService;
-import com.ecommerce.shoplite.security.JwtUtil;
 
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/cart")
+@RequestMapping("/api/cart")
 @CrossOrigin(origins = "*")
 public class CartController {
 
     @Autowired
-    private JwtUtil jwtUtil;
-
-    @Autowired
     private CartService cartService;
 
-  
-    private String extractUserEmail(String token) {
-        if (token == null || !token.startsWith("Bearer ")) {
-            throw new RuntimeException("Invalid or missing token");
-        }
-        return jwtUtil.extractEmail(token.substring(7));
-    }
-
-    
+    // ADD
     @PostMapping("/add")
     public ResponseEntity<CartResponse> addToCart(
             @Valid @RequestBody CartRequest request,
-            @RequestHeader("Authorization") String token) {
+            Authentication authentication) {
 
-        String email = extractUserEmail(token);
+        User user = (User) authentication.getPrincipal();
 
-        CartResponse response = cartService.addItem(
-                email,
-                request.getProductId(),
-                request.getQuantity()
-        );
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                cartService.addItem(user, request.getProductId(), request.getQuantity()));
     }
 
-    
+    // GET
     @GetMapping
-    public ResponseEntity<List<CartResponse>> getCart(
-            @RequestHeader("Authorization") String token) {
+    public ResponseEntity<List<CartResponse>> getCart(Authentication authentication) {
 
-        String email = extractUserEmail(token);
-        return ResponseEntity.ok(cartService.getCart(email));
+        User user = (User) authentication.getPrincipal();
+
+        return ResponseEntity.ok(cartService.getCart(user));
     }
 
-    
+    // UPDATE
     @PutMapping("/update")
     public ResponseEntity<CartResponse> updateQuantity(
             @Valid @RequestBody CartRequest request,
-            @RequestHeader("Authorization") String token) {
+            Authentication authentication) {
 
-        String email = extractUserEmail(token);
+        User user = (User) authentication.getPrincipal();
 
-        CartResponse response = cartService.updateQuantity(
-                email,
-                request.getProductId(),
-                request.getQuantity()
-        );
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                cartService.updateQuantity(user, request.getProductId(), request.getQuantity()));
     }
 
-
+    // REMOVE
     @DeleteMapping("/remove/{productId}")
     public ResponseEntity<String> removeItem(
             @PathVariable Long productId,
-            @RequestHeader("Authorization") String token) {
+            Authentication authentication) {
 
-        String email = extractUserEmail(token);
-        cartService.removeItem(email, productId);
+        User user = (User) authentication.getPrincipal();
+
+        cartService.removeItem(user, productId);
 
         return ResponseEntity.ok("Item removed successfully");
     }
 
-   
+    // CLEAR
     @DeleteMapping("/clear")
-    public ResponseEntity<String> clearCart(
-            @RequestHeader("Authorization") String token) {
+    public ResponseEntity<String> clearCart(Authentication authentication) {
 
-        String email = extractUserEmail(token);
-        cartService.clearCart(email);
+        User user = (User) authentication.getPrincipal();
+
+        cartService.clearCart(user);
 
         return ResponseEntity.ok("Cart cleared successfully");
     }

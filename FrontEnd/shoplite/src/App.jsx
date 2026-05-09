@@ -20,6 +20,8 @@ import OrderConfirmation from "./pages/user/OrderConfirmation";
 import OrderTracking from "./pages/user/OrderTracking";
 import OrderHistory from "./pages/user/OrderHistory";
 import TicketManagement from "./pages/user/TicketManagement";
+import BrandDetails from "./pages/user/BrandDetails";
+import UserTicketDetails from "./pages/user/UserTicketDetails";
 
 import AdminRoute from "./pages/admin/AdminRoute";
 import ManageProducts from "./pages/admin/ManageProducts";
@@ -30,7 +32,17 @@ import AdminLogin from "./pages/admin/AdminLogin";
 import AdminTickets from "./pages/admin/AdminTickets";
 import AdminTicketDetails from "./pages/admin/AdminTicketDetails";
 import AdminProfile from "./pages/admin/AdminProfile";
-import BrandDetails from "./pages/user/BrandDetails";
+import ManageDeliveryPartners from "./pages/admin/ManageDeliveryPartners";
+import ManageReturns from "./pages/admin/ManageReturns";
+
+import DeliveryLogin from "./pages/delivery/DeliveryLogin";
+import DeliveryDashboard from "./pages/delivery/DeliveryDashboard";
+import Completed from "./pages/delivery/Completed";
+import DeliveryRoute from "./pages/delivery/DeliveryRoute";
+import DeliveryPartnerVerification from "./pages/delivery/DeliveryPartnerVerification";
+import DeliveryProfile from "./pages/delivery/DeliveryProfile";
+import DeliverySignup from "./pages/delivery/DeliverySignup";
+import ManageDeliveryPartnerDetails from "./pages/admin/ManageDeliveryPartnerDetails";
 
 function App() {
   return (
@@ -60,6 +72,8 @@ function App() {
           <Route path="/order-tracking" element={<OrderTracking />} />
           <Route path="/orders" element={<OrderHistory />} />
           <Route path="/tickets" element={<TicketManagement />} />
+          <Route path="/tickets/:id" element={<UserTicketDetails />} />
+
 
 
           {/* ADMIN */}
@@ -90,6 +104,23 @@ function App() {
               </AdminRoute>
             }
           />
+
+          <Route
+            path="/admin/delivery-partners"
+            element={
+              <AdminRoute>
+                <ManageDeliveryPartners />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/delivery-partner/:id"
+            element={
+              <AdminRoute>
+                <ManageDeliveryPartnerDetails />
+              </AdminRoute>
+            }
+          />
           <Route
             path="/admin/tickets"
             element={
@@ -114,6 +145,16 @@ function App() {
               </AdminRoute>
             }
           />
+
+          <Route
+            path="/admin/returns"
+            element={
+              <AdminRoute>
+                <ManageReturns />
+              </AdminRoute>
+            }
+          />
+
           <Route
             path="/admin/order/:id"
             element={
@@ -128,6 +169,47 @@ function App() {
               <AdminRoute>
                 <AdminProfile />
               </AdminRoute>
+            }
+          />
+
+          {/* DELIVERY */}
+
+          <Route path="/delivery" element={<DeliveryLogin />} />
+
+          <Route
+            path="/delivery/signup"
+            element={<DeliverySignup />}
+          />
+
+          <Route
+            path="/delivery/verification"
+            element={<DeliveryPartnerVerification />}
+          />
+
+          <Route
+            path="/delivery/dashboard"
+            element={
+              <DeliveryRoute>
+                <DeliveryDashboard />
+              </DeliveryRoute>
+            }
+          />
+
+          <Route
+            path="/delivery/completed"
+            element={
+              <DeliveryRoute>
+                <Completed />
+              </DeliveryRoute>
+            }
+          />
+
+          <Route
+            path="/delivery/profile"
+            element={
+              <DeliveryRoute>
+                <DeliveryProfile />
+              </DeliveryRoute>
             }
           />
         </Routes>

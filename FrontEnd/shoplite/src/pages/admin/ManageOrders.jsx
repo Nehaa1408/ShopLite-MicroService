@@ -1,15 +1,31 @@
 import { useEffect, useState } from "react";
 import adminAxios from "../../api/adminAxios";
 import { useLocation, useNavigate } from "react-router-dom";
+import AdminHeader from "../../components/AdminHeader";
+import AdminSidebar from "../../components/AdminSidebar";
+import { calculateOrderTotal } from "../../utils/orderPricing";
 
 const ManageOrders = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
-
+  const [selectedDelivery, setSelectedDelivery] = useState({});
   const isActive = (path) => location.pathname === path;
-
+  const [users, setUsers] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "success",
+  });
+  const [stats, setStats] = useState({
+    pending: 0,
+    inTransit: 0,
+    completed: 0,
+  });
 
   const [currentPage, setCurrentPage] = useState(1);
   const ordersPerPage = 6;
@@ -22,288 +38,932 @@ const ManageOrders = () => {
   const totalPages = Math.ceil(orders.length / ordersPerPage);
 
   useEffect(() => {
-    const fetchOrders = async () => {
+    const fetchData = async () => {
       try {
-        const res = await adminAxios.get("/orders/admin");
-        setOrders(res.data);
+        const ordersRes = await adminAxios.get("/orders/admin");
+        const orders = ordersRes.data;
+
+        setOrders(orders);
+
+        const pending = orders.filter(
+          (o) => o.status === "PLACED" || o.status === "CONFIRMED"
+        ).length;
+
+        const inTransit = orders.filter(
+          (o) => o.status === "OUT_FOR_DELIVERY"
+        ).length;
+
+        const completed = orders.filter(
+          (o) => o.status === "DELIVERED"
+        ).length;
+
+        setStats({
+          pending,
+          inTransit,
+          completed,
+        });
+
+        const usersRes = await adminAxios.get("/users/delivery");
+        setUsers(usersRes.data);
+
       } catch (err) {
-        console.error("Orders fetch error:", err);
+        console.error("Error:", err);
       }
     };
 
-    fetchOrders();
+    fetchData();
   }, []);
 
   const getStatusStyle = (status) => {
     switch (status) {
       case "PLACED":
-        return "bg-primary-container/20 text-primary";
-      case "PACKED":
-        return "bg-yellow-100 text-yellow-700";
+        return "bg-blue-100 text-blue-600";
+      case "SHIPPED":
+        return "bg-yellow-100 text-yellow-600";
       case "DELIVERED":
-        return "bg-emerald-100 text-emerald-700";
+        return "bg-green-100 text-green-600";
+      case "CANCELLED":
+        return "bg-red-100 text-red-600";
+      case "DELIVERY_FAILED":
+        return "bg-red-100 text-red-600";
       default:
-        return "";
+        return "bg-gray-100 text-gray-600";
+    }
+  };
+
+  const handleLogout = () => {
+    sessionStorage.removeItem("adminToken");
+    sessionStorage.removeItem("adminRole");
+    navigate("/admin");
+  };
+
+
+  const handleAssign = async (orderId) => {
+    const deliveryId = selectedDelivery[orderId];
+
+    if (!deliveryId) {
+
+      setToast({
+        show: true,
+        message: "Please select a delivery partner first",
+        type: "error",
+      });
+
+      setTimeout(() => {
+        setToast(prev => ({
+          ...prev,
+          show: false,
+        }));
+      }, 2000);
+
+      return;
+    }
+    try {
+      await adminAxios.put(`/orders/admin/${orderId}/assign/${deliveryId}`);
+      setToast({
+        show: true,
+        message:
+          "Delivery assigned successfully. Out for delivery email sent to customer.",
+        type: "success",
+      });
+
+      // refresh orders
+      const res = await adminAxios.get("/orders/admin");
+      setOrders(res.data);
+
+
+      const orders = res.data;
+
+      const pending = orders.filter(
+        (o) => o.status === "PLACED" || o.status === "CONFIRMED"
+      ).length;
+
+      const inTransit = orders.filter(
+        (o) => o.status === "OUT_FOR_DELIVERY"
+      ).length;
+
+      const completed = orders.filter(
+        (o) => o.status === "DELIVERED"
+      ).length;
+
+      setStats({
+        pending,
+        inTransit,
+        completed,
+      });
+
+    } catch (err) {
+      console.error(err);
+      setToast({
+        show: true,
+        message: "Failed to assign delivery partner",
+        type: "error",
+      });
     }
   };
 
   return (
-    <div className="bg-surface min-h-screen text-on-surface">
-      {/* SIDEBAR */}
-      <aside className="fixed left-0 top-0 h-full w-64 bg-white/80 backdrop-blur-xl border-r border-outline-variant/20 p-6 hidden md:flex flex-col justify-between rounded-r-3xl">
-        {/* TOP */}
-        <div>
-          {/* LOGO */}
-          <div className="mb-10">
-            <h1 className="text-2xl font-black text-primary">ShopLite</h1>
-            <p className="text-xs text-on-surface-variant mt-1">
-              Management Portal
-            </p>
+    <div className="min-h-screen text-gray-800 relative overflow-hidden">
+      <div className="fixed inset-0 -z-10 
+    bg-gradient-to-br from-[#fdfcfb] via-[#f7f1ec] to-[#f3e8ff]" />
+
+      <div className="fixed top-[-120px] left-[-120px] w-[420px] h-[420px]
+    bg-[#f5d0c5]/40 rounded-full blur-[140px] -z-10" />
+
+      <div className="fixed bottom-[-140px] right-[-120px] w-[420px] h-[420px]
+    bg-[#e9d5ff]/40 rounded-full blur-[140px] -z-10" />
+      <div className="relative z-10">
+        <AdminHeader />
+
+        {/* SIDEBAR */}
+        <AdminSidebar handleLogout={handleLogout} />
+
+        {/* HEADER */}
+        <header className="md:ml-64 h-16 flex justify-between items-center px-6 bg-surface/80 backdrop-blur-xl shadow">
+          <input
+            placeholder="Search orders..."
+            className="hidden md:block bg-surface-container-low px-4 py-2 rounded-lg outline-none"
+          />
+
+          <div className="flex items-center gap-4">
+            <span className="material-symbols-outlined">notifications</span>
+            <span className="material-symbols-outlined">settings</span>
+
+            {/* PROFILE ICON (fixed) */}
+            <div className="w-9 h-9 rounded-full flex items-center justify-center bg-primary/10 text-primary">
+              <span className="material-symbols-outlined">person</span>
+            </div>
+          </div>
+        </header>
+
+        {/* MAIN */}
+        <main className="md:ml-64 p-6">
+          {/* TITLE */}
+          <h1 className="text-3xl font-extrabold mb-2">Manage Orders</h1>
+          <p className="text-on-surface-variant mb-6">
+            Track and update customer order statuses.
+          </p>
+
+          {/* STATS */}
+          <div className="grid md:grid-cols-3 gap-6 mb-8">
+
+            {/* Pending */}
+            <div className="group p-6 rounded-2xl bg-white/70 backdrop-blur-md 
+  border border-white/40 shadow-md 
+  transition-all duration-300 
+  hover:shadow-[0_0_25px_rgba(59,130,246,0.25)] 
+  hover:border-blue-300 flex gap-4 items-center">
+
+              <div className="w-12 h-12 flex items-center justify-center rounded-xl 
+    bg-blue-50 text-blue-600 
+    group-hover:bg-blue-100 group-hover:text-blue-700 transition">
+                <span className="material-symbols-outlined">pending_actions</span>
+              </div>
+
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">
+                  Pending Orders
+                </p>
+                <h2 className="text-3xl font-semibold text-gray-800">
+                  {stats.pending}
+                </h2>
+              </div>
+            </div>
+
+            {/* In Transit */}
+            <div className="group p-6 rounded-2xl bg-white/70 backdrop-blur-md 
+  border border-white/40 shadow-md 
+  transition-all duration-300 
+  hover:shadow-[0_0_25px_rgba(139,92,246,0.25)] 
+  hover:border-purple-300 flex gap-4 items-center">
+
+              <div className="w-12 h-12 flex items-center justify-center rounded-xl 
+    bg-purple-50 text-purple-600 
+    group-hover:bg-purple-100 group-hover:text-purple-700 transition">
+                <span className="material-symbols-outlined">local_shipping</span>
+              </div>
+
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">
+                  In Transit
+                </p>
+                <h2 className="text-3xl font-semibold text-gray-800">
+                  {stats.inTransit}
+                </h2>
+              </div>
+            </div>
+
+            {/* Completed */}
+            <div className="group p-6 rounded-2xl bg-white/70 backdrop-blur-md 
+  border border-white/40 shadow-md 
+  transition-all duration-300 
+  hover:shadow-[0_0_25px_rgba(34,197,94,0.25)] 
+  hover:border-green-300 flex gap-4 items-center">
+
+              <div className="w-12 h-12 flex items-center justify-center rounded-xl 
+    bg-green-50 text-green-600 
+    group-hover:bg-green-100 group-hover:text-green-700 transition">
+                <span className="material-symbols-outlined">check_circle</span>
+              </div>
+
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">
+                  Completed
+                </p>
+                <h2 className="text-3xl font-semibold text-gray-800">
+                  {stats.completed}
+                </h2>
+              </div>
+            </div>
+
           </div>
 
-          {/* NAV */}
-          <nav className="space-y-2">
-            {/* DASHBOARD */}
-            <div
-              onClick={() => navigate("/admin")}
-              className="flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer 
-        text-on-surface-variant hover:bg-surface-container hover:text-primary transition-all"
-            >
-              <span className="material-symbols-outlined">dashboard</span>
-              Dashboard
-            </div>
+          {/* TABLE */}
+          <div className="bg-white/70 backdrop-blur-xl rounded-2xl 
+shadow-[0px_20px_50px_rgba(0,0,0,0.08)] 
+border border-white/40 overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-white/60 backdrop-blur-md text-gray-500 text-xs uppercase tracking-wide">
+                <tr className="border-t border-white/30 
+transition-all duration-300
+hover:bg-white/60 
+hover:shadow-[0px_10px_30px_rgba(168,85,247,0.15)]
+hover:-translate-y-[2px]">
+                  <th className="p-4 text-left">Order ID</th>
+                  <th>Customer</th>
+                  <th>Date</th>
+                  <th>Total</th>
+                  <th>Status</th>
+                  <th className="text-right pr-6">Actions</th>
+                </tr>
+              </thead>
 
-            {/* PRODUCTS */}
-            <div
-              onClick={() => navigate("/admin/products")}
-              className="flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer 
-        text-on-surface-variant hover:bg-surface-container hover:text-primary transition-all"
-            >
-              <span className="material-symbols-outlined">inventory_2</span>
-              Manage Products
-            </div>
+              <tbody>
+                {currentOrders.map((o, i) => {
+                  const { total } = calculateOrderTotal(o.items || []);
+                  return (
+
+                    <tr
+                      key={i}
+                      className="border-t border-white/30
+
+        transition-all duration-300
+
+        hover:bg-white/70
+
+        hover:shadow-[0px_10px_30px_rgba(168,85,247,0.10)]
+
+        hover:-translate-y-[2px]"
+                    >
+
+                      {/* ORDER ID */}
+                      <td className="p-5 font-black text-gray-800">
+                        #{o.orderId}
+                      </td>
+
+                      {/* CUSTOMER */}
+                      <td>
+
+                        <div className="flex items-center gap-3">
+
+                          <div
+                            className="w-10 h-10 rounded-full
+
+              bg-gradient-to-br
+              from-indigo-500
+              to-purple-500
+
+              text-white
+
+              flex items-center justify-center
+
+              text-sm font-bold
+
+              shadow-md"
+                          >
+                            {o.customerName?.charAt(0) || "U"}
+                          </div>
+
+                          <div>
+
+                            <p className="font-semibold text-gray-800">
+                              {o.customerName || "User"}
+                            </p>
+
+                            <p className="text-xs text-gray-400">
+                              {o.customerEmail || "No email"}
+                            </p>
+
+                          </div>
+
+                        </div>
+
+                      </td>
+
+                      {/* DATE */}
+                      <td className="text-gray-600 font-medium">
+
+                        {new Date(o.orderDate).toLocaleDateString(
+                          "en-IN",
+                          {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          }
+                        )}
+
+                      </td>
+
+                      {/* TOTAL */}
+                      <td>
+
+                        <span
+                          className="px-4 py-2 rounded-xl
+
+            bg-indigo-50
+
+            text-indigo-600
+
+            font-bold"
+                        >
+                          ${total.toFixed(2)}
+                        </span>
+
+                      </td>
+
+                      {/* STATUS */}
+                      <td>
+
+                        <div className="flex flex-col gap-2">
+
+                          <span
+                            className={`w-fit px-4 py-1.5 rounded-full text-xs font-bold tracking-wide ${getStatusStyle(
+                              o.status
+                            )}`}
+                          >
+                            {o.status}
+                          </span>
+
+                          {/* RATING PREVIEW */}
+                          {o.deliveryRating && (
+
+                            <div className="flex gap-[2px]">
+
+                              {[1, 2, 3, 4, 5].map((star) => (
+
+                                <span
+                                  key={star}
+                                  className={
+                                    star <= o.deliveryRating
+                                      ? "text-yellow-400 text-sm"
+                                      : "text-gray-200 text-sm"
+                                  }
+                                >
+                                  ★
+                                </span>
+
+                              ))}
+
+                            </div>
+                          )}
+
+                        </div>
+
+                      </td>
 
 
-            {/* ADD PRODUCT */}
-            <div
-              onClick={() => navigate("/admin/add-product")}
-              className="flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer 
-        text-on-surface-variant hover:bg-surface-container hover:text-primary transition-all"
-            >
-              <span className="material-symbols-outlined">add_box</span>
-              Add Product
-            </div>
+                      {/* ACTIONS */}
+                      <td className="p-5">
 
-            {/* ACTIVE: MANAGE ORDERS */}
-            <div
-              onClick={() => navigate("/manage-orders")}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer 
-        bg-gradient-to-r from-primary to-primary-container text-white shadow-lg"
-            >
-              <span
-                className="material-symbols-outlined"
-                style={{ fontVariationSettings: "'FILL' 1" }}
-              >
-                shopping_cart
+                        <div className="flex items-center justify-end gap-4">
+                          {/* DELIVERED / FAILED → VIEW */}
+                          {(o.status === "DELIVERED" ||
+                            o.status === "DELIVERY_FAILED" ||
+                            o.status === "CANCELLED") && (
+                              <button
+                                onClick={() => {
+                                  setSelectedOrder(o);
+                                  setShowViewModal(true);
+                                }}
+                                className="px-5 py-2 rounded-xl
+
+                bg-gradient-to-r
+                from-indigo-500
+                to-purple-500
+
+                text-white text-sm font-semibold
+
+                shadow-md
+
+                hover:shadow-xl
+
+                hover:scale-[1.03]
+
+                transition-all duration-300"
+                              >
+                                View Details
+                              </button>
+                            )}
+
+                          {/* NOT DELIVERED */}
+                          {o.status !== "DELIVERED" &&
+                            o.status !== "DELIVERY_FAILED" &&
+                            o.status !== "CANCELLED" && (
+
+                              <>
+
+                                {/* DROPDOWN */}
+                                <select
+                                  className="w-[220px]
+
+                  px-4 py-2.5
+
+                  rounded-2xl
+
+                  text-sm
+
+                  bg-white/90
+
+                  border border-gray-200
+
+                  shadow-sm
+
+                  outline-none
+
+                  focus:ring-2 focus:ring-indigo-200"
+                                  value={selectedDelivery[o.orderId] || ""}
+                                  onChange={(e) =>
+                                    setSelectedDelivery({
+                                      ...selectedDelivery,
+                                      [o.orderId]: e.target.value,
+                                    })
+                                  }
+                                >
+
+                                  <option value="">
+                                    Select Delivery Partner
+                                  </option>
+
+                                  {users.map((u) => (
+
+                                    <option
+                                      key={u.id}
+                                      value={u.id}
+                                    >
+                                      {u.name} ({u.email})
+                                    </option>
+
+                                  ))}
+
+                                </select>
+
+                                {/* ASSIGN */}
+                                <button
+                                  onClick={() => handleAssign(o.orderId)}
+                                  className="px-5 py-2.5 rounded-2xl
+
+                  bg-gradient-to-r
+                  from-[#6366f1]
+                  to-[#a855f7]
+
+                  text-white text-sm font-semibold
+
+                  shadow-md
+
+                  hover:shadow-xl
+
+                  hover:scale-[1.03]
+
+                  transition-all duration-300"
+                                >
+                                  Assign
+                                </button>
+
+                              </>
+                            )}
+
+                        </div>
+
+                      </td>
+
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+
+            {/* FOOTER */}
+            <div className="p-4 flex justify-between text-xs text-on-surface-variant">
+              <span>
+                Showing {indexOfFirst + 1} -{" "}
+                {Math.min(indexOfLast, orders.length)} of {orders.length} orders
               </span>
-              Manage Orders
+
+              <div className="flex gap-2">
+                {[...Array(totalPages)].map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setCurrentPage(i + 1)}
+                    className={`px-3 py-1 rounded ${currentPage === i + 1
+                      ? "bg-primary text-white"
+                      : "bg-gray-200"
+                      }`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+              </div>
             </div>
-            {/* Tickets */}
+          </div>
+        </main>
+        {/* VIEW ORDER MODAL */}
+        {showViewModal && selectedOrder && (
+
+          <div
+            className="fixed inset-0 z-50
+
+    bg-black/40 backdrop-blur-sm
+
+    flex items-center justify-center
+
+    p-4"
+          >
+
             <div
-              onClick={() => navigate("/admin/tickets")}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition
-  ${isActive("/admin/tickets")
-                  ? "bg-gradient-to-r from-primary to-primary-container text-white shadow-lg"
-                  : "hover:bg-surface-container"
+              className="w-full max-w-3xl
+
+      max-h-[90vh]
+
+      overflow-y-auto
+
+      rounded-[32px]
+
+      bg-white
+
+      shadow-[0_25px_80px_rgba(0,0,0,0.18)]
+
+      p-8"
+            >
+
+              {/* HEADER */}
+              <div className="flex items-start justify-between mb-8">
+
+                <div>
+
+                  <p className="text-sm text-indigo-500 font-semibold mb-2">
+                    ORDER DETAILS
+                  </p>
+
+                  <h2 className="text-3xl font-black text-gray-800">
+                    Order #{selectedOrder.orderId}
+                  </h2>
+
+                </div>
+
+                <button
+                  onClick={() => setShowViewModal(false)}
+                  className="w-11 h-11 rounded-full bg-gray-100 hover:bg-red-50 hover:text-red-500 transition-all duration-300"
+                >
+                  ✕
+                </button>
+
+              </div>
+
+              {/* STATUS */}
+              <div className="mb-8">
+
+                <span
+                  className={`px-4 py-2 rounded-full text-sm font-semibold ${getStatusStyle(
+                    selectedOrder.status
+                  )}`}
+                >
+                  {selectedOrder.status}
+                </span>
+
+              </div>
+
+              {/* CANCELLATION / FAILURE REASON */}
+              {(selectedOrder.status === "DELIVERY_FAILED" ||
+                selectedOrder.status === "CANCELLED") &&
+                selectedOrder.cancelReason && (
+
+                  <div className="mb-8 rounded-2xl border border-red-200 bg-red-50 p-5">
+
+                    <p className="text-xs uppercase tracking-wider text-red-400 mb-2">
+                      {selectedOrder.status === "CANCELLED"
+                        ? "Customer Cancellation Reason"
+                        : "Delivery Failure Reason"}
+                    </p>
+
+                    <p className="text-red-700 font-medium">
+                      {selectedOrder.cancelReason}
+                    </p>
+
+                  </div>
+                )}
+
+              {/* CUSTOMER + DELIVERY */}
+              <div className="grid md:grid-cols-2 gap-6 mb-8">
+
+                {/* CUSTOMER */}
+                <div className="rounded-3xl border border-gray-100 bg-gray-50 p-6">
+
+                  <p className="text-xs uppercase tracking-wider text-gray-400 mb-4">
+                    Customer Information
+                  </p>
+
+                  <h3 className="text-xl font-bold text-gray-800 mb-2">
+                    {selectedOrder.customerName || "Customer"}
+                  </h3>
+
+                  <p className="text-gray-600">
+                    {selectedOrder.customerEmail || "No email"}
+                  </p>
+
+                </div>
+
+                {/* DELIVERY */}
+                <div className="rounded-3xl border border-indigo-100 bg-indigo-50 p-6">
+
+                  <p className="text-xs uppercase tracking-wider text-indigo-400 mb-4">
+                    Delivery Partner
+                  </p>
+
+                  <h3 className="text-xl font-bold text-gray-800 mb-2">
+                    {selectedOrder.deliveryAgentName || "Not Assigned"}
+                  </h3>
+
+                  <p className="text-gray-600">
+                    {selectedOrder.deliveryAgentEmail || "No email"}
+                  </p>
+
+                </div>
+
+              </div>
+              {/* REASSIGN DELIVERY */}
+              {selectedOrder.status === "DELIVERY_FAILED" && (
+
+                <div className="mb-8 rounded-3xl border border-indigo-100 bg-indigo-50 p-6">
+
+                  <p className="text-xs uppercase tracking-wider text-indigo-400 mb-4">
+                    Reassign Delivery Partner
+                  </p>
+
+                  <div className="flex flex-col md:flex-row gap-4">
+
+                    <select
+                      className="flex-1 px-4 py-3 rounded-2xl border border-gray-200 bg-white outline-none"
+                      value={selectedDelivery[selectedOrder.orderId] || ""}
+                      onChange={(e) =>
+                        setSelectedDelivery({
+                          ...selectedDelivery,
+                          [selectedOrder.orderId]: e.target.value,
+                        })
+                      }
+                    >
+
+                      <option value="">
+                        Select Delivery Partner
+                      </option>
+
+                      {users.map((u) => (
+
+                        <option
+                          key={u.id}
+                          value={u.id}
+                        >
+                          {u.name} ({u.email})
+                        </option>
+
+                      ))}
+
+                    </select>
+
+                    <button
+                      onClick={() => handleAssign(selectedOrder.orderId)}
+                      className="px-6 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold"
+                    >
+                      Reassign Delivery
+                    </button>
+
+                  </div>
+
+                </div>
+              )}
+
+              {/* PRODUCTS */}
+              <div className="mb-8">
+
+                <h3 className="text-xl font-bold text-gray-800 mb-5">
+                  Ordered Products
+                </h3>
+
+                <div className="space-y-4">
+
+                  {selectedOrder.items?.map((item, i) => (
+
+                    <div
+                      key={i}
+                      className="flex items-center justify-between rounded-2xl  border border-gray-100  bg-white  p-4"
+                    >
+
+                      <div className="flex items-center gap-4">
+
+                        <img
+                          src={
+                            item.image?.startsWith("http")
+                              ? item.image
+                              : `/products/${item.image}`
+                          }
+                          alt={item.productName}
+                          className="w-16 h-16 rounded-2xl object-cover border border-gray-100"
+                        />
+
+                        <div>
+
+                          <h4 className="font-semibold text-gray-800">
+                            {item.productName}
+                          </h4>
+
+                          <p className="text-sm text-gray-500">
+                            Quantity: {item.quantity}
+                          </p>
+
+                        </div>
+
+                      </div>
+
+                      <p className="font-bold text-indigo-600">
+                        ${item.price}
+                      </p>
+
+                    </div>
+                  ))}
+
+                </div>
+                {/* FINAL TOTAL */}
+                <div
+                  className="mt-6  flex items-center justify-between  rounded-2xl bg-indigo-50 border border-indigo-100 px-6 py-5"
+                >
+
+                  <p className="text-lg font-semibold text-gray-700">
+                    Final Total
+                  </p>
+
+                  <p className="text-3xl font-black text-indigo-600">
+                  ${calculateOrderTotal(selectedOrder.items || []).total.toFixed(2)}
+                  </p>
+
+                </div>
+              </div>
+
+              {/* FEEDBACK */}
+              {selectedOrder.deliveryRating && (
+
+                <div
+                  className="rounded-[28px]
+
+          border border-yellow-100
+
+          bg-gradient-to-br
+          from-yellow-50
+          via-white
+          to-orange-50
+
+          p-6"
+                >
+
+                  <div className="flex items-center justify-between mb-4">
+
+                    <div>
+
+                      <p className="text-xs uppercase tracking-widest text-gray-400 mb-2">
+                        Customer Feedback
+                      </p>
+
+                      <h3 className="text-2xl font-black text-gray-800">
+                        Delivery Experience
+                      </h3>
+
+                    </div>
+
+                    <div className="flex gap-1 text-3xl">
+
+                      {[1, 2, 3, 4, 5].map((star) => (
+
+                        <span
+                          key={star}
+                          className={
+                            star <= selectedOrder.deliveryRating
+                              ? "text-yellow-400"
+                              : "text-gray-200"
+                          }
+                        >
+                          ★
+                        </span>
+
+                      ))}
+
+                    </div>
+
+                  </div>
+
+                  <div
+                    className="rounded-2xl
+
+            bg-white/80
+
+            border border-white
+
+            p-5
+
+            text-gray-700"
+                  >
+
+                    {selectedOrder.deliveryFeedback ||
+                      "Customer gave rating without written feedback."}
+
+                  </div>
+
+                </div>
+              )}
+
+            </div>
+
+          </div>
+        )}
+      </div>
+      {/* TOAST */}
+      {toast.show && (
+
+        <div
+          className="fixed top-24 left-1/2 -translate-x-1/2
+
+    z-[9999]
+
+    min-w-[380px]
+
+    px-5 py-4
+
+    rounded-3xl
+
+    bg-white/90
+
+    backdrop-blur-xl
+
+    border border-white
+
+    shadow-[0_10px_40px_rgba(0,0,0,0.12)]
+
+    animate-[fadeIn_.25s_ease]"
+        >
+
+          <div className="flex items-center gap-4">
+
+            {/* ICON */}
+            <div
+              className={`w-11 h-11 rounded-2xl flex items-center justify-center
+
+        ${toast.type === "success"
+                  ? "bg-emerald-100 text-emerald-600"
+                  : "bg-red-100 text-red-500"
                 }`}
             >
-              <span className="material-symbols-outlined">
-                confirmation_number
+
+              <span className="text-xl">
+                {toast.type === "success" ? "✨" : "⚠️"}
               </span>
-              Tickets
+
             </div>
-          </nav>
-        </div>
 
-        {/* BOTTOM */}
-        <div className="pt-6 border-t border-outline-variant/20">
-          <div className="flex items-center gap-3 px-4 py-3 text-error cursor-pointer hover:bg-red-50 rounded-lg transition-all">
-            <span className="material-symbols-outlined">logout</span>
-            Logout
-          </div>
-        </div>
-      </aside>
+            {/* MESSAGE */}
+            <div className="flex flex-col">
 
-      {/* HEADER */}
-      <header className="md:ml-64 h-16 flex justify-between items-center px-6 bg-surface/80 backdrop-blur-xl shadow">
-        <input
-          placeholder="Search orders..."
-          className="hidden md:block bg-surface-container-low px-4 py-2 rounded-lg outline-none"
-        />
+              <p
+                className={`font-bold text-sm
 
-        <div className="flex items-center gap-4">
-          <span className="material-symbols-outlined">notifications</span>
-          <span className="material-symbols-outlined">settings</span>
+          ${toast.type === "success"
+                    ? "text-emerald-600"
+                    : "text-red-500"
+                  }`}
+              >
 
-          {/* PROFILE ICON (fixed) */}
-          <div className="w-9 h-9 rounded-full flex items-center justify-center bg-primary/10 text-primary">
-            <span className="material-symbols-outlined">person</span>
-          </div>
-        </div>
-      </header>
+                {toast.type === "success"
+                  ? "Assignment Successful"
+                  : "Assignment Failed"}
 
-      {/* MAIN */}
-      <main className="md:ml-64 p-6">
-        {/* TITLE */}
-        <h1 className="text-3xl font-extrabold mb-2">Manage Orders</h1>
-        <p className="text-on-surface-variant mb-6">
-          Track and update customer order statuses.
-        </p>
-
-        {/* STATS */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-surface-container-lowest p-6 rounded-xl shadow flex gap-4 items-center">
-            <div className="w-12 h-12 bg-primary/10 text-primary flex items-center justify-center rounded-lg">
-              <span className="material-symbols-outlined">pending_actions</span>
-            </div>
-            <div>
-              <p className="text-xs text-on-surface-variant uppercase">
-                Pending Orders
               </p>
-              <h2 className="text-2xl font-bold">24</h2>
-            </div>
-          </div>
 
-          <div className="bg-surface-container-lowest p-6 rounded-xl shadow flex gap-4 items-center">
-            <div className="w-12 h-12 bg-secondary-container/20 text-secondary flex items-center justify-center rounded-lg">
-              <span className="material-symbols-outlined">local_shipping</span>
-            </div>
-            <div>
-              <p className="text-xs text-on-surface-variant uppercase">
-                In Transit
+              <p className="text-sm text-gray-500">
+                {toast.message}
               </p>
-              <h2 className="text-2xl font-bold">58</h2>
+
             </div>
+
           </div>
 
-          <div className="bg-surface-container-lowest p-6 rounded-xl shadow flex gap-4 items-center">
-            <div className="w-12 h-12 bg-tertiary-container/20 text-tertiary flex items-center justify-center rounded-lg">
-              <span className="material-symbols-outlined">check_circle</span>
-            </div>
-            <div>
-              <p className="text-xs text-on-surface-variant uppercase">
-                Completed
-              </p>
-              <h2 className="text-2xl font-bold">1,204</h2>
-            </div>
-          </div>
         </div>
-
-        {/* TABLE */}
-        <div className="bg-surface-container-lowest rounded-xl shadow overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-surface-container-low">
-              <tr>
-                <th className="p-4 text-left">Order ID</th>
-                <th>Customer</th>
-                <th>Date</th>
-                <th>Total</th>
-                <th>Status</th>
-                <th className="text-right pr-6">Actions</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {currentOrders.map((o, i) => {
-                const total = o.items?.reduce(
-                  (sum, item) => sum + item.price * item.quantity,
-                  0
-                );
-
-                return (
-                  <tr key={i} className="border-t">
-                    {/* ORDER ID */}
-                    <td className="p-4 font-bold">#{o.orderId}</td>
-
-                    {/* CUSTOMER */}
-                    <td>
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-surface-container-highest rounded-full flex items-center justify-center text-xs font-bold text-primary">
-                          {o.user?.name?.charAt(0) || "U"}
-                        </div>
-                        {o.user?.name || "User"}
-                      </div>
-                    </td>
-
-                    {/* DATE */}
-                    <td>
-                      {new Date(o.orderDate).toLocaleDateString()}
-                    </td>
-
-                    {/* TOTAL */}
-                    <td className="font-bold">
-                      ₹{total?.toFixed(2) || 0}
-                    </td>
-
-                    {/* STATUS */}
-                    <td>
-                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700">
-                        {o.status}
-                      </span>
-                    </td>
-
-                    {/* ACTIONS */}
-                    <td className="text-right pr-6">
-                      <div className="flex justify-end gap-2 items-center">
-                        <button className="text-primary text-xs font-bold">
-                          View Details
-                        </button>
-
-                        <select
-                          className="text-xs bg-surface-container-low px-2 py-1 rounded"
-                          defaultValue={o.status}
-                        >
-                          <option value="PLACED">Placed</option>
-                          <option value="PACKED">Packed</option>
-                          <option value="SHIPPED">Shipped</option>
-                          <option value="DELIVERED">Delivered</option>
-                        </select>
-
-                        <button className="bg-primary text-white px-3 py-1 rounded text-xs font-bold">
-                          UPDATE
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-
-          {/* FOOTER */}
-          <div className="p-4 flex justify-between text-xs text-on-surface-variant">
-            <span>
-              Showing {indexOfFirst + 1} -{" "}
-              {Math.min(indexOfLast, orders.length)} of {orders.length} orders
-            </span>
-
-            <div className="flex gap-2">
-              {[...Array(totalPages)].map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCurrentPage(i + 1)}
-                  className={`px-3 py-1 rounded ${currentPage === i + 1
-                    ? "bg-primary text-white"
-                    : "bg-gray-200"
-                    }`}
-                >
-                  {i + 1}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </main>
+      )}
     </div>
   );
 };

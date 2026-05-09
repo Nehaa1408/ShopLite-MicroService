@@ -16,8 +16,8 @@ const ProductDetails = () => {
   const displayProduct = {
     id: 1,
     name: "Aura-9 Wireless Noise-Cancelling Headphones",
-    price: "$349.00",
-    priceValue: 349,
+    price: "$400.00",
+    priceValue: 400,
     image: mainImage,
     quantity: qty,
   };
@@ -101,9 +101,9 @@ const ProductDetails = () => {
             </h1>
 
             <div className="flex items-center gap-4">
-              <span className="text-3xl font-bold text-primary">$349.00</span>
+              <span className="text-3xl font-bold text-primary">$400.00</span>
               <span className="text-lg text-gray-400 line-through">
-                $420.00
+                $720.00
               </span>
             </div>
 
@@ -244,9 +244,7 @@ const ProductDetails = () => {
                   {item.icon}
                 </span>
                 <h4 className="font-bold">{item.title}</h4>
-                <p className="text-sm text-on-surface-variant">
-                  Premium quality description
-                </p>
+                
               </div>
             ))}
           </div>

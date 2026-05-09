@@ -74,13 +74,13 @@ const TopDeals = () => {
 
           {/* NAV ITEMS */}
           <div className="hidden lg:flex items-center gap-8 text-sm font-medium text-gray-600">
-            {[
-              { name: "Home", path: "/" },
-              { name: "Categories", path: "/categories" },
-              { name: "Brands", path: "/brands" },
-              { name: "Deals", path: "/top-deals" },
-              { name: "Orders", path: "/orders" },
-            ].map((item, i) => {
+             {[
+                { name: "Home", path: "/" },
+                { name: "Categories", path: "/categories" },
+                { name: "Brands", path: "/brand/aurel" },
+                { name: "Deals", path: "/top-deals" },
+ 
+              ].map((item, i) => {
               const isActive = location.pathname === item.path;
 
               return (

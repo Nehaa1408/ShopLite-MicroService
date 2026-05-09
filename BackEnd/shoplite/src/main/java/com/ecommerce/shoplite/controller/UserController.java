@@ -1,35 +1,31 @@
 package com.ecommerce.shoplite.controller;
 
-
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
 
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 
-import org.springframework.web.bind.annotation.RestController;
-
-import com.ecommerce.shoplite.dto.LoginRequest;
-import com.ecommerce.shoplite.dto.LoginResponse;
-import com.ecommerce.shoplite.dto.RegisterResponse;
 import com.ecommerce.shoplite.entity.User;
-import com.ecommerce.shoplite.service.UserService;
+import com.ecommerce.shoplite.repository.DeliveryPartnerRepository;
+import com.ecommerce.shoplite.entity.DeliveryPartner;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api/users")
+@CrossOrigin(origins = "*")
 public class UserController {
+
     @Autowired
-    private UserService userService;
+    private DeliveryPartnerRepository deliveryPartnerRepository;
 
-    @PostMapping("/register")
-    public RegisterResponse register(@RequestBody User user) {
-        return userService.register(user);
+    // GET DELIVERY USERS
+    @GetMapping("/delivery")
+    public List<User> getDeliveryUsers() {
+
+        return deliveryPartnerRepository
+                .findByApprovedTrue()
+                .stream()
+                .map(DeliveryPartner::getUser)
+                .toList();
     }
-
-    @PostMapping("/login")
-    public LoginResponse login(@RequestBody LoginRequest request) {
-        return userService.login(request.getEmail(), request.getPassword());
-    }
-
 }

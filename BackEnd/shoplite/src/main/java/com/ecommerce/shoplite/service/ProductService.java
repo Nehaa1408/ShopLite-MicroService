@@ -2,7 +2,6 @@ package com.ecommerce.shoplite.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -17,62 +16,69 @@ public class ProductService {
     @Autowired
     private ProductRepository productRepository;
 
-   
+    // ADD PRODUCT
     public Product addProduct(Product product) {
+        product.setActive(true);
         return productRepository.save(product);
     }
 
-    
+    // ALL PRODUCTS (PAGINATED)
     public Page<Product> getProducts(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        return productRepository.findAll(pageable);
+        return productRepository.findByActiveTrue(PageRequest.of(page, size));
     }
 
-    
+    // CATEGORY PRODUCTS
     public Page<Product> getProductsByCategory(String category, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        return productRepository.findByCategory_Name(category, pageable);
+        return productRepository.findByCategory_NameAndActiveTrue(
+                category, PageRequest.of(page, size));
     }
 
-   
+    // HOME PRODUCTS
+    public Page<Product> getHomeProducts(int page, int size) {
+        return productRepository.findByTypeAndActiveTrue(
+                "HOME", PageRequest.of(page, size));
+    }
+
+    // BRAND PRODUCTS
+    public Page<Product> getBrandProducts(String brand, int page, int size) {
+        return productRepository.findByBrandAndTypeAndActiveTrue(
+                brand, "BRAND", PageRequest.of(page, size));
+    }
+
+    // GET PRODUCT BY ID
     public Product getProductById(Long id) {
         return productRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found"));
+                .filter(Product::isActive) // uses getter → isActive()
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Product not found"));
     }
 
-    
+    // DELETE (SOFT DELETE)
     public void deleteProduct(Long id) {
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found"));
-
-        productRepository.delete(product);
+        Product product = getProductById(id);
+        product.setActive(false);
+        productRepository.save(product);
     }
 
-    
-    public Product updateProduct(Long id, Product updatedProduct) {
+    // UPDATE PRODUCT
+    public Product updateProduct(Long id, Product updated) {
 
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found"));
+        Product product = getProductById(id);
 
-        if (updatedProduct.getName() != null) {
-            product.setName(updatedProduct.getName());
-        }
+        if (updated.getName() != null)
+            product.setName(updated.getName());
 
-        if (updatedProduct.getDescription() != null) {
-            product.setDescription(updatedProduct.getDescription());
-        }
+        if (updated.getDescription() != null)
+            product.setDescription(updated.getDescription());
 
-        if (updatedProduct.getPrice() != 0) {
-            product.setPrice(updatedProduct.getPrice());
-        }
+        if (updated.getPrice() > 0)
+            product.setPrice(updated.getPrice());
 
-        if (updatedProduct.getQuantity() >= 0) {
-            product.setQuantity(updatedProduct.getQuantity());
-        }
+        if (updated.getQuantity() >= 0)
+            product.setQuantity(updated.getQuantity());
 
-        if (updatedProduct.getImageUrl() != null) {
-            product.setImageUrl(updatedProduct.getImageUrl());
-        }
+        if (updated.getImageUrl() != null)
+            product.setImageUrl(updated.getImageUrl());
 
         return productRepository.save(product);
     }

@@ -4,22 +4,30 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.ecommerce.shoplite.dto.GoogleLoginRequest;
 import com.ecommerce.shoplite.dto.LoginResponse;
 import com.ecommerce.shoplite.service.UserService;
 
 @RestController
-@RequestMapping("/api/auth/oauth")
+@RequestMapping("/api/auth")
 @CrossOrigin(origins = "*")
 public class AuthController {
 
     @Autowired
     private UserService userService;
 
+    // ================= GOOGLE LOGIN =================
     @PostMapping("/google")
     public ResponseEntity<LoginResponse> googleLogin(
-            @RequestBody GoogleLoginRequest request) {
+            @RequestBody java.util.Map<String, String> body) {
 
-        return ResponseEntity.ok(userService.googleLogin(request.getToken()));
+        String token = body.get("token");
+
+        if (token == null || token.isEmpty()) {
+            throw new RuntimeException("Google token missing");
+        }
+
+        return ResponseEntity.ok(
+                userService.googleLogin(token)
+        );
     }
 }

@@ -1,18 +1,29 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
+import { calculateOrderTotal } from "../../utils/orderPricing";
 
 const Cart = () => {
   const { cart, removeFromCart, increaseQty, decreaseQty, clearCart } = useCart();
-
-  const subtotal = cart.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
-
-  const tax = subtotal * 0.04;
-  const total = subtotal + tax;
   const navigate = useNavigate();
+  const [showLoginPopup, setShowLoginPopup] = React.useState(false);
+
+  const {
+    subtotal,
+    tax,
+    total
+  } = calculateOrderTotal(cart);
+
+  const handleCheckout = () => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      setShowLoginPopup(true);
+      return;
+    }
+
+    navigate("/checkout");
+  };
 
   return (
     <div className="bg-background text-on-surface min-h-screen glow-bg px-6 py-12 max-w-7xl mx-auto">
@@ -33,16 +44,20 @@ const Cart = () => {
               className="glass-panel rounded-xl p-6 flex flex-col md:flex-row gap-6 shadow"
             >
               <div className="w-full md:w-40 h-40 rounded-lg overflow-hidden">
+                {console.log(item.imageUrl)}
                 <img
-
                   src={
                     item.imageUrl?.startsWith("http")
                       ? item.imageUrl
-                      : `/products/${item.imageUrl}`
+                      : item.imageUrl?.startsWith("/products/")
+                        ? item.imageUrl
+                        : `/products/${item.imageUrl}`
                   }
                   alt={item.productName}
+                  onError={(e) => {
+                    e.target.src = "/products/p1.webp";
+                  }}
                   className="w-full h-full object-cover"
-
                 />
               </div>
 
@@ -125,12 +140,11 @@ const Cart = () => {
             </div>
 
             <button
-              onClick={() => navigate("/checkout")}
+              onClick={handleCheckout}
               className="w-full bg-primary text-white py-3 rounded-xl"
             >
               Proceed to Checkout
             </button>
-
             <button
               onClick={() => navigate("/")}
               className="w-full mt-4 border border-primary text-primary py-3 rounded-xl font-semibold hover:bg-primary/10 transition"
@@ -172,6 +186,47 @@ const Cart = () => {
           </div>
         </div>
       </div>
+      {
+        showLoginPopup && (
+          <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+
+            <div className="bg-white rounded-2xl p-8 w-[90%] max-w-sm shadow-[0_20px_60px_rgba(0,0,0,0.2)] text-center animate-[fadeIn_0.3s_ease]">
+
+              <div className="text-4xl mb-4">🔒</div>
+
+              <h2 className="text-xl font-bold mb-2">
+                Login Required
+              </h2>
+
+              <p className="text-gray-500 mb-6 text-sm">
+                Please login to continue checkout.
+              </p>
+
+              <div className="flex gap-3 justify-center">
+
+                <button
+                  onClick={() => {
+                    setShowLoginPopup(false);
+                    navigate("/login");
+                  }}
+                  className="px-5 py-2.5 bg-indigo-600 text-white rounded-lg font-medium hover:scale-105 transition"
+                >
+                  Login
+                </button>
+
+                <button
+                  onClick={() => setShowLoginPopup(false)}
+                  className="px-5 py-2.5 border rounded-lg font-medium hover:bg-gray-100 transition"
+                >
+                  Cancel
+                </button>
+
+              </div>
+
+            </div>
+          </div>
+        )
+      }
     </div>
   );
 };

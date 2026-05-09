@@ -13,4 +13,14 @@ public class OrderResponse {
     private String status;
     private String orderDate;
     private List<OrderItemResponse> items;
+    private String deliveryAgentName;
+    private String customerName;
+    private String customerEmail;
+    private String deliveryAgentEmail;
+    private String cancelReason;
+    private Integer deliveryRating;
+    private String deliveryFeedback;
+    private String deliveredAt;
+    private boolean returnEligible;
+    private String returnEligibleTill;
 }

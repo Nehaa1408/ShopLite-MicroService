@@ -1,16 +1,8 @@
 package com.ecommerce.shoplite.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import com.ecommerce.shoplite.entity.Product;
 import com.ecommerce.shoplite.service.ProductService;
@@ -23,32 +15,52 @@ public class ProductController {
     @Autowired
     private ProductService productService;
 
+    // CREATE
     @PostMapping
-    public Product addProduct(@RequestBody Product product) {
-        return productService.addProduct(product);
+    public ResponseEntity<Product> addProduct(@RequestBody Product product) {
+        return ResponseEntity.ok(productService.addProduct(product));
     }
 
+    // READ (ALL + FILTERS)
     @GetMapping
-    public org.springframework.data.domain.Page<Product> getProducts(
+    public ResponseEntity<?> getProducts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "6") int size,
-            @RequestParam(required = false) String category) {
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String brand,
+            @RequestParam(required = false) String type) {
 
-        if (category != null) {
-            return productService.getProductsByCategory(category, page, size);
+        if ("HOME".equalsIgnoreCase(type)) {
+            return ResponseEntity.ok(productService.getHomeProducts(page, size));
         }
 
-        return productService.getProducts(page, size);
+        if (brand != null && !brand.isEmpty()) {
+            return ResponseEntity.ok(productService.getBrandProducts(brand, page, size));
+        }
+
+        if (category != null && !category.isEmpty()) {
+            return ResponseEntity.ok(productService.getProductsByCategory(category, page, size));
+        }
+
+        return ResponseEntity.ok(productService.getProducts(page, size));
     }
 
-    @DeleteMapping("/{id}")
-    public String deleteProduct(@PathVariable Long id) {
-        productService.deleteProduct(id);
-        return "Product deleted successfully";
+    // READ (BY ID)
+    @GetMapping("/{id}")
+    public ResponseEntity<Product> getProductById(@PathVariable Long id) {
+        return ResponseEntity.ok(productService.getProductById(id));
     }
 
+    // UPDATE
     @PutMapping("/{id}")
-    public Product updateProduct(@PathVariable Long id, @RequestBody Product product) {
-        return productService.updateProduct(id, product);
+    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @RequestBody Product product) {
+        return ResponseEntity.ok(productService.updateProduct(id, product));
+    }
+
+    // DELETE
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteProduct(@PathVariable Long id) {
+        productService.deleteProduct(id);
+        return ResponseEntity.ok("Product deleted successfully");
     }
 }

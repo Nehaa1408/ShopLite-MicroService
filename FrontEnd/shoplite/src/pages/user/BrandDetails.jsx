@@ -1,8 +1,34 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
+import { useCart } from "../../context/CartContext";
 const BrandDetails = () => {
     const { brandName } = useParams();
     const navigate = useNavigate();
+    const { addToCart } = useCart();
+    const [showLoginPopup, setShowLoginPopup] = useState(false);
+    const [products, setProducts] = useState([]);
+    const { cart } = useCart();
+
+    useEffect(() => {
+        const fetchProducts = async () => {
+            try {
+                const res = await axios.get(
+                    `http://localhost:8080/api/products?brand=${brandName.toUpperCase()}&size=10`
+                );
+
+                console.log("API FULL RESPONSE:", res.data);
+
+                setProducts(res.data.content || res.data);
+
+            } catch (err) {
+                console.error("Error fetching products:", err);
+            }
+        };
+
+        fetchProducts();
+    }, [brandName]);
+
     const brandData = {
         aurel: {
             title: "AUREL",
@@ -42,6 +68,75 @@ const BrandDetails = () => {
     };
     const brand = brandData[brandName] || brandData["aurel"];
     console.log(brandName);
+
+    useEffect(() => {
+        const fetchProducts = async () => {
+            try {
+                const res = await axios.get(
+                    `http://localhost:8080/api/products?brand=${brandName.toUpperCase()}&size=10`
+                );
+
+                console.log("API FULL RESPONSE:", res.data);
+
+                setProducts(res.data.content || res.data);
+
+            } catch (err) {
+                console.error("Error fetching products:", err);
+            }
+        };
+
+        fetchProducts();
+    }, [brandName]);
+
+    const handleAddToCart = (e, product) => {
+        e.stopPropagation();
+        console.log("PRODUCT:", product);
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+            setShowLoginPopup(true);
+            return;
+        }
+
+        addToCart(product);
+    };
+
+    const normalize = (str) => str?.trim().toLowerCase();
+
+    // TOP SECTION (3 items)
+    const highlightNames = [
+        "atelier trench",
+        "orbital sneaker",
+        "prism gown"
+    ];
+
+    const highlightProducts = Array.isArray(products)
+        ? products.filter((p) =>
+            highlightNames.includes(normalize(p.name))
+        )
+        : [];
+
+    // GRID SECTION 
+    const gridNames = [
+        "luna clutch",
+        "serene blazer",
+        "solaris v1",
+        "elysian scarf"
+    ];
+
+    const gridProducts = Array.isArray(products)
+        ? products.filter((p) => {
+            const name = normalize(p.name);
+            return (
+                name.includes("luna") ||
+                name.includes("blazer") ||
+                name.includes("solaris") ||
+                name.includes("scarf")
+            );
+        })
+        : [];
+    console.log("GRID PRODUCTS:", gridProducts.map(p => p.name));
+    console.log("ALL PRODUCT NAMES:", products.map(p => p.name));
 
     return (
         <div className="relative min-h-screen">
@@ -94,9 +189,17 @@ const BrandDetails = () => {
                             <span className="material-symbols-outlined">favorite</span>
                         </button>
 
-                        <button className="p-2 relative hover:opacity-80">
+                        <button
+                            onClick={() => navigate("/cart")}
+                            className="p-2 relative hover:opacity-80"
+                        >
                             <span className="material-symbols-outlined">shopping_bag</span>
-                            <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full" />
+
+                            {cart.length > 0 && (
+                                <span className="absolute -top-1 -right-1 text-[10px] bg-indigo-600 text-white px-1.5 py-0.5 rounded-full">
+                                    {cart.length}
+                                </span>
+                            )}
                         </button>
                     </div>
                 </div>
@@ -192,82 +295,68 @@ const BrandDetails = () => {
                     {/* CARDS */}
                     <div className="flex gap-8 justify-center overflow-x-auto pb-6 snap-x max-w-[1200px] mx-auto no-scrollbar">
 
-                        {/* CARD */}
-                        {[
-                            {
-                                name: "Atelier Trench",
-                                price: "$2,450",
-                                category: "Signature Series",
-                                image: "https://lh3.googleusercontent.com/aida-public/AB6AXuBpKop8PcN0I24xCa_UYgweSpS9934EC_ZvuZoKEReQ_tJ92qhjRRrvQjP7V2ri-2MvwcBY6tzGrx3stXV6tz9DScCKW6a_Wt2Wjei3LUM4HqYx57g03Qs1m9qSXbYo3guJ9NRZGge5VK_d_tgwwNzM0upuwzIwpc7ihDkN2qAsNCKZOqTbmUs0Ae__XwxBY7WJy2Y1zRi9OkMApbni1E1zpaCqCh30KzXyJzPa_lri93fY9-00q_oQa_LB1V972WrysW4k1suEb8s"
-                            },
-                            {
-                                name: "Orbital Sneaker",
-                                price: "$890",
-                                category: "Footwear",
-                                image: "https://lh3.googleusercontent.com/aida-public/AB6AXuDtI-vksbJa5xp3LEekwuXudrgyMkFpIyUw6LO9oOvRNWiPlod_L9_Qno_fYfW7oAvFaWLVR045sxdl9BN62SiL9XKhRyUB2pZMV56WLmVyybd3E-s3BcJ2bwfAbxvVP4zEREbvkuoxUuVtGeWfaNOvfXc5wVVq9WF3ZPWSVVS-Si6At-WRRpXfHDLcR7plB7aKDG9OgYTavTvdtTxCN-MEVGm-W-uZeCYxmc-WrD9eo7JWmK4OWllhmyVoktt5Mlf2w3jgvgtcsnE"
-                            },
-                            {
-                                name: "Prism Gown",
-                                price: "$3,100",
-                                category: "Evening Wear",
-                                image: "https://lh3.googleusercontent.com/aida-public/AB6AXuDz4iuZpRycqWx9WwG74h6wwRCBEm4dQCzUwm0LQsFYTYphcF0yUtSe9tBGJhYHB6FOGpPDfqlcierDVzq_HaBgK9__uqBdC5e7wuwJsbwuqqq5WMy6Dt2hzCziBcWOlEKhxjEnrtZPGfMn4tT-ff0prBXLa4Y4cKchzfJ8TwrQZse4T6aZkfskuyw_TtQI3P8MtUmDY1fuxehqXc0EB6w3TYfT_u_JxCe_rWs-YVyBaDButjewpiF3VlWVeNqjVfAc17zIawJL5-s"
-                            }
-                        ].map((item, i) => (
+                        {Array.isArray(highlightProducts) && highlightProducts.length > 0 ? (
+                            highlightProducts.map((item, i) => (
 
-                            <div key={i} className="min-w-[320px] snap-start group">
+                                <div key={item.id || i} className="min-w-[320px] snap-start group">
 
-                                <div className="bg-white shadow-[0_10px_40px_rgba(0,0,0,0.06)] rounded-[24px] p-4">
+                                    <div className="bg-white shadow-[0_10px_40px_rgba(0,0,0,0.06)] rounded-[24px] p-4">
 
-                                    {/* IMAGE */}
-                                    <div className="h-[320px] rounded-[20px] overflow-hidden mb-4 relative">
+                                        <div className="h-[320px] rounded-[20px] overflow-hidden mb-4 relative">
 
-                                        <img
-                                            src={item.image}
-                                            className="w-full h-full object-cover transition duration-500 group-hover:scale-110"
-                                            alt=""
-                                        />
+                                            <img
+                                                src={item.imageUrl}
+                                                className="w-full h-full object-cover transition duration-500 group-hover:scale-110"
+                                                alt={item.name}
+                                            />
 
-                                        {/* 🔥 BOTTOM CART OVERLAY */}
-                                        <div className="absolute bottom-0 left-0 w-full p-3
-        bg-gradient-to-t from-black/50 to-transparent
-        opacity-0 group-hover:opacity-100 transition duration-300">
+                                            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[85%]
+            opacity-0 group-hover:opacity-100 transition duration-300">
 
-                                            <button className="w-full py-2 rounded-full bg-white text-gray-800
-          flex items-center justify-center gap-2 shadow-md">
+                                                <button
+                                                    onClick={(e) => handleAddToCart(e, item)}
+                                                    className="w-full py-3 rounded-full 
+                bg-white/90 backdrop-blur-md
+                text-gray-800 flex items-center justify-center gap-2
+                shadow-lg text-sm"
+                                                >
+                                                    <span className="material-symbols-outlined text-sm">
+                                                        shopping_cart
+                                                    </span>
+                                                    Add to Cart
+                                                </button>
 
-                                                <span className="material-symbols-outlined text-sm">
-                                                    shopping_cart
-                                                </span>
-                                                Add to Cart
-                                            </button>
+                                            </div>
 
                                         </div>
 
-                                    </div>
+                                        <div className="flex justify-between">
+                                            <div>
+                                                <h4 className="font-medium text-gray-800">{item.name}</h4>
+                                                <p className="text-sm text-gray-400">
+                                                    {item.category?.name}
+                                                </p>
+                                            </div>
 
-                                    {/* INFO */}
-                                    <div className="flex justify-between">
-                                        <div>
-                                            <h4 className="font-medium text-gray-800">{item.name}</h4>
-                                            <p className="text-sm text-gray-400">{item.category}</p>
+                                            <span className="text-indigo-500 font-medium">
+                                                ${item.price}
+                                            </span>
                                         </div>
 
-                                        <span className="text-indigo-500 font-medium">
-                                            {item.price}
-                                        </span>
                                     </div>
-
                                 </div>
-                            </div>
-                        ))}
+
+                            ))
+                        ) : (
+                            <p className="text-gray-400 text-center w-full">
+                                No highlight products found
+                            </p>
+                        )}
 
                     </div>
                 </section>
 
                 <section className="relative pt-6 pb-24 px-6 md:px-12 overflow-hidden">
-
-
-
                     {/* FILTER BAR */}
                     <div className="flex flex-wrap items-center justify-center gap-4 mb-16">
 
@@ -297,58 +386,31 @@ const BrandDetails = () => {
                     {/* PRODUCT GRID */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 max-w-[1200px] mx-auto">
 
-                        {[
-                            {
-                                name: "Luna Clutch",
-                                price: "$1,200",
-                                tag: "Handcrafted Leather",
-                                image: "https://lh3.googleusercontent.com/aida-public/AB6AXuAHDP_-Ac0IGnxWQbTkQqiqmVdoV7MnGItEdAWyUdzDD_ZQ7adcbnNIS0by019bt7xCtq0aDeUKkraj5x0j2Og5OcKGh1cCOy6Sq-75aL0ZckqcS-gl7PE5bboHtonXwYTA1geL51zPUmtRGU0xtf26_DGCq4mvD_5OaDOsf2m_yBKwoWzzTxvIxet72IgVw13ZTDuSE5fWve4nDpV13NyKV6D_XdnTEtCca_sQRBcJ0bBZv8aX7ZW4uyEX5BndNw3aEBj3ujDFooI"
-                            },
-                            {
-                                name: "Serene Blazer",
-                                price: "$1,850",
-                                tag: "Italian Wool",
-                                image: "https://lh3.googleusercontent.com/aida-public/AB6AXuB-AWV2KqihbRg4Wnxrlxdf39NiFKGC0t6y7MB2sZ8EX5QhLQqTUQ9kBJrT0TLSXygvYuytTl9_Bs2hAlmnHLXuzMTWBwPPPYgGycCDSUj4q3fu13gbj5VWeMmuQwcI4QwOvypH3GtwUnTlcr_vSSly8fZDexSg6Mex2wBpd-ypF2l2EkLRn7lXKDUG46kcICsYySgguAEZGaJqGs9K7Mh-ES-ryg-V4DzK-9zJPG-BFCkFDeY7eK0VrOjeuDpeFcYWbZq77I2PkR8"
-                            },
-                            {
-                                name: "Solaris V1",
-                                price: "$450",
-                                tag: "Eyewear",
-                                image: "https://lh3.googleusercontent.com/aida-public/AB6AXuDJ3eDIqGqzt5XzwtAqz3tMl1Mxqd5CQXaYQVGzdU_Ek5jdNLCB_cYV2WMoHbRBAzTZB7i74fG2JM8-H4eHS24lLVJqesE5wKlKtAz6K7-JD45zq1b6r0CuItAF30qbcYrWCO3wgcBwbLfruCD7JDNx0AsI-vtG9ndB7wg0Mxdj8Ebty5i9M04hQygTaXFgQ7PiQB-gaeeABevg8-HOihn4hodI_wIzeROgdGujtcJ19d9awSWTZZuMV8Tednc2hm22h6oF7KGglcU"
-                            },
-                            {
-                                name: "Elysian Scarf",
-                                price: "$320",
-                                tag: "100% Mulberry Silk",
-                                image: "https://lh3.googleusercontent.com/aida-public/AB6AXuBQrir7juTAV02p9AMEG58D2MCY3OcCy3omD9ffLsu4L9mJECAy54XPmRY2hby_-sH2CU0VTfqb4t-dynLVPTv-4aBSlCTZAC8Mkdtl4CppM6SHA4mji9xNteV8ICaFEB8FU7FG7B_X8nQqN1nUzANcQe7tWa5EKdkLPp-b0qJ_RT9AiumrG9_ZrRelzEWok98zwLp1ww9ZYWx4f2nZxmPpe4tOLi_c3u7HvfST-1ol1OnaAoiDyuZ_BRhP9k1wp3owpRhEWA0Bznw"
-                            }
-                        ].map((item, i) => (
+                        {Array.isArray(gridProducts) && gridProducts.map((item, i) => (
 
-                            <div key={i} className="group cursor-pointer">
+                            <div key={item.id || i} className="group cursor-pointer">
 
-                                {/* FULL CARD */}
                                 <div className="rounded-[24px] p-3 bg-white border border-gray-100
-    shadow-[0_10px_40px_rgba(0,0,0,0.06)]
-    hover:shadow-[0_20px_60px_rgba(0,0,0,0.12)]
-    transition-all duration-300">
+      shadow-[0_10px_40px_rgba(0,0,0,0.06)]
+      hover:shadow-[0_20px_60px_rgba(0,0,0,0.12)]
+      transition-all duration-300">
 
-                                    {/* IMAGE */}
                                     <div className="aspect-[3/4] rounded-[20px] overflow-hidden relative mb-4">
                                         <img
-                                            src={item.image}
+                                            src={item.imageUrl}
                                             className="w-full h-full object-cover transition duration-500 group-hover:scale-110"
-                                            alt=""
+                                            alt={item.name}
                                         />
 
-                                        {/* CART POP */}
                                         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[85%]
-        opacity-0 group-hover:opacity-100
-        transition duration-300">
+          opacity-0 group-hover:opacity-100 transition duration-300">
 
-                                            <button className="w-full py-3 rounded-full 
-          bg-white/90 backdrop-blur-md
-          text-gray-800 flex items-center justify-center gap-2
-          shadow-lg text-sm">
+                                            <button
+                                                onClick={(e) => handleAddToCart(e, item)}
+                                                className="w-full py-3 rounded-full 
+              bg-white/90 backdrop-blur-md
+              text-gray-800 flex items-center justify-center gap-2
+              shadow-lg text-sm">
 
                                                 <span className="material-symbols-outlined text-sm">
                                                     shopping_cart
@@ -359,24 +421,22 @@ const BrandDetails = () => {
                                         </div>
                                     </div>
 
-
                                     <div className="px-2">
                                         <div className="flex justify-between mb-1">
                                             <h5 className="text-sm font-medium text-gray-800">
                                                 {item.name}
                                             </h5>
                                             <span className="text-indigo-500 text-sm">
-                                                {item.price}
+                                                ${item.price}
                                             </span>
                                         </div>
 
                                         <p className="text-[10px] uppercase text-gray-400 tracking-widest">
-                                            {item.tag}
+                                            {item.category?.name}
                                         </p>
                                     </div>
 
                                 </div>
-
                             </div>
 
                         ))}
@@ -488,7 +548,7 @@ const BrandDetails = () => {
 
                         {/* BOTTOM BAR */}
                         <div className="mt-12 pt-6 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-400">
-                            <p>© 2024 ShopLite. Ethereal Commerce.</p>
+                            <p>© ShopLite. Ethereal Commerce.</p>
 
                             <div className="flex gap-6">
                                 <span className="hover:text-indigo-600 cursor-pointer">Instagram</span>
@@ -499,8 +559,46 @@ const BrandDetails = () => {
 
                     </div>
                 </footer>
-
             </main>
+            {showLoginPopup && (
+                <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+
+                    <div className="bg-white rounded-2xl p-8 w-[90%] max-w-sm shadow-[0_20px_60px_rgba(0,0,0,0.2)] text-center animate-[fadeIn_0.3s_ease]">
+
+                        <div className="text-4xl mb-4">🔒</div>
+
+                        <h2 className="text-xl font-bold mb-2">
+                            Login Required
+                        </h2>
+
+                        <p className="text-gray-500 mb-6 text-sm">
+                            Please login to continue adding items to your cart.
+                        </p>
+
+                        <div className="flex gap-3 justify-center">
+
+                            <button
+                                onClick={() => {
+                                    setShowLoginPopup(false);
+                                    navigate("/login");
+                                }}
+                                className="px-5 py-2.5 bg-indigo-600 text-white rounded-lg font-medium hover:scale-105 transition"
+                            >
+                                Login
+                            </button>
+
+                            <button
+                                onClick={() => setShowLoginPopup(false)}
+                                className="px-5 py-2.5 border rounded-lg font-medium hover:bg-gray-100 transition"
+                            >
+                                Cancel
+                            </button>
+
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </div >
     );
 };

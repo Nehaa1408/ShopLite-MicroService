@@ -11,7 +11,6 @@ const TicketManagement = () => {
     subject: "",
     category: "Order Issue",
     orderId: "",
-    priority: "Low",
     description: "",
   });
   const fetchTickets = async () => {
@@ -19,7 +18,7 @@ const TicketManagement = () => {
       const token = localStorage.getItem("token");
       if (!token) return;
 
-      const res = await axios.get("http://localhost:8080/tickets", {
+      const res = await axios.get("http://localhost:8080/api/tickets", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -27,7 +26,13 @@ const TicketManagement = () => {
 
       console.log("Tickets:", res.data);
 
-      setTickets(res.data || []);
+      if (Array.isArray(res.data)) {
+        setTickets(res.data);
+      } else if (Array.isArray(res.data.tickets)) {
+        setTickets(res.data.tickets);
+      } else {
+        setTickets([]);
+      }
     } catch (err) {
       console.error("Fetch tickets error:", err);
     }
@@ -35,6 +40,8 @@ const TicketManagement = () => {
   useEffect(() => {
     fetchTickets();
   }, []);
+
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -46,11 +53,21 @@ const TicketManagement = () => {
 
     try {
       const token = localStorage.getItem("token");
-      if (!token) return;
 
-      await axios.post(
-        `http://localhost:8080/tickets?subject=${encodeURIComponent(form.subject)}&message=${encodeURIComponent(form.description)}`,
-        {},
+
+      console.log("TOKEN:", token);
+
+      if (!token) {
+        alert("User not logged in");
+        return;
+      }
+
+      const res = await axios.post(
+        "http://localhost:8080/api/tickets",
+        {
+          subject: form.subject,
+          message: form.description,
+        },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -58,11 +75,12 @@ const TicketManagement = () => {
         }
       );
 
+      console.log("Created Ticket:", res.data);
+
       setForm({
         subject: "",
         category: "Order Issue",
         orderId: "",
-        priority: "Low",
         description: "",
       });
 
@@ -70,14 +88,23 @@ const TicketManagement = () => {
 
       setSuccessMsg("Ticket created successfully");
 
-
       setTimeout(() => {
         setSuccessMsg("");
       }, 4000);
+
     } catch (err) {
-      console.error("Create ticket error:", err);
+      console.error("Create ticket error FULL:", err);
+
+
+      if (err.response) {
+        console.log("STATUS:", err.response.status);
+        console.log("DATA:", err.response.data);
+      }
     }
   };
+
+
+
   const handleChange = (e) => {
     setForm({
       ...form,
@@ -179,31 +206,15 @@ const TicketManagement = () => {
               </select>
             </div>
 
-            {/* ORDER + PRIORITY */}
-            <div className="grid md:grid-cols-2 gap-4">
+            {/* ORDER */}
+            <div>
               <input
                 name="orderId"
                 value={form.orderId}
                 onChange={handleChange}
-                placeholder="#SL-XXXX"
-                className="p-4 bg-gray-100 rounded-lg"
+                placeholder="#XXXX"
+                className="w-full p-4 bg-gray-100 rounded-lg"
               />
-
-              <div className="flex gap-2">
-                {["Low", "Medium", "High"].map((p) => (
-                  <button
-                    type="button"
-                    key={p}
-                    onClick={() => setForm({ ...form, priority: p })}
-                    className={`flex-1 py-3 rounded-lg transition ${form.priority === p
-                      ? "bg-blue-600 text-white scale-105"
-                      : "bg-gray-100 hover:bg-blue-100"
-                      }`}
-                  >
-                    {p}
-                  </button>
-                ))}
-              </div>
             </div>
 
             {/* DESCRIPTION */}
@@ -222,12 +233,11 @@ const TicketManagement = () => {
             </button>
           </form>
         </div>
-
         {/* TICKETS */}
         <div className="mt-16">
           <h2 className="text-2xl font-bold mb-6">My Tickets</h2>
 
-          {tickets.length === 0 ? (
+          {!Array.isArray(tickets) || tickets.length === 0 ? (
             <p className="text-gray-500 text-center">No tickets yet</p>
           ) : (
             <div className="grid md:grid-cols-2 gap-6">
@@ -237,7 +247,8 @@ const TicketManagement = () => {
                 return (
                   <div
                     key={ticket.id}
-                    className="bg-white p-6 rounded-2xl shadow hover:-translate-y-1 hover:shadow-lg transition animate-[fadeInUp_0.4s_ease]"
+                    onClick={() => navigate(`/tickets/${ticket.id}`)}
+                    className="bg-white p-6 rounded-2xl shadow cursor-pointer hover:-translate-y-1 hover:shadow-lg transition"
                   >
                     <div className="flex justify-between mb-2">
                       <span className="text-xs">{ticket.id}</span>
@@ -265,8 +276,7 @@ const TicketManagement = () => {
             </div>
           )}
         </div>
-      </main>
-
+      </main >
 
       <style>
         {`
@@ -281,7 +291,7 @@ const TicketManagement = () => {
         }
         `}
       </style>
-    </div>
+    </div >
   );
 };
 

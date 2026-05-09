@@ -14,66 +14,155 @@ import com.ecommerce.shoplite.security.JwtFilter;
 @Configuration
 public class SecurityConfig {
 
-    @Autowired
-    private JwtFilter jwtFilter;
+        @Autowired
+        private JwtFilter jwtFilter;
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        @Bean
+        public SecurityFilterChain securityFilterChain(
+                        HttpSecurity http) throws Exception {
 
-        http
-            .cors(cors -> {})
-            .csrf(csrf -> csrf.disable())
+                http
+                                .cors(cors -> {
+                                })
 
-            .sessionManagement(session -> session
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )
+                                .csrf(csrf -> csrf.disable())
 
-            .authorizeHttpRequests(auth -> auth
+                                .sessionManagement(session -> session
+                                                .sessionCreationPolicy(
+                                                                SessionCreationPolicy.STATELESS))
 
-                // AUTH
-                .requestMatchers("/api/auth/**").permitAll()
+                                .authorizeHttpRequests(auth -> auth
 
-                // PRODUCTS
-                .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/products/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/api/products/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/products/**").hasRole("ADMIN")
+                                                // ================= PUBLIC =================
+                                                .requestMatchers("/api/auth/**")
+                                                .permitAll()
 
-               
-                .requestMatchers("/cart/**").permitAll()
+                                                .requestMatchers("/api/delivery/register")
+                                                .permitAll()
 
-                // ORDERS
-                .requestMatchers(HttpMethod.PUT, "/orders/*/status").hasRole("ADMIN")
-                .requestMatchers("/orders/admin/**").hasRole("ADMIN")
+                                                .requestMatchers(
+                                                                HttpMethod.GET,
+                                                                "/api/products/**")
+                                                .permitAll()
 
-                // TICKETS
-                .requestMatchers("/tickets/admin").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/tickets/**").hasRole("ADMIN")
+                                                .requestMatchers("/api/categories/**")
+                                                .permitAll()
 
-                
-                .anyRequest().permitAll()
-            )
+                                                // ================= ADMIN =================
+                                                .requestMatchers("/api/orders/admin/**")
+                                                .hasAuthority("ROLE_ADMIN")
 
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                                                .requestMatchers(
+                                                                HttpMethod.PUT,
+                                                                "/api/orders/*/status")
+                                                .hasAuthority("ROLE_ADMIN")
 
-        return http.build();
-    }
+                                                // DELIVERY APPROVAL
+                                                .requestMatchers("/api/delivery/approve/**")
+                                                .hasAuthority("ROLE_ADMIN")
 
-    @Bean
-    public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
+                                                // DELIVERY ADMIN APIs
+                                                .requestMatchers("/api/delivery/all")
+                                                .hasAuthority("ROLE_ADMIN")
 
-        org.springframework.web.cors.CorsConfiguration config = new org.springframework.web.cors.CorsConfiguration();
+                                                .requestMatchers("/api/delivery/pending")
+                                                .hasAuthority("ROLE_ADMIN")
 
-        config.setAllowedOrigins(java.util.List.of("http://localhost:5173"));
-        config.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(java.util.List.of("*"));
-        config.setAllowCredentials(true);
+                                                .requestMatchers("/api/delivery/reject/**")
+                                                .hasAuthority("ROLE_ADMIN")
 
-        org.springframework.web.cors.UrlBasedCorsConfigurationSource source =
-                new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
+                                                .requestMatchers(
+                                                                HttpMethod.GET,
+                                                                "/api/delivery/*")
+                                                .hasAuthority("ROLE_ADMIN")
 
-        source.registerCorsConfiguration("/**", config);
+                                                // RETURN ADMIN APIs
+                                                .requestMatchers("/api/returns/admin/**")
+                                                .hasAuthority("ROLE_ADMIN")
 
-        return source;
-    }
+                                                // ================= DELIVERY =================
+                                                .requestMatchers("/api/orders/delivery/**")
+                                                .hasAuthority("ROLE_DELIVERY")
+
+                                                // RETURN PICKUP APIs
+                                                .requestMatchers("/api/returns/assigned")
+                                                .hasAuthority("ROLE_DELIVERY")
+
+                                                .requestMatchers("/api/returns/*/send-pickup-otp")
+                                                .hasAuthority("ROLE_DELIVERY")
+
+                                                .requestMatchers("/api/returns/*/verify-pickup-otp")
+                                                .hasAuthority("ROLE_DELIVERY")
+
+                                                .requestMatchers("/api/delivery/profile")
+                                                .hasAuthority("ROLE_DELIVERY")
+
+                                                .requestMatchers("/api/delivery/profile/update")
+                                                .hasAuthority("ROLE_DELIVERY")
+
+                                                // ================= USER =================
+                                                .requestMatchers("/api/cart/**")
+                                                .authenticated()
+
+                                                .requestMatchers("/api/orders/**")
+                                                .authenticated()
+
+                                                .requestMatchers("/api/tickets/**")
+                                                .authenticated()
+
+                                                .requestMatchers("/api/users/**")
+                                                .authenticated()
+
+                                                // PROFILE
+                                                .requestMatchers("/api/user/**")
+                                                .authenticated()
+
+                                                // ================= ANY =================
+                                                .anyRequest()
+                                                .authenticated()
+
+                                )
+
+                                .addFilterBefore(
+                                                jwtFilter,
+                                                UsernamePasswordAuthenticationFilter.class);
+
+                return http.build();
+        }
+
+        @Bean
+        public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
+
+                org.springframework.web.cors.CorsConfiguration config = new org.springframework.web.cors.CorsConfiguration();
+
+                config.setAllowedOrigins(
+                                java.util.List.of("http://localhost:5173"));
+
+                config.setAllowedMethods(
+                                java.util.List.of(
+                                                "GET",
+                                                "POST",
+                                                "PUT",
+                                                "DELETE",
+                                                "OPTIONS"));
+
+                config.setAllowedHeaders(
+                                java.util.List.of("*"));
+
+                config.setAllowCredentials(true);
+
+                org.springframework.web.cors.UrlBasedCorsConfigurationSource source = new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
+
+                source.registerCorsConfiguration(
+                                "/**",
+                                config);
+
+                return source;
+        }
+
+        @Bean
+        public org.springframework.security.crypto.password.PasswordEncoder passwordEncoder() {
+
+                return new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
+        }
 }

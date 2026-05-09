@@ -156,3 +156,115 @@ h3 {
     transform: scale(1);
   }
 }
+
+/* ===== WAVE BACKGROUND  ===== */
+
+@keyframes waveFloat {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+
+  50% {
+    transform: translate(60px, -80px) scale(1.1);
+  }
+
+  100% {
+    transform: translate(-40px, 50px) scale(1);
+  }
+}
+
+@keyframes waveFloatReverse {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+
+  50% {
+    transform: translate(-60px, 80px) scale(1.15);
+  }
+
+  100% {
+    transform: translate(40px, -50px) scale(1);
+  }
+}
+
+/* container helper (optional) */
+.bg-wave {
+  position: relative;
+  overflow: hidden;
+}
+
+/* PROGRESS LINE ANIMATION */
+@keyframes progressFill {
+  from {
+    width: 0%;
+  }
+
+  to {
+    width: 66%;
+  }
+}
+
+.animate-progress {
+  width: 66%;
+  animation: progressFill 1s ease-out forwards;
+}
+
+/* STEP BASE */
+.step-complete,
+.step-active,
+.step-pending {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* COMPLETED */
+.step-complete {
+  background: #6366f1;
+  color: white;
+  animation: popIn 0.4s ease;
+}
+
+/* ACTIVE (GLOW + PULSE) */
+.step-active {
+  background: #6366f1;
+  color: white;
+  animation: pulseGlow 1.5s infinite;
+}
+
+/* PENDING */
+.step-pending {
+  background: #e5e7eb;
+  color: #9ca3af;
+}
+
+/* POP ANIMATION */
+@keyframes popIn {
+  from {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* GLOW PULSE */
+@keyframes pulseGlow {
+  0% {
+    box-shadow: 0 0 0px rgba(99, 102, 241, 0.4);
+  }
+
+  50% {
+    box-shadow: 0 0 12px rgba(99, 102, 241, 0.6);
+  }
+
+  100% {
+    box-shadow: 0 0 0px rgba(99, 102, 241, 0.4);
+  }
+}

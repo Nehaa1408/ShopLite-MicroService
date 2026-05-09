@@ -21,69 +21,87 @@ import java.util.List;
 @Component
 public class JwtFilter extends OncePerRequestFilter {
 
-    @Autowired
-    private JwtUtil jwtUtil;
+        @Autowired
+        private JwtUtil jwtUtil;
 
-    @Autowired
-    private UserRepository userRepository;
+        @Autowired
+        private UserRepository userRepository;
 
-    @Override
-    protected void doFilterInternal(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain)
-            throws ServletException, IOException {
+        @Override
+        protected void doFilterInternal(
+                        HttpServletRequest request,
+                        HttpServletResponse response,
+                        FilterChain filterChain)
+                        throws ServletException, IOException {
 
-        String path = request.getRequestURI();
+                String path = request.getRequestURI();
 
-        // Skip auth endpoints
-        if (path.startsWith("/api/auth")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
+                // ================= PUBLIC ENDPOINTS =================
+                if (path.startsWith("/api/auth")
+                                || path.startsWith("/api/categories")
+                                || path.startsWith("/api/delivery/register")
+                                || path.startsWith("/api/products")) {
 
-        String authHeader = request.getHeader("Authorization");
-
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-
-            String token = authHeader.substring(7);
-
-            try {
-                String email = jwtUtil.extractEmail(token);
-
-                if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-
-                    User user = userRepository.findByEmail(email).orElse(null);
-
-                    if (user != null) {
-
-                        String role = user.getRole().name();
-
-                        if (!role.startsWith("ROLE_")) {
-                            role = "ROLE_" + role;
-                        }
-
-                        List<SimpleGrantedAuthority> authorities = List.of(
-                                new SimpleGrantedAuthority(role));
-
-                        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                                user,
-                                null,
-                                authorities);
-
-                        authToken.setDetails(
-                                new org.springframework.security.web.authentication.WebAuthenticationDetailsSource()
-                                        .buildDetails(request));
-
-                        SecurityContextHolder.getContext().setAuthentication(authToken);
-                    }
+                        filterChain.doFilter(request, response);
+                        return;
                 }
 
-            } catch (Exception e) {
-                System.out.println("JWT ERROR: " + e.getMessage());
-            }
-        }
+                // ================= GET TOKEN =================
+                String authHeader = request.getHeader("Authorization");
 
-        filterChain.doFilter(request, response);
-    }
+                // NO TOKEN
+                if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+
+                        filterChain.doFilter(request, response);
+                        return;
+                }
+
+                String token = authHeader.substring(7);
+
+                try {
+
+                        // ================= EXTRACT EMAIL =================
+                        String email = jwtUtil.extractEmail(token);
+                        System.out.println("JWT TOKEN : " + token);
+                        System.out.println("JWT EMAIL : " + email);
+
+                        // ================= AUTHENTICATE =================
+                        if (email != null
+                                        && SecurityContextHolder
+                                                        .getContext()
+                                                        .getAuthentication() == null) {
+
+                                User user = userRepository.findByEmail(email)
+                                                .orElseThrow(() -> new RuntimeException("User not found"));
+
+                                // ROLE
+                                String role = "ROLE_" + user.getRole().name();
+
+                                List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(role));
+
+                                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                                                user,
+                                                token,
+                                                authorities);
+
+                                authToken.setDetails(
+
+                                                new org.springframework.security.web.authentication.WebAuthenticationDetailsSource()
+
+                                                                .buildDetails(request));
+
+                                SecurityContextHolder
+                                                .getContext()
+                                                .setAuthentication(authToken);
+                        }
+
+                } catch (Exception e) {
+
+                        System.out.println("JWT ERROR: " + e.getMessage());
+
+                        SecurityContextHolder.clearContext();
+                }
+
+                filterChain.doFilter(request, response);
+        }
 }
