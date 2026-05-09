@@ -18,7 +18,8 @@ public class SecurityConfig {
         private JwtFilter jwtFilter;
 
         @Bean
-        public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        public SecurityFilterChain securityFilterChain(
+                        HttpSecurity http) throws Exception {
 
                 http
                                 .cors(cors -> {
@@ -27,7 +28,8 @@ public class SecurityConfig {
                                 .csrf(csrf -> csrf.disable())
 
                                 .sessionManagement(session -> session
-                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                                                .sessionCreationPolicy(
+                                                                SessionCreationPolicy.STATELESS))
 
                                 .authorizeHttpRequests(auth -> auth
 
@@ -38,7 +40,8 @@ public class SecurityConfig {
                                                 .requestMatchers("/api/delivery/register")
                                                 .permitAll()
 
-                                                .requestMatchers(HttpMethod.GET,
+                                                .requestMatchers(
+                                                                HttpMethod.GET,
                                                                 "/api/products/**")
                                                 .permitAll()
 
@@ -49,7 +52,8 @@ public class SecurityConfig {
                                                 .requestMatchers("/api/orders/admin/**")
                                                 .hasAuthority("ROLE_ADMIN")
 
-                                                .requestMatchers(HttpMethod.PUT,
+                                                .requestMatchers(
+                                                                HttpMethod.PUT,
                                                                 "/api/orders/*/status")
                                                 .hasAuthority("ROLE_ADMIN")
 
@@ -67,12 +71,27 @@ public class SecurityConfig {
                                                 .requestMatchers("/api/delivery/reject/**")
                                                 .hasAuthority("ROLE_ADMIN")
 
-                                                .requestMatchers(HttpMethod.GET,
+                                                .requestMatchers(
+                                                                HttpMethod.GET,
                                                                 "/api/delivery/*")
+                                                .hasAuthority("ROLE_ADMIN")
+
+                                                // RETURN ADMIN APIs
+                                                .requestMatchers("/api/returns/admin/**")
                                                 .hasAuthority("ROLE_ADMIN")
 
                                                 // ================= DELIVERY =================
                                                 .requestMatchers("/api/orders/delivery/**")
+                                                .hasAuthority("ROLE_DELIVERY")
+
+                                                // RETURN PICKUP APIs
+                                                .requestMatchers("/api/returns/assigned")
+                                                .hasAuthority("ROLE_DELIVERY")
+
+                                                .requestMatchers("/api/returns/*/send-pickup-otp")
+                                                .hasAuthority("ROLE_DELIVERY")
+
+                                                .requestMatchers("/api/returns/*/verify-pickup-otp")
                                                 .hasAuthority("ROLE_DELIVERY")
 
                                                 .requestMatchers("/api/delivery/profile")
@@ -99,7 +118,10 @@ public class SecurityConfig {
                                                 .authenticated()
 
                                                 // ================= ANY =================
-                                                .anyRequest().authenticated())
+                                                .anyRequest()
+                                                .authenticated()
+
+                                )
 
                                 .addFilterBefore(
                                                 jwtFilter,
@@ -131,7 +153,9 @@ public class SecurityConfig {
 
                 org.springframework.web.cors.UrlBasedCorsConfigurationSource source = new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
 
-                source.registerCorsConfiguration("/**", config);
+                source.registerCorsConfiguration(
+                                "/**",
+                                config);
 
                 return source;
         }

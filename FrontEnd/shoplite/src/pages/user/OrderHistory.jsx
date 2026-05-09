@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const OrderHistory = () => {
   const navigate = useNavigate();
-
+  const location = useLocation();
   const [orders, setOrders] = useState([]);
   const [filter, setFilter] = useState("ALL");
   const [search, setSearch] = useState("");
@@ -12,53 +12,143 @@ const OrderHistory = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [ratings, setRatings] = useState({});
   const [feedbacks, setFeedbacks] = useState({});
-  const [submittedFeedbacks, setSubmittedFeedbacks] = useState({});
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelOrderId, setCancelOrderId] = useState(null);
   const [cancelReason, setCancelReason] = useState("");
   const [otherCancelReason, setOtherCancelReason] = useState("");
+  const [showReturnModal, setShowReturnModal] = useState(false);
+  const [returnOrderId, setReturnOrderId] = useState(null);
+  const [selectedReturnOrder, setSelectedReturnOrder] = useState(null);
+  const [selectedReturnItems, setSelectedReturnItems] = useState([]);
+  const [submittedFeedbacks, setSubmittedFeedbacks] = useState({});
+  const [returns, setReturns] = useState([]);
+  const [returnReason, setReturnReason] = useState("");
+  const [otherReturnReason, setOtherReturnReason] = useState("");
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState("");
 
   const ordersPerPage = 5;
 
   useEffect(() => {
+
     const fetchOrders = async () => {
+
       try {
+
         const token = localStorage.getItem("token");
 
-        const res = await axios.get("http://localhost:8080/api/orders", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        // ORDERS
+        const res = await axios.get(
+          "http://localhost:8080/api/orders",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
         setOrders(res.data);
+
+        // RETURNS
+        const returnRes = await axios.get(
+          "http://localhost:8080/api/returns/my",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        setReturns(returnRes.data);
+
       } catch (err) {
-        console.error("Fetch orders error:", err);
+
+        console.error(
+          "Fetch orders error:",
+          err
+        );
+
       } finally {
+
         setLoading(false);
       }
     };
 
     fetchOrders();
+
   }, []);
 
   useEffect(() => {
     setCurrentPage(1);
   }, [filter, search]);
 
+  useEffect(() => {
+
+    if (showReturnModal || showCancelModal) {
+
+      document.body.style.overflow = "hidden";
+
+    } else {
+
+      document.body.style.overflow = "auto";
+    }
+
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+
+  }, [showReturnModal, showCancelModal]);
+
   const filteredOrders = orders.filter((order) => {
+
+    const orderStatus =
+      order.status?.toLowerCase();
+
+    const processingStatuses = [
+      "placed",
+      "confirmed",
+      "packed",
+      "processing",
+      "shipped",
+      "out for delivery"
+    ];
+
+    // REAL RETURN CHECK
+    const hasReturnRequest =
+      returns.some(
+        (r) => r.orderId === order.orderId
+      );
+
     const matchesFilter =
+
       filter === "ALL" ||
-      order.status?.toLowerCase() === filter.toLowerCase();
+
+      (filter === "PROCESSING" &&
+        processingStatuses.includes(orderStatus)) ||
+
+      (filter === "DELIVERED" &&
+        orderStatus === "delivered") ||
+
+      (filter === "RETURNED" &&
+        hasReturnRequest) ||
+
+      (filter === "CANCELLED" &&
+        orderStatus === "cancelled");
 
     const matchesSearch =
       search === "" ||
-      (order.orderId + "").toLowerCase().includes(search.toLowerCase()) ||
+      (order.orderId + "")
+        .toLowerCase()
+        .includes(search.toLowerCase()) ||
+
       (order.items || []).some((i) =>
-        i.productName?.toLowerCase().includes(search.toLowerCase())
+        i.productName
+          ?.toLowerCase()
+          .includes(search.toLowerCase())
       );
 
     return matchesFilter && matchesSearch;
+
   });
 
   const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
@@ -154,15 +244,24 @@ const OrderHistory = () => {
 
       console.error(err);
 
-      alert(
-        err?.response?.data ||
-        "Order cancellation failed"
+      setToastMessage(
+        "⚠️ " +
+        (err?.response?.data ||
+          "Order cancellation failed")
       );
+
+      setToastType("error");
+
+      setTimeout(() => {
+        setToastMessage("");
+      }, 2000);
     }
   };
 
   const submitFeedback = async (orderId) => {
+
     try {
+
       const token = localStorage.getItem("token");
 
       await axios.post(
@@ -178,8 +277,6 @@ const OrderHistory = () => {
           },
         }
       );
-
-
 
       // REFRESH ORDERS
       const res = await axios.get(
@@ -199,12 +296,102 @@ const OrderHistory = () => {
       });
 
     } catch (err) {
+
       console.error(err);
 
-      alert(
-        err?.response?.data ||
-        "Feedback submission failed"
+      setToastMessage(
+        "⚠️ Feedback submission failed"
       );
+
+      setToastType("error");
+
+      setTimeout(() => {
+        setToastMessage("");
+      }, 2000);
+    }
+  };
+
+  // ================= RETURN REQUEST =================
+
+  const submitReturnRequest = async () => {
+
+    try {
+
+      const token = localStorage.getItem("token");
+
+      const finalReason =
+        returnReason === "Other"
+          ? otherReturnReason
+          : returnReason;
+
+      const selectedProducts =
+        selectedReturnItems
+          .map((itemKey) =>
+            itemKey.split("-").slice(1).join("-")
+          )
+          .join(",");
+
+      await axios.post(
+        "http://localhost:8080/api/returns/request",
+        {
+          orderId: returnOrderId,
+          returnReason: finalReason,
+          selectedItems: selectedProducts,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // REFRESH RETURNS
+      const returnRes = await axios.get(
+        "http://localhost:8080/api/returns/my",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setReturns(returnRes.data);
+
+      setToastMessage(
+        "📦 Return request submitted successfully"
+      );
+
+      setToastType("success");
+
+      setTimeout(() => {
+        setToastMessage("");
+      }, 2000);
+
+      setShowReturnModal(false);
+
+      setReturnReason("");
+
+      setOtherReturnReason("");
+
+      setSelectedReturnItems([]);
+
+      setSelectedReturnOrder(null);
+
+    } catch (err) {
+
+      console.error(err);
+
+      setToastMessage(
+        "⚠️ " +
+        (err?.response?.data ||
+          "Return request failed")
+      );
+
+      setToastType("error");
+
+      setTimeout(() => {
+        setToastMessage("");
+      }, 2000);
     }
   };
 
@@ -288,6 +475,20 @@ const OrderHistory = () => {
 
       {/* MAIN */}
       <main className="pt-32 px-10 max-w-7xl mx-auto">
+        {/* PREMIUM TOAST */}
+        {toastMessage && (
+
+          <div
+            className={`fixed top-24 right-6 z-[100] px-6 py-4 rounded-2xl shadow-2xl backdrop-blur-xl border text-white font-semibold animate-[slideIn_.4s_ease]
+
+    ${toastType === "success"
+                ? "bg-gradient-to-r from-emerald-500 to-green-500 border-emerald-300"
+                : "bg-gradient-to-r from-red-500 to-rose-500 border-red-300"
+              }`}
+          >
+            {toastMessage}
+          </div>
+        )}
 
         {/* HEADER */}
         <h1 className="text-5xl font-heading font-bold mb-2">
@@ -312,7 +513,7 @@ const OrderHistory = () => {
           </div>
           {/* FILTER */}
           <div className="flex gap-3">
-            {["ALL", "DELIVERED", "PROCESSING", "CANCELLED"].map((f) => (
+            {["ALL", "PROCESSING", "DELIVERED", "RETURNED", "CANCELLED"].map((f) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
@@ -384,8 +585,27 @@ const OrderHistory = () => {
 
               const displayOrderNumber =
                 filteredOrders.length - ((currentPage - 1) * ordersPerPage + index);
+
+              const returnedProductNames =
+                returns
+                  .filter(
+                    (r) =>
+                      r.orderId === order.orderId
+                  )
+                  .flatMap((r) =>
+                    r.selectedItems
+                      ?.split(",")
+                      .map((i) => i.trim()) || []
+                  );
+
               const items = order.items || [];
 
+              const allItemsReturned =
+                items.every((item) =>
+                  returnedProductNames.includes(
+                    item.productName
+                  )
+                );
               const total = items.reduce(
                 (sum, i) => sum + i.price * i.quantity,
                 0
@@ -414,9 +634,52 @@ const OrderHistory = () => {
                         </span>
                       </div>
 
-                      <p className="text-sm text-text-muted">
-                        {new Date(order.orderDate).toLocaleDateString()}
-                      </p>
+                      <div className="space-y-1">
+
+                        <div className="text-sm text-text-muted">
+
+                          <p>
+                            Ordered:
+                            {" "}
+                            {new Date(
+                              order.orderDate
+                            ).toLocaleDateString()}
+                          </p>
+
+                          {order.deliveredAt && (
+
+                            <p>
+                              Delivered:
+                              {" "}
+                              {new Date(
+                                order.deliveredAt
+                              ).toLocaleDateString()}
+                            </p>
+
+                          )}
+
+                        </div>
+
+                        {order.status?.toLowerCase() === "delivered" && (
+                          order.returnEligible ? (
+
+                            <p className="text-xs font-medium text-orange-500">
+                              ↩ Return available till{" "}
+                              {new Date(
+                                order.returnEligibleTill
+                              ).toLocaleDateString()}
+                            </p>
+
+                          ) : (
+
+                            <p className="text-xs font-medium text-gray-400">
+                              Return window expired
+                            </p>
+
+                          )
+                        )}
+
+                      </div>
                     </div>
 
                     <div className="text-right">
@@ -430,198 +693,224 @@ const OrderHistory = () => {
                   </div>
 
                   {/* IMAGES */}
-                  <div className="flex gap-4 mb-6 flex-wrap">
+                  <div className="flex gap-6 mb-8 flex-wrap">
+
                     {items.slice(0, 3).map((item, i) => (
-                      <img
+
+                      <div
                         key={i}
-                        src={
-                          item.image?.startsWith("http")
-                            ? item.image
-                            : `/products/${item.image}`
-                        }
-                        className="w-20 h-20 rounded-xl object-cover"
-                      />
+                        className="relative group"
+                      >
+
+                        {/* PRODUCT IMAGE */}
+                        <img
+                          src={
+                            item.image?.startsWith("http")
+                              ? item.image
+                              : `/products/${item.image}`
+                          }
+                          className="w-24 h-24 rounded-2xl object-cover border border-white/40 shadow-md"
+                        />
+
+                        {/* PRODUCT NAME */}
+                        <p className="mt-3 text-xs font-semibold text-center text-gray-700 max-w-[96px] truncate">
+                          {item.productName}
+                        </p>
+                      </div>
+
                     ))}
 
                     {items.length > 3 && (
-                      <div className="w-20 h-20 flex items-center justify-center border border-dashed rounded-xl text-indigo-600">
+
+                      <div className="w-24 h-24 rounded-2xl object-cover border border-white/40 shadow-md">
                         +{items.length - 3}
                       </div>
+
                     )}
+
                   </div>
 
                   {/* DELIVERY FEEDBACK */}
                   {order.status?.toLowerCase() === "delivered" && (
 
-                    <div className="mt-8">
-
+                    <>
                       {/* THANK YOU STATE */}
                       {submittedFeedbacks[order.orderId] ? (
 
-                        <div className="relative overflow-hidden rounded-[32px] border border-green-200/50 bg-gradient-to-br from-green-50 via-emerald-50 to-white p-8 shadow-[0_20px_60px_rgba(16,185,129,0.15)]">
+                        <div className="mt-8">
 
-                          <div className="absolute top-0 right-0 w-40 h-40 bg-green-200/30 blur-3xl rounded-full"></div>
+                          <div className="relative overflow-hidden rounded-[32px] border border-green-200/50 bg-gradient-to-br from-green-50 via-emerald-50 to-white p-8 shadow-[0_20px_60px_rgba(16,185,129,0.15)]">
 
-                          <div className="relative z-10 text-center">
+                            <div className="absolute top-0 right-0 w-40 h-40 bg-green-200/30 blur-3xl rounded-full"></div>
 
-                            <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-r from-green-400 to-emerald-500 flex items-center justify-center text-4xl shadow-lg mb-5">
-                              ❤️
-                            </div>
+                            <div className="relative z-10 text-center">
 
-                            <h2 className="text-3xl font-black text-gray-800 mb-3">
-                              Thank You for Your Feedback
-                            </h2>
-
-                            <p className="text-gray-600 text-lg leading-relaxed max-w-xl mx-auto">
-                              Your feedback helps us improve the ShopLite delivery experience
-                              and motivates our delivery partners to provide exceptional service.
-                            </p>
-
-                          </div>
-                        </div>
-
-                      ) : order.deliveryRating ? (
-
-                        /* EXISTING FEEDBACK */
-                        <div className="relative overflow-hidden rounded-[32px] border border-yellow-200/40 bg-gradient-to-br from-yellow-50 via-white to-orange-50 p-8 shadow-[0_20px_60px_rgba(251,191,36,0.12)]">
-
-                          <div className="absolute -top-10 -right-10 w-40 h-40 bg-yellow-200/30 rounded-full blur-3xl"></div>
-
-                          <div className="relative z-10">
-
-                            <div className="flex items-center justify-between flex-wrap gap-4 mb-5">
-
-                              <div>
-                                <h3 className="text-2xl font-black text-gray-800">
-                                  Delivery Feedback
-                                </h3>
-
-                                <p className="text-gray-500 mt-1">
-                                  Your submitted delivery experience
-                                </p>
+                              <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-r from-green-400 to-emerald-500 flex items-center justify-center text-4xl shadow-lg mb-5">
+                                ❤️
                               </div>
 
-                              <div className="flex gap-1 text-3xl">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <span
-                                    key={star}
-                                    className={
-                                      star <= order.deliveryRating
-                                        ? "text-yellow-400"
-                                        : "text-gray-200"
-                                    }
-                                  >
-                                    ★
-                                  </span>
-                                ))}
-                              </div>
-
-                            </div>
-
-                            <div className="bg-white/70 backdrop-blur-md border border-white/50 rounded-3xl p-5 text-gray-700 leading-relaxed shadow-sm">
-                              “{order.deliveryFeedback}”
-                            </div>
-
-                          </div>
-                        </div>
-
-                      ) : (
-
-                        /* FEEDBACK FORM */
-                        <div className="relative overflow-hidden rounded-[32px] border border-white/30 bg-white/60 backdrop-blur-2xl p-8 shadow-[0_20px_80px_rgba(99,102,241,0.12)]">
-
-                          {/* BACKGROUND BLOBS */}
-                          <div className="absolute -top-10 right-0 w-52 h-52 bg-indigo-300/20 rounded-full blur-3xl"></div>
-                          <div className="absolute bottom-0 left-0 w-40 h-40 bg-purple-300/20 rounded-full blur-3xl"></div>
-
-                          <div className="relative z-10">
-
-                            {/* HEADER */}
-                            <div className="mb-8">
-
-                              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-100 text-indigo-700 text-sm font-semibold mb-5">
-                                ✨ Delivery Experience
-                              </div>
-
-                              <h2 className="text-3xl font-black text-gray-800 mb-2">
-                                Rate Your Delivery
+                              <h2 className="text-3xl font-black text-gray-800 mb-3">
+                                Thank You for Your Feedback
                               </h2>
 
-                              <p className="text-gray-500 text-lg">
-                                Share your experience with the ShopLite delivery service
+                              <p className="text-gray-600 text-lg leading-relaxed max-w-xl mx-auto">
+                                Your feedback helps us improve the ShopLite delivery experience
+                                and motivates our delivery partners to provide exceptional service.
                               </p>
 
                             </div>
-
-                            {/* STARS */}
-                            <div className="flex gap-3 mb-8">
-
-                              {[1, 2, 3, 4, 5].map((star) => (
-
-                                <button
-                                  key={star}
-                                  onClick={() =>
-                                    setRatings({
-                                      ...ratings,
-                                      [order.orderId]: star,
-                                    })
-                                  }
-                                  className={`w-16 h-16 rounded-2xl flex items-center justify-center text-4xl transition-all duration-300 transform hover:scale-110 ${ratings[order.orderId] >= star
-                                    ? "bg-gradient-to-br from-yellow-300 to-orange-400 text-white shadow-[0_10px_30px_rgba(251,191,36,0.4)]"
-                                    : "bg-white/70 text-gray-300 border border-gray-200 hover:border-yellow-300"
-                                    }`}
-                                >
-                                  ★
-                                </button>
-
-                              ))}
-
-                            </div>
-
-                            {/* FEEDBACK BOX */}
-                            <div className="mb-6">
-
-                              <textarea
-                                placeholder="Tell us about your delivery experience..."
-                                value={feedbacks[order.orderId] || ""}
-                                onChange={(e) =>
-                                  setFeedbacks({
-                                    ...feedbacks,
-                                    [order.orderId]: e.target.value,
-                                  })
-                                }
-                                rows={5}
-                                className="w-full rounded-3xl border border-white/40 bg-white/70 backdrop-blur-md p-6 text-gray-700 placeholder-gray-400 outline-none focus:ring-4 focus:ring-indigo-200 resize-none shadow-inner"
-                              />
-
-                            </div>
-
-                            {/* SUBMIT BUTTON */}
-                            <button
-                              onClick={() => submitFeedback(order.orderId)}
-                              className="group relative overflow-hidden px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 text-white font-semibold text-sm shadow-[0_10px_25px_rgba(99,102,241,0.28)] transition-all duration-300 hover:scale-[1.02]"
-                            >
-
-                              <span className="relative z-10 flex items-center gap-2">
-                                Submit Feedback
-                                <span className="transition-transform duration-300 group-hover:translate-x-1">
-                                  →
-                                </span>
-                              </span>
-
-                              <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition"></div>
-
-                            </button>
-
                           </div>
                         </div>
-                      )}
-                    </div>
+
+                      ) : order.deliveryRating && order.deliveryFeedback ? (
+
+                        /* EXISTING FEEDBACK */
+                        <div className="mt-8">
+
+                          <div className="relative overflow-hidden rounded-[32px] border border-yellow-200/40 bg-gradient-to-br from-yellow-50 via-white to-orange-50 p-8 shadow-[0_20px_60px_rgba(251,191,36,0.12)]">
+
+                            <div className="absolute -top-10 -right-10 w-40 h-40 bg-yellow-200/30 rounded-full blur-3xl"></div>
+
+                            <div className="relative z-10">
+
+                              <div className="flex items-center justify-between flex-wrap gap-4 mb-5">
+
+                                <div>
+                                  <h3 className="text-2xl font-black text-gray-800">
+                                    Delivery Feedback
+                                  </h3>
+
+                                  <p className="text-gray-500 mt-1">
+                                    Your submitted delivery experience
+                                  </p>
+                                </div>
+
+                                <div className="flex gap-1 text-3xl">
+                                  {[1, 2, 3, 4, 5].map((star) => (
+                                    <span
+                                      key={star}
+                                      className={
+                                        star <= Number(order.deliveryRating)
+                                          ? "text-yellow-400"
+                                          : "text-gray-200"
+                                      }
+                                    >
+                                      ★
+                                    </span>
+                                  ))}
+                                </div>
+
+                              </div>
+
+                              <div className="bg-white/70 backdrop-blur-md border border-white/50 rounded-3xl p-5 text-gray-700 leading-relaxed shadow-sm">
+                                “{order.deliveryFeedback}”
+                              </div>
+
+                            </div>
+                          </div>
+                        </div>
+
+                      ) : order.returnEligible ? (
+
+                        /* FEEDBACK FORM */
+                        <div className="mt-8">
+
+                          <div className="relative overflow-hidden rounded-[32px] border border-white/30 bg-white/60 backdrop-blur-2xl p-8 shadow-[0_20px_80px_rgba(99,102,241,0.12)]">
+
+                            {/* BACKGROUND BLOBS */}
+                            <div className="absolute -top-10 right-0 w-52 h-52 bg-indigo-300/20 rounded-full blur-3xl"></div>
+                            <div className="absolute bottom-0 left-0 w-40 h-40 bg-purple-300/20 rounded-full blur-3xl"></div>
+
+                            <div className="relative z-10">
+
+                              {/* HEADER */}
+                              <div className="mb-8">
+
+                                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-100 text-indigo-700 text-sm font-semibold mb-5">
+                                  ✨ Delivery Experience
+                                </div>
+
+                                <h2 className="text-3xl font-black text-gray-800 mb-2">
+                                  Rate Your Delivery
+                                </h2>
+
+                                <p className="text-gray-500 text-lg">
+                                  Share your experience with the ShopLite delivery service
+                                </p>
+
+                              </div>
+
+                              {/* STARS */}
+                              <div className="flex gap-3 mb-8">
+
+                                {[1, 2, 3, 4, 5].map((star) => (
+
+                                  <button
+                                    key={star}
+                                    onClick={() =>
+                                      setRatings({
+                                        ...ratings,
+                                        [order.orderId]: star,
+                                      })
+                                    }
+                                    className={`w-16 h-16 rounded-2xl flex items-center justify-center text-4xl transition-all duration-300 transform hover:scale-110 ${ratings[order.orderId] >= star
+                                      ? "bg-gradient-to-br from-yellow-300 to-orange-400 text-white shadow-[0_10px_30px_rgba(251,191,36,0.4)]"
+                                      : "bg-white/70 text-gray-300 border border-gray-200 hover:border-yellow-300"
+                                      }`}
+                                  >
+                                    ★
+                                  </button>
+
+                                ))}
+
+                              </div>
+
+                              {/* FEEDBACK BOX */}
+                              <div className="mb-6">
+
+                                <textarea
+                                  placeholder="Tell us about your delivery experience..."
+                                  value={feedbacks[order.orderId] || ""}
+                                  onChange={(e) =>
+                                    setFeedbacks({
+                                      ...feedbacks,
+                                      [order.orderId]: e.target.value,
+                                    })
+                                  }
+                                  rows={5}
+                                  className="w-full rounded-3xl border border-white/40 bg-white/70 backdrop-blur-md p-6 text-gray-700 placeholder-gray-400 outline-none focus:ring-4 focus:ring-indigo-200 resize-none shadow-inner"
+                                />
+
+                              </div>
+
+                              {/* SUBMIT BUTTON */}
+                              <button
+                                onClick={() => submitFeedback(order.orderId)}
+                                className="group relative overflow-hidden px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 text-white font-semibold text-sm shadow-[0_10px_25px_rgba(99,102,241,0.28)] transition-all duration-300 hover:scale-[1.02]"
+                              >
+
+                                <span className="relative z-10 flex items-center gap-2">
+                                  Submit Feedback
+                                  <span className="transition-transform duration-300 group-hover:translate-x-1">
+                                    →
+                                  </span>
+                                </span>
+
+                                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition"></div>
+
+                              </button>
+
+                            </div>
+                          </div>
+                        </div>
+
+                      ) : null}
+                    </>
                   )}
 
-                 
                   {/* BUTTONS */}
-                  <div className="flex justify-end gap-3">
+
+                  <div className="flex justify-end gap-3 mt-8 pt-4 border-t border-white/20">
 
                     {/* CANCEL ORDER */}
                     {(order.status?.toLowerCase() === "placed" ||
@@ -639,6 +928,37 @@ const OrderHistory = () => {
                         >
                           Cancel Order
                         </button>
+                      )}
+
+                    {/* RETURN ITEMS */}
+                    {order.status?.toLowerCase() === "delivered" &&
+                      !allItemsReturned && (
+
+                        order.returnEligible ? (
+
+                          <button
+                            onClick={() => {
+
+                              setReturnOrderId(order.orderId);
+                              setSelectedReturnOrder(order);
+                              setSelectedReturnItems([]);
+                              setShowReturnModal(true);
+                            }}
+                            className="px-6 py-2 rounded-full border border-orange-200 text-orange-600 hover:bg-orange-50 transition"
+                          >
+                            Return Items
+                          </button>
+
+                        ) : (
+
+                          <button
+                            disabled
+                            className="px-6 py-2 rounded-full border border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed"
+                          >
+                            Return Window Expired
+                          </button>
+
+                        )
                       )}
 
                     {/* VIEW DETAILS */}
@@ -706,6 +1026,251 @@ const OrderHistory = () => {
           )}
         </div>
       </main >
+
+      {/* RETURN REQUEST MODAL */}
+      {showReturnModal && (
+
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center px-4">
+          <div className="w-full max-w-5xl bg-white rounded-[32px] p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
+
+            {/* SELECT RETURN ITEMS */}
+            <div className="mb-6">
+
+              <h2 className="text-2xl font-black text-gray-800 mb-2">
+                Select Items to Return
+              </h2>
+
+              <p className="text-sm text-gray-500 mb-5">
+                Choose the products you want to return from this order.
+              </p>
+
+              <div className="grid grid-cols-2 gap-4">
+
+                {selectedReturnOrder?.items?.map((item, index) => {
+
+                  const itemKey =
+                    `${returnOrderId}-${item.productName}`;
+
+                  const isSelected =
+                    selectedReturnItems.includes(itemKey);
+
+                  const isReturned =
+                    returns
+                      .filter(
+                        (r) =>
+                          r.orderId === returnOrderId
+                      )
+                      .flatMap((r) =>
+                        r.selectedItems
+                          ?.split(",")
+                          .map((i) => i.trim()) || []
+                      )
+                      .includes(item.productName);
+                  return (
+
+                    <div
+                      key={index}
+                      onClick={() => {
+
+                        if (isReturned) return;
+
+                        if (isSelected) {
+
+                          setSelectedReturnItems(
+                            selectedReturnItems.filter(
+                              (i) => i !== itemKey
+                            )
+                          );
+
+                        } else {
+
+                          setSelectedReturnItems([
+                            ...selectedReturnItems,
+                            itemKey
+                          ]);
+                        }
+                      }}
+                      className={`relative p-4 rounded-3xl border transition-all duration-300
+
+  ${isReturned
+                          ? "opacity-60 bg-gray-100 border-gray-200 cursor-not-allowed"
+                          : "cursor-pointer"
+                        }
+
+  ${isSelected
+                          ? "border-orange-400 bg-orange-50"
+                          : "border-gray-200 hover:border-orange-200"
+                        }`}
+                    >
+
+                      {/* CHECKBOX */}
+                      <div
+                        className={`w-6 h-6 rounded-lg border flex items-center justify-center
+
+    ${isSelected
+                            ? "bg-orange-500 border-orange-500 text-white"
+                            : "border-gray-300"
+                          }`}
+                      >
+                        {isSelected && "✓"}
+                      </div>
+
+                      {/* IMAGE */}
+                      <img
+                        src={
+                          item.image?.startsWith("http")
+                            ? item.image
+                            : `/products/${item.image}`
+                        }
+                        alt=""
+                        className="w-24 h-24 mx-auto rounded-2xl object-cover border border-gray-100 shadow-sm"
+                      />
+
+                      {/* INFO */}
+                      <div className="text-center mt-4">
+                        <div className="flex flex-col items-center">
+
+                          <h3 className="font-bold text-gray-800">
+                            {item.productName}
+                          </h3>
+
+                          {isReturned && (
+
+                            <span className="px-2 py-1 rounded-full bg-gray-200 text-gray-600 text-[10px] font-bold tracking-wide">
+                              RETURN REQUESTED
+                            </span>
+
+                          )}
+
+                        </div>
+
+                        <div className="flex items-center justify-center gap-2 mt-2 text-sm">
+
+                          <span className="text-sm text-gray-500">
+                            Qty: {item.quantity}
+                          </span>
+
+                          <span className="w-1 h-1 rounded-full bg-gray-300"></span>
+
+                          <span className="text-sm font-semibold text-indigo-600">
+                            ${item.price}
+                          </span>
+
+                        </div>
+
+                      </div>
+                    </div>
+                  );
+                })}
+
+              </div>
+
+            </div>
+
+            {/* SUBTITLE */}
+            <p className="text-sm text-gray-500 mb-6">
+              Please select a reason for your return request.
+            </p>
+
+            {/* REASONS */}
+            <div className="space-y-3 mb-6">
+
+              {[
+                "Damaged product",
+                "Wrong item received",
+                "Size issue",
+                "Product not as expected",
+                "Missing accessories",
+                "Other"
+              ].map((reason) => (
+
+                <label
+                  key={reason}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-2xl border cursor-pointer transition-all duration-300
+            ${returnReason === reason
+                      ? "border-orange-400 bg-orange-50"
+                      : "border-gray-200"
+                    }`}
+                >
+
+                  <input
+                    type="radio"
+                    name="returnReason"
+                    value={reason}
+                    checked={returnReason === reason}
+                    onChange={(e) =>
+                      setReturnReason(e.target.value)
+                    }
+                  />
+
+                  <span className="text-sm font-medium text-gray-700">
+                    {reason}
+                  </span>
+
+                </label>
+              ))}
+
+            </div>
+
+            {/* OTHER REASON */}
+            {returnReason === "Other" && (
+
+              <textarea
+                value={otherReturnReason}
+                onChange={(e) =>
+                  setOtherReturnReason(e.target.value)
+                }
+                placeholder="Enter return reason..."
+                className="w-full h-28 resize-none rounded-2xl border border-gray-200 p-4 text-sm outline-none focus:ring-2 focus:ring-orange-200 mb-6"
+              />
+
+            )}
+
+            {/* BUTTONS */}
+            <div className="flex gap-3">
+
+              {/* CLOSE */}
+              <button
+                onClick={() => {
+
+                  setShowReturnModal(false);
+
+                  setReturnReason("");
+
+                  setOtherReturnReason("");
+
+                  setSelectedReturnItems([]);
+
+                  setSelectedReturnOrder(null);
+                }}
+                className="flex-1 py-3 rounded-2xl border border-gray-200 text-gray-600 font-semibold hover:bg-gray-50"
+              >
+                Close
+              </button>
+
+              {/* SUBMIT */}
+              <button
+                onClick={submitReturnRequest}
+                disabled={
+                  !returnReason ||
+                  selectedReturnItems.length === 0
+                }
+                className={`flex-1 py-3 rounded-2xl text-white font-semibold transition-all
+  ${returnReason &&
+                    selectedReturnItems.length > 0
+                    ? "bg-gradient-to-br from-orange-500 to-red-500 hover:scale-[1.02] shadow-lg hover:shadow-orange-300/40"
+                    : "bg-gray-300 cursor-not-allowed"
+                  }`}
+              >
+                Submit Return
+              </button>
+            </div>
+
+          </div>
+
+        </div>
+      )}
+
       {/* CANCEL ORDER MODAL */}
       {showCancelModal && (
 

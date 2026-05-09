@@ -33,7 +33,7 @@ import AdminTickets from "./pages/admin/AdminTickets";
 import AdminTicketDetails from "./pages/admin/AdminTicketDetails";
 import AdminProfile from "./pages/admin/AdminProfile";
 import ManageDeliveryPartners from "./pages/admin/ManageDeliveryPartners";
-
+import ManageReturns from "./pages/admin/ManageReturns";
 
 import DeliveryLogin from "./pages/delivery/DeliveryLogin";
 import DeliveryDashboard from "./pages/delivery/DeliveryDashboard";
@@ -145,6 +145,16 @@ function App() {
               </AdminRoute>
             }
           />
+
+          <Route
+            path="/admin/returns"
+            element={
+              <AdminRoute>
+                <ManageReturns />
+              </AdminRoute>
+            }
+          />
+
           <Route
             path="/admin/order/:id"
             element={

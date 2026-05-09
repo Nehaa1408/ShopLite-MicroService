@@ -91,6 +91,23 @@ export default function AdminSidebar({ handleLogout }) {
                     Manage Deliveries
                 </div>
 
+                {/* Manage Returns */}
+                <div
+                    onClick={() => navigate("/admin/returns")}
+                    className={`group flex items-center gap-3 px-4 py-3 rounded-2xl cursor-pointer
+transition-all duration-300
+${isActive("/admin/returns")
+                            ? "bg-gradient-to-r from-[#6366f1]/20 to-[#a855f7]/20 text-indigo-600 shadow-inner border border-white/40"
+                            : "text-gray-500 hover:bg-white/40 hover:shadow-md hover:ring-2 hover:ring-orange-200"
+                        }`}
+                >
+                    <span className="material-symbols-outlined transition-colors group-hover:text-orange-500">
+                        assignment_return
+                    </span>
+
+                    Manage Returns
+                </div>
+
                 {/* Tickets */}
                 <div
                     onClick={() => navigate("/admin/tickets")}

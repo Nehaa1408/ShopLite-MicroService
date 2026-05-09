@@ -5,7 +5,10 @@ import {
     getDeliveryOrders,
     sendDeliveryOtp,
     verifyDeliveryOtp,
-    markDeliveryFailed
+    markDeliveryFailed,
+    getAssignedReturnPickups,
+    sendReturnPickupOtp,
+    verifyReturnPickupOtp
 } from "../../services/deliveryApi";
 
 const DeliveryDashboard = () => {
@@ -13,6 +16,8 @@ const DeliveryDashboard = () => {
     const [orders, setOrders] = useState([]);
     const [search, setSearch] = useState("");
     const [selectedOrderId, setSelectedOrderId] = useState(null);
+    const [selectedFlowType, setSelectedFlowType] =
+        useState("DELIVERY");
     const [otp, setOtp] = useState("");
     const [showOtpModal, setShowOtpModal] = useState(false);
     const [loadingOtp, setLoadingOtp] = useState(false);
@@ -32,13 +37,57 @@ const DeliveryDashboard = () => {
     const [otherReason, setOtherReason] = useState("");
 
     const fetchOrders = useCallback(async () => {
+
         try {
-            const res = await getDeliveryOrders();
-            setOrders(Array.isArray(res) ? res : []);
+
+            const deliveryOrders =
+                await getDeliveryOrders();
+
+            const returnOrders =
+                await getAssignedReturnPickups();
+
+            // DELIVERY ORDERS
+            const formattedDeliveries =
+                (Array.isArray(deliveryOrders)
+                    ? deliveryOrders
+                    : []
+                ).map(order => ({
+                    ...order,
+                    flowType: "DELIVERY"
+                }));
+
+            // RETURN PICKUPS
+            const formattedReturns =
+                (Array.isArray(returnOrders)
+                    ? returnOrders
+                    : []
+                )
+
+                    // REMOVE COMPLETED PICKUPS
+                    .filter(order =>
+                        order.status !== "PICKUP_COMPLETED"
+                    )
+
+                    .map(order => ({
+                        ...order,
+                        flowType: "RETURN_PICKUP"
+                    }));
+
+            setOrders([
+                ...formattedDeliveries,
+                ...formattedReturns
+            ]);
+
         } catch (err) {
-            console.error("Error fetching orders", err);
+
+            console.error(
+                "Error fetching orders",
+                err
+            );
+
             setOrders([]);
         }
+
     }, []);
 
     useEffect(() => {
@@ -67,30 +116,52 @@ const DeliveryDashboard = () => {
 
     }, [showOtpModal, resendTimer]);
 
+
     // SEND OTP
-    const handleSendOtp = async (id) => {
+    const handleSendOtp = async (
+        id,
+        flowType
+    ) => {
 
         try {
 
             setLoadingOtp(true);
 
-            await sendDeliveryOtp(id);
+            // DELIVERY
+            if (flowType === "DELIVERY") {
+
+                await sendDeliveryOtp(id);
+
+            } else {
+
+                // RETURN PICKUP
+                await sendReturnPickupOtp(id);
+            }
 
             setSelectedOrderId(id);
+            setSelectedFlowType(flowType);
 
             setShowOtpModal(true);
+
             setResendTimer(60);
 
             setCanResend(false);
+
             setToast({
                 show: true,
-                message: "OTP sent successfully",
+                message:
+                    flowType === "DELIVERY"
+                        ? "Delivery OTP sent successfully"
+                        : "Pickup OTP sent successfully",
                 type: "success"
             });
 
         } catch (err) {
 
-            console.error("OTP send failed", err);
+            console.error(
+                "OTP send failed",
+                err
+            );
 
             setToast({
                 show: true,
@@ -103,13 +174,16 @@ const DeliveryDashboard = () => {
             setLoadingOtp(false);
 
             setTimeout(() => {
+
                 setToast(prev => ({
                     ...prev,
                     show: false
                 }));
+
             }, 3000);
         }
     };
+
     // VERIFY OTP
     const handleVerifyOtp = async () => {
 
@@ -117,14 +191,29 @@ const DeliveryDashboard = () => {
 
             setVerifyingOtp(true);
 
-            await verifyDeliveryOtp(
-                selectedOrderId,
-                otp
-            );
+            // DELIVERY OTP VERIFY
+            if (selectedFlowType === "DELIVERY") {
+
+                await verifyDeliveryOtp(
+                    selectedOrderId,
+                    otp
+                );
+
+            } else {
+
+                // RETURN PICKUP OTP VERIFY
+                await verifyReturnPickupOtp(
+                    selectedOrderId,
+                    otp
+                );
+            }
 
             setToast({
                 show: true,
-                message: "Order delivered successfully",
+                message:
+                    selectedFlowType === "DELIVERY"
+                        ? "Order delivered successfully"
+                        : "Return pickup completed successfully",
                 type: "success"
             });
 
@@ -136,7 +225,10 @@ const DeliveryDashboard = () => {
 
         } catch (err) {
 
-            console.error("OTP verification failed", err);
+            console.error(
+                "OTP verification failed",
+                err
+            );
 
             setToast({
                 show: true,
@@ -149,14 +241,15 @@ const DeliveryDashboard = () => {
             setVerifyingOtp(false);
 
             setTimeout(() => {
+
                 setToast(prev => ({
                     ...prev,
                     show: false
                 }));
+
             }, 3000);
         }
     };
-
     const filteredOrders = orders.filter((o) =>
         o.orderId.toString().includes(search)
     );
@@ -213,7 +306,9 @@ const DeliveryDashboard = () => {
                         <OrderCard
                             key={order.orderId}
                             order={order}
-                            onSendOtp={handleSendOtp}
+                            onSendOtp={(id, flowType) =>
+                                handleSendOtp(id, flowType)
+                            }
                             onUnableToDeliver={(id) => {
 
                                 setIssueOrderId(id);

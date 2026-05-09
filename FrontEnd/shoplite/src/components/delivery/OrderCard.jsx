@@ -8,8 +8,9 @@ const OrderCard = ({
 }) => {
 
   const items = order.items || [];
-const { total } = calculateOrderTotal(items);
-
+  const { total } = calculateOrderTotal(items);
+  const isReturnPickup =
+    order.flowType === "RETURN_PICKUP";
   // IMAGE PATH FIX
   const getImage = (img) => {
 
@@ -244,7 +245,14 @@ const { total } = calculateOrderTotal(items);
 
           {/* SEND OTP */}
           <button
-            onClick={() => onSendOtp(order.orderId)}
+            onClick={() =>
+              onSendOtp(
+                order.flowType === "RETURN_PICKUP"
+                  ? order.returnId
+                  : order.orderId,
+                order.flowType
+              )
+            }
             className="flex-1 py-3 rounded-[22px]
 
             bg-gradient-to-br
@@ -268,7 +276,9 @@ const { total } = calculateOrderTotal(items);
             transition-all duration-300"
           >
 
-            Reached Destination
+            {isReturnPickup
+              ? "Reached Pickup"
+              : "Reached Destination"}
 
           </button>
 

@@ -20,4 +20,7 @@ public class OrderResponse {
     private String cancelReason;
     private Integer deliveryRating;
     private String deliveryFeedback;
+    private String deliveredAt;
+    private boolean returnEligible;
+    private String returnEligibleTill;
 }

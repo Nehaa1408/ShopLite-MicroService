@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
 import DeliveryLayout from "../../components/delivery/DeliveryLayout";
-import { getCompletedOrders } from "../../services/deliveryApi";
+import {
+  getCompletedOrders,
+  getCompletedReturnPickups
+} from "../../services/deliveryApi";
 
 const Completed = () => {
 
@@ -11,13 +14,43 @@ const Completed = () => {
 
     try {
 
-      const res = await getCompletedOrders();
+      const completedDeliveries =
+        await getCompletedOrders();
 
-      setOrders(Array.isArray(res) ? res : []);
+      const completedReturns =
+        await getCompletedReturnPickups();
+
+      // DELIVERY DATA
+      const formattedDeliveries =
+        (Array.isArray(completedDeliveries)
+          ? completedDeliveries
+          : []
+        ).map(order => ({
+          ...order,
+          flowType: "DELIVERY"
+        }));
+
+      // RETURN PICKUPS
+      const formattedReturns =
+        (Array.isArray(completedReturns)
+          ? completedReturns
+          : []
+        ).map(order => ({
+          ...order,
+          flowType: "RETURN_PICKUP"
+        }));
+
+      setOrders([
+        ...formattedDeliveries,
+        ...formattedReturns
+      ]);
 
     } catch (err) {
 
-      console.error("Error fetching completed orders", err);
+      console.error(
+        "Error fetching completed orders",
+        err
+      );
 
     } finally {
 
@@ -189,7 +222,9 @@ const Completed = () => {
                     text-xs font-semibold"
                   >
 
-                    ✓ Delivered
+                    {order.flowType === "RETURN_PICKUP"
+                      ? "✓ Pickup Completed"
+                      : "✓ Delivered"}
 
                   </div>
 
@@ -249,7 +284,9 @@ const Completed = () => {
                   <div>
 
                     <p className="text-[11px] uppercase tracking-wide text-gray-400 mb-1">
-                      Delivery Address
+                      {order.flowType === "RETURN_PICKUP"
+                        ? "Pickup Address"
+                        : "Delivery Address"}
                     </p>
 
                     <p className="text-sm text-gray-600 leading-relaxed">
@@ -270,7 +307,9 @@ const Completed = () => {
 
                   <p className="text-sm">
 
-                    Delivered on{" "}
+                    {order.flowType === "RETURN_PICKUP"
+                      ? "Picked up on "
+                      : "Delivered on "}
 
                     {order.orderDate
                       ? new Date(order.orderDate).toLocaleDateString(
@@ -341,7 +380,7 @@ const Completed = () => {
 
                         <div>
 
-                        
+
                           <h3 className="text-[17px] font-bold text-gray-800 leading-none">
                             Delivery Experience
                           </h3>
@@ -356,8 +395,8 @@ const Completed = () => {
                             <span
                               key={star}
                               className={`text-[20px] ${star <= order.deliveryRating
-                                  ? "text-amber-400"
-                                  : "text-gray-200"
+                                ? "text-amber-400"
+                                : "text-gray-200"
                                 }`}
                             >
                               ★

@@ -6,6 +6,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import com.ecommerce.shoplite.entity.Order;
 import com.ecommerce.shoplite.entity.OrderItem;
+import com.ecommerce.shoplite.entity.ReturnRequest;
 
 @Service
 public class EmailService {
@@ -142,6 +143,199 @@ public class EmailService {
                                                 + "\n\nThis OTP is valid for 5 minutes.\n\n"
 
                                                 + "If you did not request this signup, please ignore this email.\n\n"
+
+                                                + "Regards,\n"
+                                                + "ShopLite");
+
+                mailSender.send(message);
+        }
+
+        // ================= RETURN REQUEST EMAIL =================
+        public void sendReturnRequestEmail(
+                        String toEmail,
+                        String customerName,
+                        ReturnRequest returnRequest) {
+
+                SimpleMailMessage message = new SimpleMailMessage();
+
+                message.setTo(toEmail);
+
+                message.setSubject(
+                                "ShopLite Return Request Submitted");
+
+                message.setText(
+
+                                "Hello " + customerName + ",\n\n"
+
+                                                + "Your return request has been submitted successfully.\n\n"
+
+                                                + "Return Details:\n"
+
+                                                + "Return ID: #" + returnRequest.getId() + "\n"
+
+                                                + "Order ID: #" + returnRequest.getOrder().getId() + "\n"
+
+                                                + "Selected Items: "
+                                                + returnRequest.getSelectedItems() + "\n"
+
+                                                + "Reason: "
+                                                + returnRequest.getReturnReason() + "\n\n"
+
+                                                + "Return Policies:\n"
+
+                                                + "- Product should not be customer damaged\n"
+
+                                                + "- Original tags must be attached\n"
+
+                                                + "- Original packaging should be available\n"
+
+                                                + "- Used products may not be accepted\n"
+
+                                                + "- Return request valid within 7 days only\n\n"
+
+                                                + "Our team will review your request shortly.\n\n"
+
+                                                + "Regards,\n"
+                                                + "ShopLite");
+
+                mailSender.send(message);
+        }
+
+        // ================= RETURN PICKUP SUCCESS EMAIL =================
+        public void sendReturnPickupSuccessEmail(
+                        String toEmail,
+                        String customerName,
+                        ReturnRequest returnRequest) {
+
+                SimpleMailMessage message = new SimpleMailMessage();
+
+                message.setTo(toEmail);
+
+                message.setSubject(
+                                "ShopLite Return Pickup Successful");
+
+                message.setText(
+
+                                "Hello " + customerName + ",\n\n"
+
+                                                + "Your return pickup has been completed successfully.\n\n"
+
+                                                + "Return Details:\n"
+
+                                                + "Return ID: #"
+                                                + returnRequest.getId()
+                                                + "\n"
+
+                                                + "Order ID: #"
+                                                + returnRequest.getOrder().getId()
+                                                + "\n"
+
+                                                + "Selected Items: "
+                                                + returnRequest.getSelectedItems()
+                                                + "\n\n"
+
+                                                + "Our inspection team will now verify the returned product.\n\n"
+
+                                                + "You will receive another update once the return is approved or rejected.\n\n"
+
+                                                + "Regards,\n"
+                                                + "ShopLite");
+
+                mailSender.send(message);
+        }
+
+        // ================= PICKUP OTP EMAIL =================
+        public void sendOtpEmail(
+                        String toEmail,
+                        String customerName,
+                        String otp) {
+
+                SimpleMailMessage message = new SimpleMailMessage();
+
+                message.setTo(toEmail);
+
+                message.setSubject(
+                                "ShopLite Pickup OTP");
+
+                message.setText(
+                                "Hello " + customerName + ",\n\n"
+
+                                                + "Your return pickup OTP is: "
+                                                + otp
+
+                                                + "\n\nThis OTP is valid for 10 minutes.\n\n"
+
+                                                + "Please share this OTP only after handing over the returned product.\n\n"
+
+                                                + "Regards,\n"
+                                                + "ShopLite");
+
+                mailSender.send(message);
+        }
+
+        // ================= REFUND APPROVED EMAIL =================
+        public void sendRefundApprovedEmail(
+                        String toEmail,
+                        String customerName,
+                        ReturnRequest returnRequest) {
+
+                SimpleMailMessage message = new SimpleMailMessage();
+
+                message.setTo(toEmail);
+
+                message.setSubject(
+                                "ShopLite Refund Approved");
+
+                message.setText(
+
+                                "Hello " + customerName + ",\n\n"
+
+                                                + "Your return request has been approved.\n\n"
+
+                                                + "Refund Details:\n"
+
+                                                + "Return ID: #"
+                                                + returnRequest.getId()
+                                                + "\n"
+
+                                                + "Refund Amount: $"
+                                                + returnRequest.getRefundAmount()
+                                                + "\n\n"
+
+                                                + "Your refund will be processed shortly.\n\n"
+
+                                                + "Thank you for shopping with ShopLite.\n\n"
+
+                                                + "Regards,\n"
+                                                + "ShopLite");
+
+                mailSender.send(message);
+        }
+
+        // ================= RETURN REJECTED EMAIL =================
+        public void sendReturnRejectedEmail(
+                        String toEmail,
+                        String customerName,
+                        ReturnRequest returnRequest) {
+
+                SimpleMailMessage message = new SimpleMailMessage();
+
+                message.setTo(toEmail);
+
+                message.setSubject(
+                                "ShopLite Return Rejected");
+
+                message.setText(
+
+                                "Hello " + customerName + ",\n\n"
+
+                                                + "Your return request has been rejected after inspection.\n\n"
+
+                                                + "Return ID: #"
+                                                + returnRequest.getId()
+                                                + "\n\n"
+
+                                                + "If you need more information, please contact support.\n\n"
 
                                                 + "Regards,\n"
                                                 + "ShopLite");

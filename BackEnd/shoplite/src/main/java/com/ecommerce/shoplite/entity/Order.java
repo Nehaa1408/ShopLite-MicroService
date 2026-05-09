@@ -40,6 +40,8 @@ public class Order {
     @Column(nullable = false, updatable = false)
     private LocalDateTime orderDate;
 
+    private LocalDateTime deliveredAt;
+
     // AUTO SET DATE
     @PrePersist
     protected void onCreate() {

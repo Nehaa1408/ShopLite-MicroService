@@ -296,6 +296,7 @@ public class OrderService {
 
                 // MARK ORDER DELIVERED
                 order.setStatus(OrderStatus.DELIVERED);
+                order.setDeliveredAt(LocalDateTime.now());
 
                 // SEND DELIVERY SUCCESS EMAIL
                 emailService.sendDeliverySuccessEmail(
@@ -348,6 +349,7 @@ public class OrderService {
                 }
 
                 order.setStatus(OrderStatus.DELIVERED);
+                order.setDeliveredAt(LocalDateTime.now());
 
                 return mapToResponse(orderRepository.save(order));
         }
@@ -495,6 +497,27 @@ public class OrderService {
                                 order.getCancellationReason());
 
                 response.setOrderDate(order.getOrderDate().toString());
+
+                if (order.getDeliveredAt() != null) {
+
+                        response.setDeliveredAt(
+                                        order.getDeliveredAt().toString());
+
+                        response.setReturnEligibleTill(
+                                        order.getDeliveredAt()
+                                                        .plusDays(7)
+                                                        .toLocalDate()
+                                                        .toString());
+
+                        boolean eligible = !LocalDateTime.now().toLocalDate().isAfter(
+                                        order.getDeliveredAt()
+                                                        .plusDays(7)
+                                                        .toLocalDate());
+
+                        response.setReturnEligible(eligible);
+                }
+
+                response.setItems(itemResponses);
                 response.setItems(itemResponses);
 
                 if (order.getUser() != null) {
