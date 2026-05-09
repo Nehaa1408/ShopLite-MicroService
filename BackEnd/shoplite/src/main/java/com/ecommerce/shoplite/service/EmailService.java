@@ -39,6 +39,39 @@ public class EmailService {
                 mailSender.send(message);
         }
 
+        // ================= OUT FOR DELIVERY EMAIL =================
+        public void sendOutForDeliveryEmail(
+                        String toEmail,
+                        String customerName,
+                        String deliveryPartnerName) {
+
+                SimpleMailMessage message = new SimpleMailMessage();
+
+                message.setTo(toEmail);
+
+                message.setSubject(
+                                "ShopLite Order Out for Delivery");
+
+                message.setText(
+                                "Hello " + customerName + ",\n\n"
+
+                                                + "Good news! Your ShopLite order is now out for delivery.\n\n"
+
+                                                + "Delivery Partner: "
+                                                + deliveryPartnerName
+
+                                                + "\n\nYour package is expected to arrive today.\n\n"
+
+                                                + "You can track your order live from your ShopLite account.\n\n"
+
+                                                + "Thank you for shopping with ShopLite.\n\n"
+
+                                                + "Regards,\n"
+                                                + "ShopLite");
+
+                mailSender.send(message);
+        }
+
         // ================= DELIVERY SUCCESS EMAIL =================
         public void sendDeliverySuccessEmail(
                         String toEmail,

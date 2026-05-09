@@ -1,4 +1,5 @@
 import React from "react";
+import { calculateOrderTotal } from "../../utils/orderPricing";
 
 const OrderCard = ({
   order,
@@ -7,13 +8,7 @@ const OrderCard = ({
 }) => {
 
   const items = order.items || [];
-
-  // TOTAL PRICE
-  const totalPrice = items.reduce(
-    (acc, item) =>
-      acc + ((item.price || 0) * (item.quantity || 1)),
-    0
-  );
+const { total } = calculateOrderTotal(items);
 
   // IMAGE PATH FIX
   const getImage = (img) => {
@@ -108,7 +103,7 @@ const OrderCard = ({
       <div className="flex items-center gap-3 mb-5">
 
         <p className="text-xl font-bold text-indigo-600">
-          ₹{totalPrice}
+          ${total.toFixed(2)}
         </p>
 
         <div className="w-1.5 h-1.5 rounded-full bg-gray-300"></div>

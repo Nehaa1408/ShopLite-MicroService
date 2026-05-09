@@ -34,6 +34,9 @@ public class Order {
     @Enumerated(EnumType.STRING)
     private OrderStatus status;
 
+    @Column(length = 1000)
+    private String cancellationReason;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime orderDate;
 

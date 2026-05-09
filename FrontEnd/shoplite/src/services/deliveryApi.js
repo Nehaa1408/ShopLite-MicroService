@@ -150,6 +150,20 @@ export const verifyDeliveryOtp = async (
     return res.data;
 };
 
+// MARK DELIVERY FAILED
+export const markDeliveryFailed = async (
+    orderId,
+    reason
+) => {
+
+    const res =
+        await deliveryAxios.put(
+            `/orders/delivery/${orderId}/failed?reason=${encodeURIComponent(reason)}`
+        );
+
+    return res.data;
+};
+
 // GET COMPLETED ORDERS
 export const getCompletedOrders = async () => {
 

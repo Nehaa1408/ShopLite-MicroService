@@ -4,7 +4,8 @@ import OrderCard from "../../components/delivery/OrderCard";
 import {
     getDeliveryOrders,
     sendDeliveryOtp,
-    verifyDeliveryOtp
+    verifyDeliveryOtp,
+    markDeliveryFailed
 } from "../../services/deliveryApi";
 
 const DeliveryDashboard = () => {
@@ -483,25 +484,44 @@ const DeliveryDashboard = () => {
 
                             {/* SUBMIT */}
                             <button
-                                onClick={() => {
+                                onClick={async () => {
 
-                                    setOrders(prev =>
-                                        prev.filter(
-                                            o => o.orderId !== issueOrderId
-                                        )
-                                    );
+                                    try {
 
-                                    setShowIssueModal(false);
+                                        const finalReason =
+                                            selectedReason === "Other"
+                                                ? otherReason
+                                                : selectedReason;
 
-                                    setSelectedReason("");
+                                        await markDeliveryFailed(
+                                            issueOrderId,
+                                            finalReason
+                                        );
 
-                                    setOtherReason("");
+                                        fetchOrders();
 
-                                    setToast({
-                                        show: true,
-                                        message: "Delivery issue submitted",
-                                        type: "error"
-                                    });
+                                        setShowIssueModal(false);
+
+                                        setSelectedReason("");
+
+                                        setOtherReason("");
+
+                                        setToast({
+                                            show: true,
+                                            message: "Delivery issue submitted",
+                                            type: "error"
+                                        });
+
+                                    } catch (err) {
+
+                                        console.error(err);
+
+                                        setToast({
+                                            show: true,
+                                            message: "Failed to submit issue",
+                                            type: "error"
+                                        });
+                                    }
 
                                     setTimeout(() => {
                                         setToast(prev => ({
@@ -513,18 +533,18 @@ const DeliveryDashboard = () => {
                                 disabled={!selectedReason}
                                 className={`flex-1 py-3 rounded-2xl
 
-                    text-white font-semibold
+text-white font-semibold
 
-                    transition-all duration-300
+transition-all duration-300
 
-                    ${selectedReason
+${selectedReason
                                         ? `
-                        bg-gradient-to-br
-                        from-red-500
-                        to-rose-500
+bg-gradient-to-br
+from-red-500
+to-rose-500
 
-                        shadow-[0_10px_30px_rgba(239,68,68,0.25)]
-                        `
+shadow-[0_10px_30px_rgba(239,68,68,0.25)]
+`
                                         : "bg-gray-300 cursor-not-allowed"
                                     }`}
                             >

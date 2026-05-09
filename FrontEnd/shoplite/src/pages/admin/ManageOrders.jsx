@@ -3,6 +3,7 @@ import adminAxios from "../../api/adminAxios";
 import { useLocation, useNavigate } from "react-router-dom";
 import AdminHeader from "../../components/AdminHeader";
 import AdminSidebar from "../../components/AdminSidebar";
+import { calculateOrderTotal } from "../../utils/orderPricing";
 
 const ManageOrders = () => {
 
@@ -15,6 +16,11 @@ const ManageOrders = () => {
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
 
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "success",
+  });
   const [stats, setStats] = useState({
     pending: 0,
     inTransit: 0,
@@ -78,6 +84,8 @@ const ManageOrders = () => {
         return "bg-green-100 text-green-600";
       case "CANCELLED":
         return "bg-red-100 text-red-600";
+      case "DELIVERY_FAILED":
+        return "bg-red-100 text-red-600";
       default:
         return "bg-gray-100 text-gray-600";
     }
@@ -94,13 +102,30 @@ const ManageOrders = () => {
     const deliveryId = selectedDelivery[orderId];
 
     if (!deliveryId) {
-      alert("Select delivery agent first");
+
+      setToast({
+        show: true,
+        message: "Please select a delivery partner first",
+        type: "error",
+      });
+
+      setTimeout(() => {
+        setToast(prev => ({
+          ...prev,
+          show: false,
+        }));
+      }, 2000);
+
       return;
     }
-
     try {
       await adminAxios.put(`/orders/admin/${orderId}/assign/${deliveryId}`);
-      alert("Assigned successfully");
+      setToast({
+        show: true,
+        message:
+          "Delivery assigned successfully. Out for delivery email sent to customer.",
+        type: "success",
+      });
 
       // refresh orders
       const res = await adminAxios.get("/orders/admin");
@@ -129,7 +154,11 @@ const ManageOrders = () => {
 
     } catch (err) {
       console.error(err);
-      alert("Assignment failed");
+      setToast({
+        show: true,
+        message: "Failed to assign delivery partner",
+        type: "error",
+      });
     }
   };
 
@@ -271,12 +300,7 @@ hover:-translate-y-[2px]">
 
               <tbody>
                 {currentOrders.map((o, i) => {
-
-                  const total = o.items?.reduce(
-                    (sum, item) => sum + item.price * item.quantity,
-                    0
-                  );
-
+                  const { total } = calculateOrderTotal(o.items || []);
                   return (
 
                     <tr
@@ -362,7 +386,7 @@ hover:-translate-y-[2px]">
 
             font-bold"
                         >
-                          ${total?.toFixed(2) || 0}
+                          ${total.toFixed(2)}
                         </span>
 
                       </td>
@@ -407,20 +431,21 @@ hover:-translate-y-[2px]">
 
                       </td>
 
+
                       {/* ACTIONS */}
                       <td className="p-5">
 
                         <div className="flex items-center justify-end gap-4">
-
-                          {/* DELIVERED → VIEW */}
-                          {o.status === "DELIVERED" && (
-
-                            <button
-                              onClick={() => {
-                                setSelectedOrder(o);
-                                setShowViewModal(true);
-                              }}
-                              className="px-5 py-2 rounded-xl
+                          {/* DELIVERED / FAILED → VIEW */}
+                          {(o.status === "DELIVERED" ||
+                            o.status === "DELIVERY_FAILED" ||
+                            o.status === "CANCELLED") && (
+                              <button
+                                onClick={() => {
+                                  setSelectedOrder(o);
+                                  setShowViewModal(true);
+                                }}
+                                className="px-5 py-2 rounded-xl
 
                 bg-gradient-to-r
                 from-indigo-500
@@ -435,19 +460,21 @@ hover:-translate-y-[2px]">
                 hover:scale-[1.03]
 
                 transition-all duration-300"
-                            >
-                              View Details
-                            </button>
-                          )}
+                              >
+                                View Details
+                              </button>
+                            )}
 
                           {/* NOT DELIVERED */}
-                          {o.status !== "DELIVERED" && (
+                          {o.status !== "DELIVERED" &&
+                            o.status !== "DELIVERY_FAILED" &&
+                            o.status !== "CANCELLED" && (
 
-                            <>
+                              <>
 
-                              {/* DROPDOWN */}
-                              <select
-                                className="w-[220px]
+                                {/* DROPDOWN */}
+                                <select
+                                  className="w-[220px]
 
                   px-4 py-2.5
 
@@ -464,36 +491,36 @@ hover:-translate-y-[2px]">
                   outline-none
 
                   focus:ring-2 focus:ring-indigo-200"
-                                value={selectedDelivery[o.orderId] || ""}
-                                onChange={(e) =>
-                                  setSelectedDelivery({
-                                    ...selectedDelivery,
-                                    [o.orderId]: e.target.value,
-                                  })
-                                }
-                              >
+                                  value={selectedDelivery[o.orderId] || ""}
+                                  onChange={(e) =>
+                                    setSelectedDelivery({
+                                      ...selectedDelivery,
+                                      [o.orderId]: e.target.value,
+                                    })
+                                  }
+                                >
 
-                                <option value="">
-                                  Select Delivery Partner
-                                </option>
-
-                                {users.map((u) => (
-
-                                  <option
-                                    key={u.id}
-                                    value={u.id}
-                                  >
-                                    {u.name} ({u.email})
+                                  <option value="">
+                                    Select Delivery Partner
                                   </option>
 
-                                ))}
+                                  {users.map((u) => (
 
-                              </select>
+                                    <option
+                                      key={u.id}
+                                      value={u.id}
+                                    >
+                                      {u.name} ({u.email})
+                                    </option>
 
-                              {/* ASSIGN */}
-                              <button
-                                onClick={() => handleAssign(o.orderId)}
-                                className="px-5 py-2.5 rounded-2xl
+                                  ))}
+
+                                </select>
+
+                                {/* ASSIGN */}
+                                <button
+                                  onClick={() => handleAssign(o.orderId)}
+                                  className="px-5 py-2.5 rounded-2xl
 
                   bg-gradient-to-r
                   from-[#6366f1]
@@ -508,12 +535,12 @@ hover:-translate-y-[2px]">
                   hover:scale-[1.03]
 
                   transition-all duration-300"
-                              >
-                                Assign
-                              </button>
+                                >
+                                  Assign
+                                </button>
 
-                            </>
-                          )}
+                              </>
+                            )}
 
                         </div>
 
@@ -615,6 +642,26 @@ hover:-translate-y-[2px]">
 
               </div>
 
+              {/* CANCELLATION / FAILURE REASON */}
+              {(selectedOrder.status === "DELIVERY_FAILED" ||
+                selectedOrder.status === "CANCELLED") &&
+                selectedOrder.cancelReason && (
+
+                  <div className="mb-8 rounded-2xl border border-red-200 bg-red-50 p-5">
+
+                    <p className="text-xs uppercase tracking-wider text-red-400 mb-2">
+                      {selectedOrder.status === "CANCELLED"
+                        ? "Customer Cancellation Reason"
+                        : "Delivery Failure Reason"}
+                    </p>
+
+                    <p className="text-red-700 font-medium">
+                      {selectedOrder.cancelReason}
+                    </p>
+
+                  </div>
+                )}
+
               {/* CUSTOMER + DELIVERY */}
               <div className="grid md:grid-cols-2 gap-6 mb-8">
 
@@ -653,6 +700,56 @@ hover:-translate-y-[2px]">
                 </div>
 
               </div>
+              {/* REASSIGN DELIVERY */}
+              {selectedOrder.status === "DELIVERY_FAILED" && (
+
+                <div className="mb-8 rounded-3xl border border-indigo-100 bg-indigo-50 p-6">
+
+                  <p className="text-xs uppercase tracking-wider text-indigo-400 mb-4">
+                    Reassign Delivery Partner
+                  </p>
+
+                  <div className="flex flex-col md:flex-row gap-4">
+
+                    <select
+                      className="flex-1 px-4 py-3 rounded-2xl border border-gray-200 bg-white outline-none"
+                      value={selectedDelivery[selectedOrder.orderId] || ""}
+                      onChange={(e) =>
+                        setSelectedDelivery({
+                          ...selectedDelivery,
+                          [selectedOrder.orderId]: e.target.value,
+                        })
+                      }
+                    >
+
+                      <option value="">
+                        Select Delivery Partner
+                      </option>
+
+                      {users.map((u) => (
+
+                        <option
+                          key={u.id}
+                          value={u.id}
+                        >
+                          {u.name} ({u.email})
+                        </option>
+
+                      ))}
+
+                    </select>
+
+                    <button
+                      onClick={() => handleAssign(selectedOrder.orderId)}
+                      className="px-6 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold"
+                    >
+                      Reassign Delivery
+                    </button>
+
+                  </div>
+
+                </div>
+              )}
 
               {/* PRODUCTS */}
               <div className="mb-8">
@@ -667,15 +764,7 @@ hover:-translate-y-[2px]">
 
                     <div
                       key={i}
-                      className="flex items-center justify-between
-
-  rounded-2xl
-
-  border border-gray-100
-
-  bg-white
-
-  p-4"
+                      className="flex items-center justify-between rounded-2xl  border border-gray-100  bg-white  p-4"
                     >
 
                       <div className="flex items-center gap-4">
@@ -712,7 +801,20 @@ hover:-translate-y-[2px]">
                   ))}
 
                 </div>
+                {/* FINAL TOTAL */}
+                <div
+                  className="mt-6  flex items-center justify-between  rounded-2xl bg-indigo-50 border border-indigo-100 px-6 py-5"
+                >
 
+                  <p className="text-lg font-semibold text-gray-700">
+                    Final Total
+                  </p>
+
+                  <p className="text-3xl font-black text-indigo-600">
+                  ${calculateOrderTotal(selectedOrder.items || []).total.toFixed(2)}
+                  </p>
+
+                </div>
               </div>
 
               {/* FEEDBACK */}
@@ -791,6 +893,77 @@ hover:-translate-y-[2px]">
           </div>
         )}
       </div>
+      {/* TOAST */}
+      {toast.show && (
+
+        <div
+          className="fixed top-24 left-1/2 -translate-x-1/2
+
+    z-[9999]
+
+    min-w-[380px]
+
+    px-5 py-4
+
+    rounded-3xl
+
+    bg-white/90
+
+    backdrop-blur-xl
+
+    border border-white
+
+    shadow-[0_10px_40px_rgba(0,0,0,0.12)]
+
+    animate-[fadeIn_.25s_ease]"
+        >
+
+          <div className="flex items-center gap-4">
+
+            {/* ICON */}
+            <div
+              className={`w-11 h-11 rounded-2xl flex items-center justify-center
+
+        ${toast.type === "success"
+                  ? "bg-emerald-100 text-emerald-600"
+                  : "bg-red-100 text-red-500"
+                }`}
+            >
+
+              <span className="text-xl">
+                {toast.type === "success" ? "✨" : "⚠️"}
+              </span>
+
+            </div>
+
+            {/* MESSAGE */}
+            <div className="flex flex-col">
+
+              <p
+                className={`font-bold text-sm
+
+          ${toast.type === "success"
+                    ? "text-emerald-600"
+                    : "text-red-500"
+                  }`}
+              >
+
+                {toast.type === "success"
+                  ? "Assignment Successful"
+                  : "Assignment Failed"}
+
+              </p>
+
+              <p className="text-sm text-gray-500">
+                {toast.message}
+              </p>
+
+            </div>
+
+          </div>
+
+        </div>
+      )}
     </div>
   );
 };

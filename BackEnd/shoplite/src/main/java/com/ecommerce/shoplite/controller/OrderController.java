@@ -46,6 +46,22 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getOrderById(user, orderId));
     }
 
+    // ================= CUSTOMER → CANCEL ORDER =================
+    @PutMapping("/{orderId}/cancel")
+    public ResponseEntity<OrderResponse> cancelOrder(
+            @PathVariable Long orderId,
+            @RequestParam String reason,
+            Authentication authentication) {
+
+        User user = (User) authentication.getPrincipal();
+
+        return ResponseEntity.ok(
+                orderService.cancelOrder(
+                        orderId,
+                        reason,
+                        user));
+    }
+
     // ================= ADMIN: UPDATE STATUS =================
     @PutMapping("/{orderId}/status")
     public ResponseEntity<OrderResponse> updateOrderStatus(
@@ -125,6 +141,22 @@ public class OrderController {
 
         User user = (User) authentication.getPrincipal();
         return ResponseEntity.ok(orderService.markAsDelivered(orderId, user));
+    }
+
+    // ================= DELIVERY: FAILED DELIVERY =================
+    @PutMapping("/delivery/{orderId}/failed")
+    public ResponseEntity<OrderResponse> markDeliveryFailed(
+            @PathVariable Long orderId,
+            @RequestParam String reason,
+            Authentication authentication) {
+
+        User user = (User) authentication.getPrincipal();
+
+        return ResponseEntity.ok(
+                orderService.markDeliveryFailed(
+                        orderId,
+                        reason,
+                        user));
     }
 
     // ================= ADMIN: ASSIGN DELIVERY =================

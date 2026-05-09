@@ -13,6 +13,11 @@ const OrderHistory = () => {
   const [ratings, setRatings] = useState({});
   const [feedbacks, setFeedbacks] = useState({});
   const [submittedFeedbacks, setSubmittedFeedbacks] = useState({});
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelOrderId, setCancelOrderId] = useState(null);
+  const [cancelReason, setCancelReason] = useState("");
+  const [otherCancelReason, setOtherCancelReason] = useState("");
+
   const ordersPerPage = 5;
 
   useEffect(() => {
@@ -105,6 +110,56 @@ const OrderHistory = () => {
       return sum + items.reduce((s, i) => s + i.price * i.quantity, 0);
     }, 0);
   }, [orders]);
+
+  const cancelOrder = async () => {
+
+    try {
+
+      const token = localStorage.getItem("token");
+
+      const finalReason =
+        cancelReason === "Other"
+          ? otherCancelReason
+          : cancelReason;
+
+      await axios.put(
+        `http://localhost:8080/api/orders/${cancelOrderId}/cancel?reason=${encodeURIComponent(finalReason)}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // REFRESH ORDERS
+      const res = await axios.get(
+        "http://localhost:8080/api/orders",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setOrders(res.data);
+
+      setShowCancelModal(false);
+
+      setCancelReason("");
+
+      setOtherCancelReason("");
+
+    } catch (err) {
+
+      console.error(err);
+
+      alert(
+        err?.response?.data ||
+        "Order cancellation failed"
+      );
+    }
+  };
 
   const submitFeedback = async (orderId) => {
     try {
@@ -326,6 +381,9 @@ const OrderHistory = () => {
             <p className="text-center text-gray-500">No orders found.</p>
           ) : (
             currentOrders.map((order, index) => {
+
+              const displayOrderNumber =
+                filteredOrders.length - ((currentPage - 1) * ordersPerPage + index);
               const items = order.items || [];
 
               const total = items.reduce(
@@ -344,7 +402,7 @@ const OrderHistory = () => {
                     <div>
                       <div className="flex gap-3 items-center">
                         <h3 className="font-semibold text-lg">
-                          Order #{order.orderId}
+                          Order #{displayOrderNumber}
                         </h3>
 
                         <span
@@ -561,8 +619,29 @@ const OrderHistory = () => {
                     </div>
                   )}
 
-                  {/* BUTTON */}
-                  <div className="flex justify-end">
+                 
+                  {/* BUTTONS */}
+                  <div className="flex justify-end gap-3">
+
+                    {/* CANCEL ORDER */}
+                    {(order.status?.toLowerCase() === "placed" ||
+                      order.status?.toLowerCase() === "confirmed" ||
+                      order.status?.toLowerCase() === "packed") && (
+
+                        <button
+                          onClick={() => {
+
+                            setCancelOrderId(order.orderId);
+
+                            setShowCancelModal(true);
+                          }}
+                          className="px-6 py-2 rounded-full border border-red-200 text-red-600 hover:bg-red-50 transition"
+                        >
+                          Cancel Order
+                        </button>
+                      )}
+
+                    {/* VIEW DETAILS */}
                     <button
                       onClick={() =>
                         navigate("/order-tracking", { state: order })
@@ -571,6 +650,7 @@ const OrderHistory = () => {
                     >
                       View Details
                     </button>
+
                   </div>
                 </div>
               );
@@ -626,7 +706,112 @@ const OrderHistory = () => {
           )}
         </div>
       </main >
+      {/* CANCEL ORDER MODAL */}
+      {showCancelModal && (
 
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center px-4">
+
+          <div className="w-full max-w-lg bg-white rounded-[32px] p-7 shadow-2xl">
+
+            {/* TITLE */}
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">
+              Cancel Order
+            </h2>
+
+            <p className="text-sm text-gray-500 mb-6">
+              Please select a reason for cancellation.
+            </p>
+
+            {/* REASONS */}
+            <div className="space-y-3 mb-6">
+
+              {[
+                "Ordered by mistake",
+                "Found cheaper elsewhere",
+                "Wrong address",
+                "Need faster delivery",
+                "Payment issue",
+                "Other"
+              ].map((reason) => (
+
+                <label
+                  key={reason}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-2xl border cursor-pointer transition-all duration-300
+            ${cancelReason === reason
+                      ? "border-red-400 bg-red-50"
+                      : "border-gray-200"
+                    }`}
+                >
+
+                  <input
+                    type="radio"
+                    name="cancelReason"
+                    value={reason}
+                    checked={cancelReason === reason}
+                    onChange={(e) =>
+                      setCancelReason(e.target.value)
+                    }
+                  />
+
+                  <span className="text-sm font-medium text-gray-700">
+                    {reason}
+                  </span>
+
+                </label>
+              ))}
+
+            </div>
+
+            {/* OTHER */}
+            {cancelReason === "Other" && (
+
+              <textarea
+                value={otherCancelReason}
+                onChange={(e) =>
+                  setOtherCancelReason(e.target.value)
+                }
+                placeholder="Enter cancellation reason..."
+                className="w-full h-28 resize-none rounded-2xl border border-gray-200 p-4 text-sm outline-none focus:ring-2 focus:ring-red-200 mb-6"
+              />
+            )}
+
+            {/* BUTTONS */}
+            <div className="flex gap-3">
+
+              {/* CLOSE */}
+              <button
+                onClick={() => {
+
+                  setShowCancelModal(false);
+
+                  setCancelReason("");
+
+                  setOtherCancelReason("");
+                }}
+                className="flex-1 py-3 rounded-2xl border border-gray-200 text-gray-600 font-semibold hover:bg-gray-50"
+              >
+                Close
+              </button>
+
+              {/* SUBMIT */}
+              <button
+                onClick={cancelOrder}
+                disabled={!cancelReason}
+                className={`flex-1 py-3 rounded-2xl text-white font-semibold transition-all
+          ${cancelReason
+                    ? "bg-gradient-to-br from-red-500 to-rose-500"
+                    : "bg-gray-300 cursor-not-allowed"
+                  }`}
+              >
+                Confirm Cancel
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+      )}
       {/* FOOTER */}
       < footer className="mt-20 py-10 border-t text-center text-text-muted" >
         © ShopLite Luxury E-commerce.

@@ -16,6 +16,8 @@ public interface DeliveryPartnerRepository
     // ALL PARTNERS
     List<DeliveryPartner> findAllByOrderByIdDesc();
 
+    List<DeliveryPartner> findByApprovedTrue();
+
     // PENDING PARTNERS
     List<DeliveryPartner> findByApprovedFalse();
 }

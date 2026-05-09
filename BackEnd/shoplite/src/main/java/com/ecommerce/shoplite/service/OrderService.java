@@ -153,8 +153,21 @@ public class OrderService {
         // ================= DELIVERY → ACTIVE =================
         public List<OrderResponse> getOrdersForDelivery(User deliveryUser) {
 
-                List<Order> orders = orderRepository
-                                .findByDeliveryAgentAndStatus(deliveryUser, OrderStatus.OUT_FOR_DELIVERY);
+                List<Order> orders = orderRepository.findAll()
+                                .stream()
+                                .filter(order ->
+
+                                order.getDeliveryAgent() != null &&
+
+                                                order.getDeliveryAgent()
+                                                                .getId()
+                                                                .equals(deliveryUser.getId())
+                                                &&
+
+                                                (order.getStatus() == OrderStatus.PACKED ||
+
+                                                                order.getStatus() == OrderStatus.OUT_FOR_DELIVERY))
+                                .toList();
 
                 return orders.stream()
                                 .map(this::mapToResponse)
@@ -210,6 +223,9 @@ public class OrderService {
                 deliveryOtp.setVerified(false);
 
                 deliveryOtpRepository.save(deliveryOtp);
+
+                order.setStatus(OrderStatus.OUT_FOR_DELIVERY);
+                orderRepository.save(order);
 
                 // SEND EMAIL TO CUSTOMER
                 emailService.sendDeliveryOtp(
@@ -308,8 +324,12 @@ public class OrderService {
 
                 order.setDeliveryAgent(deliveryUser);
 
-                // CORRECT STATUS
-                order.setStatus(OrderStatus.OUT_FOR_DELIVERY);
+                order.setStatus(OrderStatus.PACKED);
+
+                emailService.sendOutForDeliveryEmail(
+                                order.getUser().getEmail(),
+                                order.getUser().getName(),
+                                deliveryUser.getName());
 
                 return mapToResponse(orderRepository.save(order));
         }
@@ -328,6 +348,69 @@ public class OrderService {
                 }
 
                 order.setStatus(OrderStatus.DELIVERED);
+
+                return mapToResponse(orderRepository.save(order));
+        }
+
+        // ================= DELIVERY → FAILED DELIVERY =================
+        @Transactional
+        public OrderResponse markDeliveryFailed(
+                        Long orderId,
+                        String reason,
+                        User deliveryUser) {
+
+                Order order = orderRepository.findById(orderId)
+                                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+                // SECURITY CHECK
+                if (order.getDeliveryAgent() == null ||
+                                !order.getDeliveryAgent().getId().equals(deliveryUser.getId())) {
+
+                        throw new RuntimeException("Unauthorized delivery action");
+                }
+
+                // UPDATE STATUS
+                order.setStatus(OrderStatus.DELIVERY_FAILED);
+
+                // SAVE REASON
+                order.setCancellationReason(reason);
+
+                return mapToResponse(orderRepository.save(order));
+        }
+
+        // ================= CUSTOMER → CANCEL ORDER =================
+        @Transactional
+        public OrderResponse cancelOrder(
+                        Long orderId,
+                        String reason,
+                        User customer) {
+
+                Order order = orderRepository.findById(orderId)
+                                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+                // SECURITY CHECK
+                if (!order.getUser().getId().equals(customer.getId())) {
+
+                        throw new RuntimeException(
+                                        "Unauthorized cancellation action");
+                }
+
+                // ALLOW ONLY BEFORE DELIVERY
+                if (order.getStatus() == OrderStatus.DELIVERED ||
+                                order.getStatus() == OrderStatus.OUT_FOR_DELIVERY) {
+
+                        throw new RuntimeException(
+                                        "Order can no longer be cancelled");
+                }
+
+                // UPDATE STATUS
+                order.setStatus(OrderStatus.CANCELLED);
+
+                // SAVE REASON
+                order.setCancellationReason(reason);
+
+                // REMOVE DELIVERY AGENT
+                order.setDeliveryAgent(null);
 
                 return mapToResponse(orderRepository.save(order));
         }
@@ -407,6 +490,10 @@ public class OrderService {
                 response.setOrderId(order.getId());
                 response.setTotalAmount(order.getTotalAmount());
                 response.setStatus(order.getStatus().name());
+
+                response.setCancelReason(
+                                order.getCancellationReason());
+
                 response.setOrderDate(order.getOrderDate().toString());
                 response.setItems(itemResponses);
 

@@ -1,19 +1,42 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
+import axios from "axios";
 const steps = [
-  { key: "placed", label: "Order Placed", icon: "inventory_2" },
-  { key: "packed", label: "Packed", icon: "package_2" },
-  { key: "shipped", label: "Out for Delivery", icon: "local_shipping" },
-  { key: "delivered", label: "Delivered", icon: "check_circle" },
-];
+  {
+    key: "PLACED",
+    label: "Order Placed",
+    icon: "inventory_2",
+  },
 
+  {
+    key: "PACKED",
+    label: "Packed",
+    icon: "package_2",
+  },
+
+  {
+    key: "OUT_FOR_DELIVERY",
+    label: "Out for Delivery",
+    icon: "local_shipping",
+  },
+
+  {
+    key: "DELIVERED",
+    label: "Delivered",
+    icon: "check_circle",
+  },
+];
 const OrderTracking = () => {
   const { clearCart } = useCart();
   const location = useLocation();
   const navigate = useNavigate();
 
-  const order = location.state;
+  const initialOrder = location.state;
+
+  const [order, setOrder] = useState(initialOrder);
+
+
   const subtotal = order.items.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
@@ -25,14 +48,71 @@ const OrderTracking = () => {
   const [statusIndex, setStatusIndex] = useState(0);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setStatusIndex((prev) => {
-        if (prev < steps.length - 1) return prev + 1;
-        return prev;
-      });
-    }, 5000);
+
+    // ORDER JUST PLACED
+    if (order.status === "PLACED") {
+
+      setStatusIndex(0);
+
+      const timer = setTimeout(() => {
+        setStatusIndex(1);
+      }, 4000);
+
+      return () => clearTimeout(timer);
+    }
+
+    // PACKED
+    if (order.status === "PACKED") {
+      setStatusIndex(2);
+    }
+
+    // OUT FOR DELIVERY
+    if (order.status === "OUT_FOR_DELIVERY") {
+      setStatusIndex(2);
+    }
+
+    // DELIVERED
+    if (order.status === "DELIVERED") {
+      setStatusIndex(3);
+    }
+
+  }, [order.status]);
+
+  console.log("STATUS:", order.status);
+  console.log("STATUS INDEX:", statusIndex);
+
+  useEffect(() => {
+
+    // STOP POLLING AFTER DELIVERY
+    if (order.status === "DELIVERED") {
+      return;
+    }
+
+    const interval = setInterval(async () => {
+
+      try {
+
+        const token = localStorage.getItem("token");
+
+        const res = await axios.get(
+          `http://localhost:8080/api/orders/${order.orderId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        setOrder(res.data);
+
+      } catch (err) {
+        console.error("Tracking refresh failed", err);
+      }
+
+    }, 1000);
     return () => clearInterval(interval);
-  }, []);
+
+  }, [order.orderId, order.status]);
 
   if (!order || order.items.length === 0) {
     return (
@@ -122,15 +202,18 @@ const OrderTracking = () => {
               <div
                 className="h-full bg-primary transition-all duration-500"
                 style={{
-                  width: `${(statusIndex / (steps.length - 1)) * 100}%`,
+                  width: `${statusIndex >= 0
+                    ? ((statusIndex + 1) / steps.length) * 100
+                    : 0
+                    }%`,
                 }}
               />
             </div>
 
             {/* STEPS */}
             {steps.map((step, index) => {
-              const isCompleted = index < statusIndex;
-              const isActive = index === statusIndex;
+              const isCompleted = index <= statusIndex;
+              const isActive = false;
 
               return (
                 <div
@@ -138,11 +221,9 @@ const OrderTracking = () => {
                   className="flex flex-col items-center gap-3 relative z-10"
                 >
                   <div
-                    className={`w-12 h-12 rounded-full flex items-center justify-center ${isCompleted
+                    className={`w-12 h-12 rounded-full flex items-center justify-center ${isCompleted || isActive
                       ? "bg-primary text-white"
-                      : isActive
-                        ? "border-2 border-primary text-primary bg-white"
-                        : "bg-gray-200 text-gray-400"
+                      : "bg-gray-200 text-gray-400"
                       }`}
                   >
                     <span className="material-symbols-outlined">

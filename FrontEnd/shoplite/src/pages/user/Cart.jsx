@@ -1,19 +1,19 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
+import { calculateOrderTotal } from "../../utils/orderPricing";
 
 const Cart = () => {
   const { cart, removeFromCart, increaseQty, decreaseQty, clearCart } = useCart();
-
-  const subtotal = cart.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
-
-  const tax = subtotal * 0.04;
-  const total = subtotal + tax;
   const navigate = useNavigate();
   const [showLoginPopup, setShowLoginPopup] = React.useState(false);
+
+  const {
+    subtotal,
+    tax,
+    total
+  } = calculateOrderTotal(cart);
+
   const handleCheckout = () => {
     const token = localStorage.getItem("token");
 
