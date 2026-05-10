@@ -1,11 +1,8 @@
 import React, { useEffect, useState } from "react";
 import DeliveryLayout from "../../components/delivery/DeliveryLayout";
-import {
-  getCompletedOrders,
-  getCompletedReturnPickups
-} from "../../services/deliveryApi";
+import { getCompletedReturnPickups } from "../../services/deliveryApi";
 
-const Completed = () => {
+const CompletedPickups = () => {
 
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14,36 +11,16 @@ const Completed = () => {
 
     try {
 
-      const completedDeliveries =
-        await getCompletedOrders();
-
       const completedReturns =
         await getCompletedReturnPickups();
 
-      // DELIVERY DATA
-      const formattedDeliveries =
-        (Array.isArray(completedDeliveries)
-          ? completedDeliveries
-          : []
-        ).map(order => ({
-          ...order,
-          flowType: "DELIVERY"
-        }));
-
       // RETURN PICKUPS
-      const formattedReturns =
-        (Array.isArray(completedReturns)
-          ? completedReturns
-          : []
-        ).map(order => ({
-          ...order,
-          flowType: "RETURN_PICKUP"
-        }));
 
-      setOrders([
-        ...formattedDeliveries,
-        ...formattedReturns
-      ]);
+      const formattedReturns =
+        Array.isArray(completedReturns)
+          ? completedReturns
+          : [];
+      setOrders(formattedReturns);
 
     } catch (err) {
 
@@ -89,11 +66,11 @@ const Completed = () => {
           <div>
 
             <h1 className="text-4xl font-bold text-gray-800 mb-2">
-              Completed Deliveries
+              Completed Pickups
             </h1>
 
             <p className="text-gray-500">
-              Track all successfully delivered orders
+              Track all completed return pickups
             </p>
 
           </div>
@@ -111,7 +88,7 @@ const Completed = () => {
           >
 
             <p className="text-sm text-indigo-600 font-semibold">
-              ✨ {orders.length} deliveries completed
+              ✨ {orders.length} pickups completed
             </p>
 
           </div>
@@ -121,7 +98,7 @@ const Completed = () => {
         {/* LOADING */}
         {loading && (
           <div className="text-gray-400">
-            Loading completed deliveries...
+            Loading completed pickups...
           </div>
         )}
 
@@ -138,7 +115,7 @@ const Completed = () => {
 
             text-center text-gray-400"
           >
-            No completed deliveries yet
+            No completed pickups yet
           </div>
         )}
 
@@ -148,8 +125,9 @@ const Completed = () => {
           {orders.map((order) => {
 
             const items =
-              order.flowType === "RETURN_PICKUP"
-                ? [
+              order.items && order.items.length > 0
+                ? order.items
+                : [
                   {
                     productName:
                       order.selectedItems ||
@@ -163,8 +141,7 @@ const Completed = () => {
                     image:
                       "/products/placeholder.webp"
                   }
-                ]
-                : (order.items || []);
+                ];
 
             const totalPrice = items.reduce(
               (acc, item) =>
@@ -238,11 +215,7 @@ const Completed = () => {
 
                     text-xs font-semibold"
                   >
-
-                    {order.flowType === "RETURN_PICKUP"
-                      ? "✓ Pickup Completed"
-                      : "✓ Delivered"}
-
+                    ✓ Pickup Completed
                   </div>
 
                 </div>
@@ -301,9 +274,9 @@ const Completed = () => {
                   <div>
 
                     <p className="text-[11px] uppercase tracking-wide text-gray-400 mb-1">
-                      {order.flowType === "RETURN_PICKUP"
-                        ? "Pickup Address"
-                        : "Delivery Address"}
+
+                      Pickup Address
+
                     </p>
 
                     <p className="text-sm text-gray-600 leading-relaxed">
@@ -324,9 +297,8 @@ const Completed = () => {
 
                   <p className="text-sm">
 
-                    {order.flowType === "RETURN_PICKUP"
-                      ? "Picked up on "
-                      : "Delivered on "}
+                    Picked up on
+
 
                     {order.orderDate
                       ? new Date(order.orderDate).toLocaleDateString(
@@ -511,4 +483,4 @@ const Completed = () => {
   );
 };
 
-export default Completed;
+export default CompletedPickups;

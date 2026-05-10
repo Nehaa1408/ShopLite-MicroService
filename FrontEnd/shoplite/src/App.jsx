@@ -37,7 +37,8 @@ import ManageReturns from "./pages/admin/ManageReturns";
 
 import DeliveryLogin from "./pages/delivery/DeliveryLogin";
 import DeliveryDashboard from "./pages/delivery/DeliveryDashboard";
-import Completed from "./pages/delivery/Completed";
+import CompletedDeliveries from "./pages/delivery/CompletedDeliveries";
+import CompletedPickups from "./pages/delivery/CompletedPickups";
 import DeliveryRoute from "./pages/delivery/DeliveryRoute";
 import DeliveryPartnerVerification from "./pages/delivery/DeliveryPartnerVerification";
 import DeliveryProfile from "./pages/delivery/DeliveryProfile";
@@ -196,10 +197,19 @@ function App() {
           />
 
           <Route
-            path="/delivery/completed"
+            path="/delivery/completed-deliveries"
             element={
               <DeliveryRoute>
-                <Completed />
+                <CompletedDeliveries />
+              </DeliveryRoute>
+            }
+          />
+
+          <Route
+            path="/delivery/completed-pickups"
+            element={
+              <DeliveryRoute>
+                <CompletedPickups />
               </DeliveryRoute>
             }
           />

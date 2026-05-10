@@ -48,9 +48,12 @@ const DeliveryDashboard = () => {
 
             // DELIVERY ORDERS
             const formattedDeliveries =
-                (Array.isArray(deliveryOrders)
-                    ? deliveryOrders
-                    : []
+                (
+                    Array.isArray(deliveryOrders?.data)
+                        ? deliveryOrders.data
+                        : Array.isArray(deliveryOrders)
+                            ? deliveryOrders
+                            : []
                 ).map(order => ({
                     ...order,
                     flowType: "DELIVERY"
@@ -72,7 +75,7 @@ const DeliveryDashboard = () => {
                         ...order,
                         flowType: "RETURN_PICKUP"
                     }));
-
+         
             setOrders([
                 ...formattedDeliveries,
                 ...formattedReturns
@@ -254,20 +257,170 @@ const DeliveryDashboard = () => {
         o.orderId.toString().includes(search)
     );
 
-    const active = orders.filter(o => o.status === "OUT_FOR_DELIVERY").length;
+    
+    const active = orders.filter(
+
+        o =>
+
+            o.status === "PACKED" ||
+
+            o.status === "OUT_FOR_DELIVERY" ||
+
+            o.status === "PICKUP_PARTNER_ASSIGNED"
+
+    ).length;
 
     return (
         <DeliveryLayout>
 
             {/* HERO */}
-            <div className="mb-10">
-                <h1 className="text-4xl font-bold mb-2">
-                    Welcome back 👋
-                </h1>
-                <p className="text-gray-500">
-                    You have <span className="text-purple-600 font-semibold">{active} active deliveries</span>
-                </p>
+            <div
+                className="relative overflow-hidden
+
+    mb-8
+
+    rounded-[32px]
+
+    border border-white/60
+
+    bg-white/70
+
+  
+
+    p-8
+
+    shadow-[0_20px_60px_rgba(15,23,42,0.06)]"
+            >
+
+              
+
+                {/* CONTENT */}
+                <div
+                    className="relative z-10
+
+        flex items-center justify-between"
+                >
+
+                    {/* LEFT CONTENT */}
+                    <div>
+
+                        {/* TOP LABEL */}
+                        <div
+                            className="inline-flex items-center gap-2
+
+                px-4 py-2
+
+                rounded-full
+
+                bg-indigo-50
+
+                border border-indigo-100
+
+                mb-5"
+                        >
+                            <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+
+                            <span className="text-xs font-semibold tracking-wide text-indigo-600">
+                                DELIVERY OPERATIONS
+                            </span>
+
+                        </div>
+
+                        {/* TITLE */}
+                        <h1
+                            className="text-[44px]
+
+                leading-[1.05]
+
+                font-bold
+
+                tracking-tight
+
+                text-gray-900
+
+                mb-3"
+                        >
+                            Welcome back 👋
+                        </h1>
+
+                        {/* SUBTEXT */}
+                        <p className="text-[17px] text-gray-500">
+
+                            You currently have
+
+                            <span className="font-bold text-indigo-600">
+                                {" "}{active} active deliveries
+                            </span>{" "}
+
+                            waiting for completion.
+
+                        </p>
+
+                    </div>
+
+                    {/* RIGHT VISUAL */}
+                    <div
+                        className="hidden lg:flex
+
+            relative
+
+            shrink-0
+
+            items-center justify-center
+
+            w-[130px] h-[130px]
+
+            rounded-[34px]
+
+            bg-white/40
+
+            border border-white/60
+
+            backdrop-blur-xl
+
+            shadow-[0_20px_50px_rgba(99,102,241,0.08)]"
+                    >
+
+                        {/* INNER GLOW */}
+                        <div
+                            className="absolute inset-0 rounded-[34px]
+
+                bg-gradient-to-br
+                from-indigo-100/40
+                to-violet-100/20"
+                        />
+
+                        {/* FLOATING LIGHT */}
+                        <div
+                            className="absolute top-4 right-4
+
+                w-3 h-3 rounded-full
+
+                bg-emerald-400
+
+                shadow-[0_0_18px_rgba(74,222,128,0.8)]
+
+                animate-pulse"
+                        />
+
+                        <span
+                            className="material-symbols-outlined
+
+                relative z-10
+
+                text-[58px]
+
+                text-indigo-500"
+                        >
+                            local_shipping
+                        </span>
+
+                    </div>
+
+                </div>
+
             </div>
+
 
             {/* HEADER */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-10">
@@ -276,28 +429,10 @@ const DeliveryDashboard = () => {
                     Active Deliveries
                 </h3>
 
-                <div className="relative w-full md:w-80">
-
-                    <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-                        search
-                    </span>
-
-                    <input
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Search order ID..."
-                        className="w-full pl-12 pr-4 py-3 rounded-2xl 
-                        bg-white/70 backdrop-blur-lg border border-white/40
-                        text-sm text-gray-700 outline-none
-                        focus:ring-2 focus:ring-purple-300
-                        hover:border-purple-200"
-                    />
-                </div>
-
             </div>
 
             {/* CARDS */}
-            <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-10">
+            <div className="grid xl:grid-cols-2 gap-6">
 
                 {filteredOrders.length === 0 ? (
                     <p className="text-gray-500">No matching orders</p>
@@ -321,42 +456,43 @@ const DeliveryDashboard = () => {
 
             </div>
             {/* OTP MODAL */}
-            {showOtpModal && (
+            {
+                showOtpModal && (
 
-                <div
-                    className="fixed inset-0 z-50
+                    <div
+                        className="fixed inset-0 z-50
 
-        bg-black/40 backdrop-blur-sm
+        bg-black/40
 
         flex items-center justify-center
 
         px-4"
-                >
+                    >
 
-                    <div
-                        className="w-full max-w-md
+                        <div
+                            className="w-full max-w-md
 
             bg-white rounded-[28px]
 
             p-7 shadow-2xl"
-                    >
+                        >
 
-                        {/* TITLE */}
-                        <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                            Verify Delivery OTP
-                        </h2>
+                            {/* TITLE */}
+                            <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                                Verify Delivery OTP
+                            </h2>
 
-                        <p className="text-sm text-gray-500 mb-6">
-                            Ask customer for the OTP sent to their email.
-                        </p>
+                            <p className="text-sm text-gray-500 mb-6">
+                                Ask customer for the OTP sent to their email.
+                            </p>
 
-                        {/* INPUT */}
-                        <input
-                            type="text"
-                            value={otp}
-                            onChange={(e) => setOtp(e.target.value)}
-                            placeholder="Enter 6-digit OTP"
-                            className="w-full px-5 py-4 rounded-2xl
+                            {/* INPUT */}
+                            <input
+                                type="text"
+                                value={otp}
+                                onChange={(e) => setOtp(e.target.value)}
+                                placeholder="Enter 6-digit OTP"
+                                className="w-full px-5 py-4 rounded-2xl
 
                 border border-gray-200
 
@@ -369,47 +505,47 @@ const DeliveryDashboard = () => {
                 text-center font-semibold
 
                 mb-6"
-                        />
-                        {/* RESEND OTP */}
-                        <div className="flex items-center justify-between mb-5">
+                            />
+                            {/* RESEND OTP */}
+                            <div className="flex items-center justify-between mb-5">
 
-                            <p className="text-sm text-gray-500">
-                                Didn't receive OTP?
-                            </p>
+                                <p className="text-sm text-gray-500">
+                                    Didn't receive OTP?
+                                </p>
 
-                            <button
-                                disabled={!canResend || loadingOtp}
-                                onClick={() => handleSendOtp(selectedOrderId)}
-                                className={`text-sm font-semibold
+                                <button
+                                    disabled={!canResend || loadingOtp}
+                                    onClick={() => handleSendOtp(selectedOrderId)}
+                                    className={`text-sm font-semibold
 
         transition-all
 
         ${canResend
-                                        ? "text-indigo-600 hover:text-indigo-700"
-                                        : "text-gray-400 cursor-not-allowed"
-                                    }`}
-                            >
+                                            ? "text-indigo-600 hover:text-indigo-700"
+                                            : "text-gray-400 cursor-not-allowed"
+                                        }`}
+                                >
 
-                                {loadingOtp
-                                    ? "Sending..."
-                                    : canResend
-                                        ? "Resend OTP"
-                                        : `Resend in ${resendTimer}s`
-                                }
+                                    {loadingOtp
+                                        ? "Sending..."
+                                        : canResend
+                                            ? "Resend OTP"
+                                            : `Resend in ${resendTimer}s`
+                                    }
 
-                            </button>
+                                </button>
 
-                        </div>
-                        {/* BUTTONS */}
-                        <div className="flex gap-3">
+                            </div>
+                            {/* BUTTONS */}
+                            <div className="flex gap-3">
 
-                            {/* CANCEL */}
-                            <button
-                                onClick={() => {
-                                    setShowOtpModal(false);
-                                    setOtp("");
-                                }}
-                                className="flex-1 py-3 rounded-2xl
+                                {/* CANCEL */}
+                                <button
+                                    onClick={() => {
+                                        setShowOtpModal(false);
+                                        setOtp("");
+                                    }}
+                                    className="flex-1 py-3 rounded-2xl
 
                     border border-gray-200
 
@@ -418,14 +554,14 @@ const DeliveryDashboard = () => {
                     hover:bg-gray-50
 
                     transition-all"
-                            >
-                                Cancel
-                            </button>
+                                >
+                                    Cancel
+                                </button>
 
-                            {/* VERIFY */}
-                            <button
-                                onClick={handleVerifyOtp}
-                                className="flex-1 py-3 rounded-2xl
+                                {/* VERIFY */}
+                                <button
+                                    onClick={handleVerifyOtp}
+                                    className="flex-1 py-3 rounded-2xl
 
                     bg-gradient-to-b
                     from-[#7C83FF]
@@ -438,31 +574,33 @@ const DeliveryDashboard = () => {
                     hover:opacity-95
 
                     transition-all"
-                            >
-                                Verify Delivery
-                            </button>
+                                >
+                                    Verify Delivery
+                                </button>
+
+                            </div>
 
                         </div>
 
                     </div>
-
-                </div>
-            )}
+                )
+            }
             {/* ISSUE MODAL */}
-            {showIssueModal && (
+            {
+                showIssueModal && (
 
-                <div
-                    className="fixed inset-0 z-50
+                    <div
+                        className="fixed inset-0 z-50
 
         bg-black/40 backdrop-blur-sm
 
         flex items-center justify-center
 
         px-4"
-                >
+                    >
 
-                    <div
-                        className="w-full max-w-lg
+                        <div
+                            className="w-full max-w-lg
 
             bg-white/80 backdrop-blur-2xl
 
@@ -471,32 +609,32 @@ const DeliveryDashboard = () => {
             rounded-[30px]
 
             p-7 shadow-2xl"
-                    >
+                        >
 
-                        {/* TITLE */}
-                        <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                            Unable to Deliver
-                        </h2>
+                            {/* TITLE */}
+                            <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                                Unable to Deliver
+                            </h2>
 
-                        <p className="text-sm text-gray-500 mb-6">
-                            Select the reason for delivery failure.
-                        </p>
+                            <p className="text-sm text-gray-500 mb-6">
+                                Select the reason for delivery failure.
+                            </p>
 
-                        {/* REASONS */}
-                        <div className="space-y-3 mb-6">
+                            {/* REASONS */}
+                            <div className="space-y-3 mb-6">
 
-                            {[
-                                "Customer unreachable",
-                                "Wrong address",
-                                "OTP not received",
-                                "Fake email",
-                                "Customer unavailable",
-                                "Other"
-                            ].map((reason) => (
+                                {[
+                                    "Customer unreachable",
+                                    "Wrong address",
+                                    "OTP not received",
+                                    "Fake email",
+                                    "Customer unavailable",
+                                    "Other"
+                                ].map((reason) => (
 
-                                <label
-                                    key={reason}
-                                    className={`flex items-center gap-3
+                                    <label
+                                        key={reason}
+                                        className={`flex items-center gap-3
 
                         px-4 py-3 rounded-2xl
 
@@ -505,40 +643,40 @@ const DeliveryDashboard = () => {
                         transition-all duration-300
 
                         ${selectedReason === reason
-                                            ? "border-red-400 bg-red-50"
-                                            : "border-gray-200 bg-white/60"
-                                        }`}
-                                >
+                                                ? "border-red-400 bg-red-50"
+                                                : "border-gray-200 bg-white/60"
+                                            }`}
+                                    >
 
-                                    <input
-                                        type="radio"
-                                        name="deliveryIssue"
-                                        value={reason}
-                                        checked={selectedReason === reason}
-                                        onChange={(e) =>
-                                            setSelectedReason(e.target.value)
-                                        }
-                                    />
+                                        <input
+                                            type="radio"
+                                            name="deliveryIssue"
+                                            value={reason}
+                                            checked={selectedReason === reason}
+                                            onChange={(e) =>
+                                                setSelectedReason(e.target.value)
+                                            }
+                                        />
 
-                                    <span className="text-sm font-medium text-gray-700">
-                                        {reason}
-                                    </span>
+                                        <span className="text-sm font-medium text-gray-700">
+                                            {reason}
+                                        </span>
 
-                                </label>
-                            ))}
+                                    </label>
+                                ))}
 
-                        </div>
+                            </div>
 
-                        {/* OTHER TEXT */}
-                        {selectedReason === "Other" && (
+                            {/* OTHER TEXT */}
+                            {selectedReason === "Other" && (
 
-                            <textarea
-                                value={otherReason}
-                                onChange={(e) =>
-                                    setOtherReason(e.target.value)
-                                }
-                                placeholder="Enter issue details..."
-                                className="w-full h-28 resize-none
+                                <textarea
+                                    value={otherReason}
+                                    onChange={(e) =>
+                                        setOtherReason(e.target.value)
+                                    }
+                                    placeholder="Enter issue details..."
+                                    className="w-full h-28 resize-none
 
                     rounded-2xl
 
@@ -551,20 +689,20 @@ const DeliveryDashboard = () => {
                     focus:ring-2 focus:ring-red-200
 
                     mb-6"
-                            />
-                        )}
+                                />
+                            )}
 
-                        {/* BUTTONS */}
-                        <div className="flex gap-3">
+                            {/* BUTTONS */}
+                            <div className="flex gap-3">
 
-                            {/* CANCEL */}
-                            <button
-                                onClick={() => {
-                                    setShowIssueModal(false);
-                                    setSelectedReason("");
-                                    setOtherReason("");
-                                }}
-                                className="flex-1 py-3 rounded-2xl
+                                {/* CANCEL */}
+                                <button
+                                    onClick={() => {
+                                        setShowIssueModal(false);
+                                        setSelectedReason("");
+                                        setOtherReason("");
+                                    }}
+                                    className="flex-1 py-3 rounded-2xl
 
                     border border-gray-200
 
@@ -573,90 +711,92 @@ const DeliveryDashboard = () => {
                     hover:bg-gray-50
 
                     transition-all"
-                            >
-                                Cancel
-                            </button>
+                                >
+                                    Cancel
+                                </button>
 
-                            {/* SUBMIT */}
-                            <button
-                                onClick={async () => {
+                                {/* SUBMIT */}
+                                <button
+                                    onClick={async () => {
 
-                                    try {
+                                        try {
 
-                                        const finalReason =
-                                            selectedReason === "Other"
-                                                ? otherReason
-                                                : selectedReason;
+                                            const finalReason =
+                                                selectedReason === "Other"
+                                                    ? otherReason
+                                                    : selectedReason;
 
-                                        await markDeliveryFailed(
-                                            issueOrderId,
-                                            finalReason
-                                        );
+                                            await markDeliveryFailed(
+                                                issueOrderId,
+                                                finalReason
+                                            );
 
-                                        fetchOrders();
+                                            fetchOrders();
 
-                                        setShowIssueModal(false);
+                                            setShowIssueModal(false);
 
-                                        setSelectedReason("");
+                                            setSelectedReason("");
 
-                                        setOtherReason("");
+                                            setOtherReason("");
 
-                                        setToast({
-                                            show: true,
-                                            message: "Delivery issue submitted",
-                                            type: "error"
-                                        });
+                                            setToast({
+                                                show: true,
+                                                message: "Delivery issue submitted",
+                                                type: "error"
+                                            });
 
-                                    } catch (err) {
+                                        } catch (err) {
 
-                                        console.error(err);
+                                            console.error(err);
 
-                                        setToast({
-                                            show: true,
-                                            message: "Failed to submit issue",
-                                            type: "error"
-                                        });
-                                    }
+                                            setToast({
+                                                show: true,
+                                                message: "Failed to submit issue",
+                                                type: "error"
+                                            });
+                                        }
 
-                                    setTimeout(() => {
-                                        setToast(prev => ({
-                                            ...prev,
-                                            show: false
-                                        }));
-                                    }, 3000);
-                                }}
-                                disabled={!selectedReason}
-                                className={`flex-1 py-3 rounded-2xl
+                                        setTimeout(() => {
+                                            setToast(prev => ({
+                                                ...prev,
+                                                show: false
+                                            }));
+                                        }, 3000);
+                                    }}
+                                    disabled={!selectedReason}
+                                    className={`flex-1 py-3 rounded-2xl
 
 text-white font-semibold
 
 transition-all duration-300
 
 ${selectedReason
-                                        ? `
+                                            ? `
 bg-gradient-to-br
 from-red-500
 to-rose-500
 
 shadow-[0_10px_30px_rgba(239,68,68,0.25)]
 `
-                                        : "bg-gray-300 cursor-not-allowed"
-                                    }`}
-                            >
-                                Submit Issue
-                            </button>
+                                            : "bg-gray-300 cursor-not-allowed"
+                                        }`}
+                                >
+                                    Submit Issue
+                                </button>
+
+                            </div>
 
                         </div>
 
                     </div>
-
-                </div>
-            )}
+                )
+            }
             {/* TOAST */}
-            {toast.show && (
+            {
+                toast.show && (
 
-                <div
-                    className="fixed top-24 left-[58%]
+                    <div
+                        className="fixed top-24 left-[58%]
         -translate-x-1/2
 
         z-[9999]
@@ -678,33 +818,34 @@ shadow-[0_10px_30px_rgba(239,68,68,0.25)]
         text-white font-medium
 
         animate-[fadeIn_.25s_ease]"
-                    style={{
-                        background:
-                            toast.type === "success"
-                                ? "rgba(16,185,129,0.92)"
-                                : "rgba(239,68,68,0.92)"
-                    }}
-                >
+                        style={{
+                            background:
+                                toast.type === "success"
+                                    ? "rgba(16,185,129,0.92)"
+                                    : "rgba(239,68,68,0.92)"
+                        }}
+                    >
 
-                    <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3">
 
-                        <span className="material-symbols-outlined text-[20px]">
+                            <span className="material-symbols-outlined text-[20px]">
 
-                            {toast.type === "success"
-                                ? "check_circle"
-                                : "error"}
+                                {toast.type === "success"
+                                    ? "check_circle"
+                                    : "error"}
 
-                        </span>
+                            </span>
 
-                        <span className="text-[15px] leading-none">
-                            {toast.message}
-                        </span>
+                            <span className="text-[15px] leading-none">
+                                {toast.message}
+                            </span>
+
+                        </div>
 
                     </div>
-
-                </div>
-            )}
-        </DeliveryLayout>
+                )
+            }
+        </DeliveryLayout >
     );
 };
 

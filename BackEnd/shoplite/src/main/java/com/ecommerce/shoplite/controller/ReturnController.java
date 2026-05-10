@@ -125,4 +125,21 @@ public class ReturnController {
                                                 request.getOtp(),
                                                 user));
         }
+
+        // ================= DELIVERY → COMPLETED PICKUPS =================
+        @GetMapping("/completed-pickups")
+        public ResponseEntity<List<ReturnRequestResponse>> getCompletedPickups(
+                        Authentication authentication) {
+
+                User user = (User) authentication.getPrincipal();
+
+                if (user.getRole() != Role.DELIVERY) {
+
+                        throw new RuntimeException(
+                                        "Access denied");
+                }
+
+                return ResponseEntity.ok(
+                                returnService.getCompletedPickups(user));
+        }
 }

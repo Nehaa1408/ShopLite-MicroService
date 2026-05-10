@@ -1,26 +1,37 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+
   theme: {
     extend: {
+
       colors: {
-        // CORE SYSTEM (clean + premium)
+        // CORE
         background: "#f9f5ff",
         surface: "#ffffff",
 
-        primary: "#2563eb",        // clean modern blue
-        "primary-soft": "#3b82f6", // lighter blue
+        // PRIMARY
+        primary: "#2563eb",
+        "primary-soft": "#3b82f6",
 
-        // SURFACE SYSTEM (minimal)
+        // SURFACES
         "surface-low": "#f2f1ff",
         "surface-mid": "#e6e4ff",
 
-        //  TEXT
+        // TEXT
         "text-main": "#2b2a51",
         "text-muted": "#6b6a85",
 
-        //  UTIL
+        // BORDER
         border: "#e6e4ff",
+
+        // STATUS
+        success: "#10b981",
+        warning: "#f59e0b",
+        danger: "#ef4444",
       },
 
       fontFamily: {
@@ -29,29 +40,57 @@ module.exports = {
       },
 
       boxShadow: {
-        soft: "0 4px 20px rgba(43, 42, 81, 0.06)",
-        hover: "0 12px 32px rgba(43, 42, 81, 0.10)",
+        // LIGHTWEIGHT SHADOWS
+        soft: "0 2px 12px rgba(43,42,81,0.06)",
+        medium: "0 8px 24px rgba(43,42,81,0.08)",
+        hover: "0 12px 28px rgba(43,42,81,0.10)",
 
-
-        glow: "0 4px 20px rgba(37, 99, 235, 0.25)",
-        "glow-soft": "0 2px 10px rgba(37, 99, 235, 0.15)",
-        "glow-white": "0 0 20px rgba(255,255,255,0.6)",
+        // GLOW
+        glow: "0 0 18px rgba(37,99,235,0.18)",
+        "glow-soft": "0 0 10px rgba(37,99,235,0.12)",
       },
 
       borderRadius: {
         xl: "12px",
-        "2xl": "16px",
+        "2xl": "18px",
+        "3xl": "28px",
       },
+
       keyframes: {
+
         floatY: {
-          '0%, 100%': { transform: 'translateY(0px)' },
-          '50%': { transform: 'translateY(-15px)' },
+          "0%, 100%": {
+            transform: "translateY(0px)",
+          },
+
+          "50%": {
+            transform: "translateY(-10px)",
+          },
+        },
+
+        fadeIn: {
+          from: {
+            opacity: "0",
+            transform: "translateY(10px)",
+          },
+
+          to: {
+            opacity: "1",
+            transform: "translateY(0px)",
+          },
         },
       },
+
       animation: {
-        floatY: 'floatY 4s ease-in-out infinite',
+        floatY: "floatY 4s ease-in-out infinite",
+        fadeIn: "fadeIn 0.3s ease forwards",
+      },
+
+      backdropBlur: {
+        xs: "2px",
       },
     },
   },
+
   plugins: [],
 };

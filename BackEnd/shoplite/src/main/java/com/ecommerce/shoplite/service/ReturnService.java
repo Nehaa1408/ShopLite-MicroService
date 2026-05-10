@@ -28,6 +28,9 @@ public interface ReturnService {
         List<ReturnRequestResponse> getAssignedReturns(
                         User user);
 
+        List<ReturnRequestResponse> getCompletedPickups(
+                        User user);
+
         // SEND PICKUP OTP
         String sendPickupOtp(
                         Long returnId,

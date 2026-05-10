@@ -186,16 +186,15 @@ export const verifyReturnPickupOtp = async (
 
     return res.data;
 };
+
 // COMPLETED RETURN PICKUPS
 export const getCompletedReturnPickups = async () => {
 
     const res =
         await deliveryAxios.get(
-            "/returns/assigned"
+            "/returns/completed-pickups"
         );
 
-    return res.data.filter(
-        (r) => r.status === "PICKUP_COMPLETED"
-    );
+    return res.data;
 };
 export default deliveryAxios;

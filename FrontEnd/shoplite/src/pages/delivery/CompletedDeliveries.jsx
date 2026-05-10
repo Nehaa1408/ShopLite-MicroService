@@ -1,49 +1,26 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import DeliveryLayout from "../../components/delivery/DeliveryLayout";
-import {
-  getCompletedOrders,
-  getCompletedReturnPickups
-} from "../../services/deliveryApi";
+import { getCompletedOrders } from "../../services/deliveryApi";
 
-const Completed = () => {
+const CompletedDeliveries = () => {
 
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
 
     try {
 
       const completedDeliveries =
         await getCompletedOrders();
 
-      const completedReturns =
-        await getCompletedReturnPickups();
-
       // DELIVERY DATA
       const formattedDeliveries =
-        (Array.isArray(completedDeliveries)
+        Array.isArray(completedDeliveries)
           ? completedDeliveries
-          : []
-        ).map(order => ({
-          ...order,
-          flowType: "DELIVERY"
-        }));
+          : [];
 
-      // RETURN PICKUPS
-      const formattedReturns =
-        (Array.isArray(completedReturns)
-          ? completedReturns
-          : []
-        ).map(order => ({
-          ...order,
-          flowType: "RETURN_PICKUP"
-        }));
-
-      setOrders([
-        ...formattedDeliveries,
-        ...formattedReturns
-      ]);
+      setOrders(formattedDeliveries);
 
     } catch (err) {
 
@@ -57,8 +34,8 @@ const Completed = () => {
       setLoading(false);
 
     }
-  };
 
+  }, []);
   useEffect(() => {
     fetchOrders();
   }, []);
@@ -147,24 +124,7 @@ const Completed = () => {
 
           {orders.map((order) => {
 
-            const items =
-              order.flowType === "RETURN_PICKUP"
-                ? [
-                  {
-                    productName:
-                      order.selectedItems ||
-                      "Returned Product",
-
-                    quantity: 1,
-
-                    price:
-                      order.refundAmount || 0,
-
-                    image:
-                      "/products/placeholder.webp"
-                  }
-                ]
-                : (order.items || []);
+            const items = order.items || [];
 
             const totalPrice = items.reduce(
               (acc, item) =>
@@ -238,11 +198,7 @@ const Completed = () => {
 
                     text-xs font-semibold"
                   >
-
-                    {order.flowType === "RETURN_PICKUP"
-                      ? "✓ Pickup Completed"
-                      : "✓ Delivered"}
-
+                    ✓ Delivered
                   </div>
 
                 </div>
@@ -301,9 +257,7 @@ const Completed = () => {
                   <div>
 
                     <p className="text-[11px] uppercase tracking-wide text-gray-400 mb-1">
-                      {order.flowType === "RETURN_PICKUP"
-                        ? "Pickup Address"
-                        : "Delivery Address"}
+                      Delivery Address
                     </p>
 
                     <p className="text-sm text-gray-600 leading-relaxed">
@@ -323,11 +277,7 @@ const Completed = () => {
                   </span>
 
                   <p className="text-sm">
-
-                    {order.flowType === "RETURN_PICKUP"
-                      ? "Picked up on "
-                      : "Delivered on "}
-
+                    Delivered on
                     {order.orderDate
                       ? new Date(order.orderDate).toLocaleDateString(
                         "en-IN",
@@ -511,4 +461,4 @@ const Completed = () => {
   );
 };
 
-export default Completed;
+export default CompletedDeliveries;

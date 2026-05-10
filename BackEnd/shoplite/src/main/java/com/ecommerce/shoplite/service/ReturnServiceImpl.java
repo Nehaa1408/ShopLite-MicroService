@@ -275,14 +275,20 @@ public class ReturnServiceImpl implements ReturnService {
 
         // ================= DELIVERY → ASSIGNED RETURNS =================
         @Override
-        public List<ReturnRequestResponse> getAssignedReturns(User user) {
+        public List<ReturnRequestResponse> getAssignedReturns(
+                        User user) {
 
-                List<ReturnRequest> returns = returnRequestRepository
-                                .findByPickupPartnerOrderByRequestedDateDesc(
-                                                user);
+                return returnRequestRepository
+                                .findByPickupPartnerOrderByRequestedDateDesc(user)
+                                .stream()
 
-                return returns.stream()
+                                // ONLY ACTIVE PICKUPS
+                                .filter(returnRequest ->
+
+                                returnRequest.getStatus() == ReturnStatus.PICKUP_PARTNER_ASSIGNED)
+
                                 .map(this::mapToResponse)
+
                                 .toList();
         }
 
@@ -440,6 +446,26 @@ public class ReturnServiceImpl implements ReturnService {
                 response.setItems(items);
 
                 return response;
+        }
+
+        @Override
+        public List<ReturnRequestResponse> getCompletedPickups(User user) {
+
+                return returnRequestRepository
+                                .findByPickupPartnerOrderByRequestedDateDesc(user)
+                                .stream()
+
+                                .filter(returnRequest ->
+
+                                returnRequest.getStatus() == ReturnStatus.PICKUP_COMPLETED ||
+
+                                                returnRequest.getStatus() == ReturnStatus.REFUND_PROCESSED ||
+
+                                                returnRequest.getStatus() == ReturnStatus.RETURN_REJECTED)
+
+                                .map(this::mapToResponse)
+
+                                .toList();
         }
 
 }
