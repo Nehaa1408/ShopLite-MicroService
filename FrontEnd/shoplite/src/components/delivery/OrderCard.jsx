@@ -4,6 +4,7 @@ import { calculateOrderTotal } from "../../utils/orderPricing";
 const OrderCard = ({
   order,
   onSendOtp,
+  onConfirmCod,
   onUnableToDeliver
 }) => {
 
@@ -13,6 +14,20 @@ const OrderCard = ({
 
   const isReturnPickup =
     order.flowType === "RETURN_PICKUP";
+
+  const isDeliveryFlow =
+    order.flowType === "DELIVERY";
+
+  const isCod =
+    isDeliveryFlow &&
+    order.paymentMethod === "COD";
+
+  const codPending =
+    isCod &&
+    order.paymentStatus === "COD_PENDING";
+
+  const paymentDone =
+    order.paymentStatus === "SUCCESS";
 
   // IMAGE PATH FIX
   const getImage = (img) => {
@@ -142,6 +157,97 @@ const OrderCard = ({
         <p className="text-sm text-gray-500 font-medium">
           {items.length} item{items.length > 1 ? "s" : ""}
         </p>
+
+      </div>
+
+      {/* PAYMENT STATUS */}
+      <div className="flex items-center gap-3 mb-5 flex-wrap">
+
+        {/* PAYMENT METHOD */}
+        <div
+          className={`px-4 h-9 rounded-full border flex items-center gap-2
+
+    ${isCod
+              ? `
+          bg-amber-50
+          border-amber-100
+        `
+              : `
+          bg-emerald-50
+          border-emerald-100
+        `
+            }`}
+        >
+
+          <div
+            className={`w-2 h-2 rounded-full
+
+      ${isCod
+                ? "bg-amber-400"
+                : "bg-emerald-400"
+              }`}
+          />
+
+          <span
+            className={`text-[11px] font-bold tracking-wide
+
+      ${isCod
+                ? "text-amber-600"
+                : "text-emerald-600"
+              }`}
+          >
+
+            {isCod && paymentDone
+              ? "COD PAID"
+              : isCod
+                ? "COD"
+                : "PAYMENT DONE"}
+
+          </span>
+
+        </div>
+
+        {/* PAYMENT STATUS */}
+        <div
+          className={`px-4 h-9 rounded-full border flex items-center gap-2
+
+    ${paymentDone
+              ? `
+          bg-emerald-50
+          border-emerald-100
+        `
+              : `
+          bg-rose-50
+          border-rose-100
+        `
+            }`}
+        >
+
+          <div
+            className={`w-2 h-2 rounded-full animate-pulse
+
+      ${paymentDone
+                ? "bg-emerald-400"
+                : "bg-rose-400"
+              }`}
+          />
+
+          <span
+            className={`text-[11px] font-bold tracking-wide
+
+      ${paymentDone
+                ? "text-emerald-600"
+                : "text-rose-600"
+              }`}
+          >
+
+            {paymentDone
+              ? "VERIFIED"
+              : "PENDING"}
+
+          </span>
+
+        </div>
 
       </div>
 
@@ -339,6 +445,7 @@ const OrderCard = ({
 
           {/* REACHED DESTINATION */}
           <button
+            disabled={isCod && codPending}
             onClick={() =>
               onSendOtp(
                 order.flowType === "RETURN_PICKUP"
@@ -368,8 +475,7 @@ const OrderCard = ({
             hover:shadow-[0_16px_42px_rgba(99,102,241,0.20)]
 
             active:scale-[0.98]
-
-            transition-all duration-300"
+            transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
           >
 
             {/* EDGE LIGHT */}
@@ -420,13 +526,60 @@ const OrderCard = ({
 
               {isReturnPickup
                 ? "Reached Pickup"
-                : "Reached Destination"}
+                : codPending
+                  ? "Collect COD First"
+                  : "Reached Destination"}
 
             </span>
 
           </button>
 
         </div>
+
+        {/* COD PAYMENT BUTTON */}
+        {
+          isCod && codPending && (
+
+            <button
+              onClick={() => onConfirmCod?.(order.orderId)}
+              className="group relative overflow-hidden
+
+      w-full h-[54px]
+
+      rounded-2xl
+
+      bg-gradient-to-br
+      from-emerald-500
+      to-green-500
+
+      text-white text-sm font-semibold
+
+      shadow-[0_14px_34px_rgba(34,197,94,0.24)]
+
+      hover:-translate-y-[2px]
+
+      active:scale-[0.98]
+
+      transition-all duration-300"
+            >
+
+              <span
+                className="relative z-10
+
+        flex items-center justify-center gap-2"
+              >
+
+                <span className="material-symbols-outlined text-[18px]">
+                  payments
+                </span>
+
+                COD Completed
+
+              </span>
+
+            </button>
+          )
+        }
 
         {/* UNABLE BUTTON */}
         <button

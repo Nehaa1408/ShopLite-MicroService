@@ -8,7 +8,8 @@ import {
     markDeliveryFailed,
     getAssignedReturnPickups,
     sendReturnPickupOtp,
-    verifyReturnPickupOtp
+    verifyReturnPickupOtp,
+    confirmCodPayment
 } from "../../services/deliveryApi";
 
 const DeliveryDashboard = () => {
@@ -75,7 +76,7 @@ const DeliveryDashboard = () => {
                         ...order,
                         flowType: "RETURN_PICKUP"
                     }));
-         
+
             setOrders([
                 ...formattedDeliveries,
                 ...formattedReturns
@@ -257,7 +258,7 @@ const DeliveryDashboard = () => {
         o.orderId.toString().includes(search)
     );
 
-    
+
     const active = orders.filter(
 
         o =>
@@ -292,7 +293,7 @@ const DeliveryDashboard = () => {
     shadow-[0_20px_60px_rgba(15,23,42,0.06)]"
             >
 
-              
+
 
                 {/* CONTENT */}
                 <div
@@ -444,6 +445,40 @@ const DeliveryDashboard = () => {
                             onSendOtp={(id, flowType) =>
                                 handleSendOtp(id, flowType)
                             }
+                            onConfirmCod={async (id) => {
+
+                                try {
+
+                                    await confirmCodPayment(id);
+
+                                    setToast({
+                                        show: true,
+                                        message: "COD payment collected successfully",
+                                        type: "success"
+                                    });
+
+                                    fetchOrders();
+
+                                } catch (err) {
+
+                                    console.error(err);
+
+                                    setToast({
+                                        show: true,
+                                        message: "Failed to confirm COD payment",
+                                        type: "error"
+                                    });
+                                }
+
+                                setTimeout(() => {
+
+                                    setToast(prev => ({
+                                        ...prev,
+                                        show: false
+                                    }));
+
+                                }, 3000);
+                            }}
                             onUnableToDeliver={(id) => {
 
                                 setIssueOrderId(id);

@@ -13,6 +13,8 @@ import com.ecommerce.shoplite.dto.OrderResponse;
 import com.ecommerce.shoplite.entity.User;
 import com.ecommerce.shoplite.service.OrderService;
 import com.ecommerce.shoplite.dto.VerifyOtpRequest;
+import com.ecommerce.shoplite.dto.PlaceOrderRequest;
+import com.ecommerce.shoplite.dto.TransactionResponse;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -24,9 +26,17 @@ public class OrderController {
 
     // ================= PLACE ORDER =================
     @PostMapping
-    public ResponseEntity<OrderResponse> placeOrder(Authentication authentication) {
+    public ResponseEntity<OrderResponse> placeOrder(
+            @RequestBody PlaceOrderRequest request,
+            Authentication authentication) {
+
         User user = (User) authentication.getPrincipal();
-        return ResponseEntity.ok(orderService.placeOrder(user));
+
+        return ResponseEntity.ok(
+                orderService.placeOrder(
+                        user,
+                        request.getPaymentMethod(),
+                        request.getPaymentScreenshot()));
     }
 
     // ================= USER ORDERS =================
@@ -89,6 +99,13 @@ public class OrderController {
 
         return ResponseEntity.ok(
                 orderService.getTopSellingProducts());
+    }
+
+    @GetMapping("/admin/transactions")
+    public ResponseEntity<List<TransactionResponse>> getAllTransactions() {
+
+        return ResponseEntity.ok(
+                orderService.getAllTransactions());
     }
 
     // ================= DELIVERY: ACTIVE =================
@@ -167,5 +184,37 @@ public class OrderController {
 
         return ResponseEntity.ok(
                 orderService.assignDeliveryAgent(orderId, deliveryUserId));
+    }
+
+    @PutMapping("/admin/{orderId}/verify-payment")
+    public ResponseEntity<OrderResponse> verifyPayment(
+            @PathVariable Long orderId) {
+
+        return ResponseEntity.ok(
+                orderService.verifyPayment(orderId));
+    }
+
+    @PutMapping("/delivery/{orderId}/confirm-cod")
+    public ResponseEntity<OrderResponse> confirmCodPayment(
+            @PathVariable Long orderId,
+            Authentication authentication) {
+
+        User user = (User) authentication.getPrincipal();
+
+        return ResponseEntity.ok(
+                orderService.confirmCodPayment(
+                        orderId,
+                        user));
+    }
+
+    @PutMapping("/admin/{orderId}/reject-payment")
+    public ResponseEntity<OrderResponse> rejectPayment(
+            @PathVariable Long orderId,
+            @RequestParam String reason) {
+
+        return ResponseEntity.ok(
+                orderService.rejectPayment(
+                        orderId,
+                        reason));
     }
 }

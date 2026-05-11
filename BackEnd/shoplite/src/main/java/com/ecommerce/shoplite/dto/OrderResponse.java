@@ -23,4 +23,8 @@ public class OrderResponse {
     private String deliveredAt;
     private boolean returnEligible;
     private String returnEligibleTill;
+    private String transactionId;
+    private String paymentScreenshot;
+    private String paymentMethod;
+    private String paymentStatus;
 }

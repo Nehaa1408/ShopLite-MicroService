@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import com.ecommerce.shoplite.entity.Order;
 import com.ecommerce.shoplite.entity.OrderItem;
 import com.ecommerce.shoplite.entity.ReturnRequest;
+import com.ecommerce.shoplite.entity.Transaction;
 
 @Service
 public class EmailService {
@@ -336,6 +337,110 @@ public class EmailService {
                                                 + "\n\n"
 
                                                 + "If you need more information, please contact support.\n\n"
+
+                                                + "Regards,\n"
+                                                + "ShopLite");
+
+                mailSender.send(message);
+        }
+
+        // ================= PAYMENT SUCCESS EMAIL =================
+        public void sendPaymentSuccessEmail(
+                        String toEmail,
+                        String customerName,
+                        Order order,
+                        Transaction transaction) {
+
+                StringBuilder itemsText = new StringBuilder();
+
+                for (OrderItem item : order.getItems()) {
+
+                        itemsText.append("• ")
+                                        .append(item.getProduct().getName())
+                                        .append(" | Qty: ")
+                                        .append(item.getQuantity())
+                                        .append(" | $")
+                                        .append(item.getPrice())
+                                        .append("\n");
+                }
+
+                SimpleMailMessage message = new SimpleMailMessage();
+
+                message.setTo(toEmail);
+
+                message.setSubject(
+                                "ShopLite Payment Confirmation");
+
+                message.setText(
+
+                                "Hello " + customerName + ",\n\n"
+
+                                                + "Your payment has been successfully received.\n\n"
+
+                                                + "Transaction Details:\n"
+
+                                                + "Transaction ID: "
+                                                + transaction.getTransactionId()
+                                                + "\n"
+
+                                                + "Payment Method: "
+                                                + transaction.getPaymentMethod()
+                                                + "\n"
+
+                                                + "Payment Status: "
+                                                + transaction.getPaymentStatus()
+                                                + "\n\n"
+
+                                                + "Ordered Items:\n\n"
+
+                                                + itemsText.toString()
+
+                                                + "\nTotal Amount: $"
+                                                + order.getTotalAmount()
+
+                                                + "\n\nYour order has been placed successfully."
+
+                                                + "\n\nThank you for shopping with ShopLite.\n\n"
+
+                                                + "Regards,\n"
+                                                + "ShopLite");
+
+                mailSender.send(message);
+        }
+
+        // ================= PAYMENT REJECTED EMAIL =================
+        public void sendPaymentRejectedEmail(
+                        String toEmail,
+                        String customerName,
+                        Order order,
+                        String reason) {
+
+                SimpleMailMessage message = new SimpleMailMessage();
+
+                message.setTo(toEmail);
+
+                message.setSubject(
+                                "ShopLite Payment Verification Failed");
+
+                message.setText(
+
+                                "Hello " + customerName + ",\n\n"
+
+                                                + "Unfortunately, your payment verification was rejected.\n\n"
+
+                                                + "Order ID: #"
+                                                + order.getId()
+
+                                                + "\n"
+
+                                                + "Reason: "
+                                                + reason
+
+                                                + "\n\n"
+
+                                                + "Your order has been cancelled automatically.\n\n"
+
+                                                + "If money was deducted incorrectly, please contact support.\n\n"
 
                                                 + "Regards,\n"
                                                 + "ShopLite");

@@ -8,7 +8,9 @@ import org.springframework.stereotype.Service;
 
 import com.ecommerce.shoplite.dto.OrderItemResponse;
 import com.ecommerce.shoplite.dto.OrderResponse;
+import com.ecommerce.shoplite.dto.TransactionResponse;
 import com.ecommerce.shoplite.entity.*;
+import com.ecommerce.shoplite.repository.TransactionRepository;
 import com.ecommerce.shoplite.repository.CartRepository;
 import com.ecommerce.shoplite.repository.OrderRepository;
 import com.ecommerce.shoplite.repository.ProductRepository;
@@ -30,6 +32,9 @@ public class OrderService {
         private OrderRepository orderRepository;
 
         @Autowired
+        private TransactionRepository transactionRepository;
+
+        @Autowired
         private ProductRepository productRepository;
 
         @Autowired
@@ -45,7 +50,10 @@ public class OrderService {
 
         // ================= PLACE ORDER =================
         @Transactional
-        public OrderResponse placeOrder(User user) {
+        public OrderResponse placeOrder(
+                        User user,
+                        String paymentMethod,
+                        String paymentScreenshot) {
 
                 List<Cart> cartItems = cartRepository.findByUser(user);
 
@@ -54,34 +62,189 @@ public class OrderService {
                 }
 
                 Order order = new Order();
+
                 order.setUser(user);
+
                 order.setOrderDate(LocalDateTime.now());
+
                 order.setStatus(OrderStatus.PLACED);
 
                 List<OrderItem> orderItems = new ArrayList<>();
+
                 double total = 0;
 
                 for (Cart cart : cartItems) {
 
                         OrderItem item = new OrderItem();
+
                         item.setOrder(order);
+
                         item.setProduct(cart.getProduct());
+
                         item.setQuantity(cart.getQuantity());
+
                         item.setPrice(cart.getProduct().getPrice());
 
-                        total += cart.getQuantity() * cart.getProduct().getPrice();
+                        total += cart.getQuantity()
+                                        * cart.getProduct().getPrice();
 
                         orderItems.add(item);
                 }
 
                 order.setItems(orderItems);
-                order.setTotalAmount(total);
+                double subtotal = cartItems.stream()
+                                .mapToDouble(item -> item.getProduct().getPrice() * item.getQuantity())
+                                .sum();
+
+                double tax = subtotal * 0.04;
+
+                double finalTotal = subtotal + tax;
+
+                order.setTotalAmount(finalTotal);
+
+                // ================= SAVE ORDER =================
 
                 Order savedOrder = orderRepository.save(order);
+
+                // ================= CREATE TRANSACTION =================
+
+                Transaction transaction = new Transaction();
+
+                transaction.setTransactionId(
+                                "TXN-" +
+                                                UUID.randomUUID()
+                                                                .toString()
+                                                                .substring(0, 8)
+                                                                .toUpperCase());
+
+                transaction.setOrder(savedOrder);
+
+                transaction.setUser(user);
+
+                transaction.setAmount(savedOrder.getTotalAmount());
+
+                // ================= PAYMENT METHOD =================
+
+                PaymentMethod method;
+
+                try {
+
+                        method = PaymentMethod.valueOf(
+                                        paymentMethod.toUpperCase());
+
+                } catch (Exception e) {
+
+                        throw new RuntimeException(
+                                        "Invalid payment method");
+                }
+
+                transaction.setPaymentMethod(method);
+
+                // SAVE PAYMENT SCREENSHOT
+                transaction.setPaymentScreenshot(
+                                paymentScreenshot);
+
+                // ================= PAYMENT STATUS =================
+
+                if (method == PaymentMethod.COD) {
+
+                        transaction.setPaymentStatus(
+                                        PaymentStatus.COD_PENDING);
+
+                } else {
+
+                        // UPI / CARD
+                        transaction.setPaymentStatus(
+                                        PaymentStatus.PENDING_VERIFICATION);
+                }
+
+                transactionRepository.save(transaction);
+
+                // LINK TRANSACTION TO ORDER
+                savedOrder.setTransaction(transaction);
+
+                orderRepository.save(savedOrder);
+
+                // ================= CLEAR CART =================
 
                 cartRepository.deleteByUser(user);
 
                 return mapToResponse(savedOrder);
+        }
+
+        @Transactional
+        public OrderResponse verifyPayment(
+                        Long orderId) {
+
+                Order order = orderRepository.findById(orderId)
+                                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+                Transaction transaction = transactionRepository
+                                .findByOrder(order)
+                                .orElseThrow(() -> new RuntimeException("Transaction not found"));
+
+                // ONLY VERIFY PENDING PAYMENTS
+                if (transaction.getPaymentStatus() != PaymentStatus.PENDING_VERIFICATION) {
+
+                        throw new RuntimeException(
+                                        "Payment is not pending verification");
+                }
+
+                // MARK SUCCESS
+                transaction.setPaymentStatus(
+                                PaymentStatus.SUCCESS);
+
+                transactionRepository.save(transaction);
+
+                // SEND PAYMENT SUCCESS EMAIL
+                emailService.sendPaymentSuccessEmail(
+                                order.getUser().getEmail(),
+                                order.getUser().getName(),
+                                order,
+                                transaction);
+
+                return mapToResponse(order);
+        }
+
+        public List<TransactionResponse> getAllTransactions() {
+
+                return transactionRepository
+                                .findAllByOrderByPaidAtDesc()
+                                .stream()
+                                .map(transaction -> {
+
+                                        TransactionResponse response = new TransactionResponse();
+
+                                        response.setTransactionId(
+                                                        transaction.getTransactionId());
+
+                                        response.setOrderId(
+                                                        transaction.getOrder().getId());
+
+                                        response.setCustomerName(
+                                                        transaction.getUser().getName());
+
+                                        response.setCustomerEmail(
+                                                        transaction.getUser().getEmail());
+
+                                        response.setAmount(
+                                                        transaction.getAmount());
+
+                                        response.setPaymentMethod(
+                                                        transaction.getPaymentMethod().name());
+
+                                        response.setPaymentStatus(
+                                                        transaction.getPaymentStatus().name());
+
+                                        response.setPaymentScreenshot(
+                                                        transaction.getPaymentScreenshot());
+
+                                        response.setPaidAt(
+                                                        transaction.getPaidAt().toString());
+
+                                        return response;
+                                })
+                                .toList();
         }
 
         // ================= USER ORDERS =================
@@ -473,6 +636,95 @@ public class OrderService {
                 return "Delivery feedback submitted successfully";
         }
 
+        @Transactional
+        public OrderResponse confirmCodPayment(
+                        Long orderId,
+                        User deliveryUser) {
+
+                Order order = orderRepository.findById(orderId)
+                                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+                // SECURITY CHECK
+                if (order.getDeliveryAgent() == null ||
+
+                                !order.getDeliveryAgent()
+                                                .getId()
+                                                .equals(deliveryUser.getId())) {
+
+                        throw new RuntimeException(
+                                        "Unauthorized delivery action");
+                }
+
+                Transaction transaction = transactionRepository
+                                .findByOrder(order)
+                                .orElseThrow(() -> new RuntimeException("Transaction not found"));
+
+                // ONLY COD ALLOWED
+                if (transaction.getPaymentMethod() != PaymentMethod.COD) {
+
+                        throw new RuntimeException(
+                                        "This order is not COD");
+                }
+
+                // MARK PAYMENT SUCCESS
+                transaction.setPaymentStatus(
+                                PaymentStatus.SUCCESS);
+
+                transactionRepository.save(transaction);
+
+                // SEND PAYMENT SUCCESS EMAIL
+                emailService.sendPaymentSuccessEmail(
+                                order.getUser().getEmail(),
+                                order.getUser().getName(),
+                                order,
+                                transaction);
+
+                return mapToResponse(order);
+        }
+
+        @Transactional
+        public OrderResponse rejectPayment(
+                        Long orderId,
+                        String reason) {
+
+                Order order = orderRepository.findById(orderId)
+                                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+                Transaction transaction = transactionRepository
+                                .findByOrder(order)
+                                .orElseThrow(() -> new RuntimeException("Transaction not found"));
+
+                // ONLY PENDING PAYMENTS CAN BE REJECTED
+                if (transaction.getPaymentStatus() != PaymentStatus.PENDING_VERIFICATION) {
+
+                        throw new RuntimeException(
+                                        "Payment is not pending verification");
+                }
+
+                // UPDATE TRANSACTION STATUS
+                transaction.setPaymentStatus(
+                                PaymentStatus.FAILED);
+
+                transactionRepository.save(transaction);
+
+                // CANCEL ORDER
+                order.setStatus(OrderStatus.CANCELLED);
+
+                order.setCancellationReason(
+                                reason);
+
+                orderRepository.save(order);
+
+                // SEND REJECTION EMAIL
+                emailService.sendPaymentRejectedEmail(
+                                order.getUser().getEmail(),
+                                order.getUser().getName(),
+                                order,
+                                reason);
+
+                return mapToResponse(order);
+        }
+
         // ================= DTO MAPPER =================
         private OrderResponse mapToResponse(Order order) {
 
@@ -492,6 +744,26 @@ public class OrderService {
                 response.setOrderId(order.getId());
                 response.setTotalAmount(order.getTotalAmount());
                 response.setStatus(order.getStatus().name());
+
+                if (order.getTransaction() != null) {
+
+                        response.setTransactionId(
+                                        order.getTransaction().getTransactionId());
+
+                        response.setPaymentMethod(
+                                        order.getTransaction()
+                                                        .getPaymentMethod()
+                                                        .name());
+
+                        response.setPaymentStatus(
+                                        order.getTransaction()
+                                                        .getPaymentStatus()
+                                                        .name());
+
+                        response.setPaymentScreenshot(
+                                        order.getTransaction()
+                                                        .getPaymentScreenshot());
+                }
 
                 response.setCancelReason(
                                 order.getCancellationReason());
@@ -517,7 +789,6 @@ public class OrderService {
                         response.setReturnEligible(eligible);
                 }
 
-                response.setItems(itemResponses);
                 response.setItems(itemResponses);
 
                 if (order.getUser() != null) {

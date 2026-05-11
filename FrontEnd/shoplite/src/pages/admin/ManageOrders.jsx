@@ -3,7 +3,7 @@ import adminAxios from "../../api/adminAxios";
 import { useLocation, useNavigate } from "react-router-dom";
 import AdminHeader from "../../components/AdminHeader";
 import AdminSidebar from "../../components/AdminSidebar";
-import { calculateOrderTotal } from "../../utils/orderPricing";
+
 
 const ManageOrders = () => {
 
@@ -15,6 +15,8 @@ const ManageOrders = () => {
   const [orders, setOrders] = useState([]);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [rejectReason, setRejectReason] = useState("");
+  const [processingPayment, setProcessingPayment] = useState(false);
 
   const [toast, setToast] = useState({
     show: false,
@@ -78,7 +80,7 @@ const ManageOrders = () => {
     switch (status) {
       case "PLACED":
         return "bg-blue-100 text-blue-600";
-      case "SHIPPED":
+      case "OUT_FOR_DELIVERY":
         return "bg-yellow-100 text-yellow-600";
       case "DELIVERED":
         return "bg-green-100 text-green-600";
@@ -91,10 +93,47 @@ const ManageOrders = () => {
     }
   };
 
+  const getPaymentStatusStyle = (status) => {
+
+    switch (status) {
+
+      case "SUCCESS":
+        return "bg-green-100 text-green-700";
+
+      case "FAILED":
+        return "bg-red-100 text-red-700";
+
+      case "PENDING_VERIFICATION":
+        return "bg-yellow-100 text-yellow-700";
+
+      case "COD_PENDING":
+        return "bg-orange-100 text-orange-700";
+
+      default:
+        return "bg-gray-100 text-gray-700";
+    }
+  };
+
   const handleLogout = () => {
     sessionStorage.removeItem("adminToken");
     sessionStorage.removeItem("adminRole");
     navigate("/admin");
+  };
+
+  const showToast = (message, type = "success") => {
+
+    setToast({
+      show: true,
+      message,
+      type,
+    });
+
+    setTimeout(() => {
+      setToast(prev => ({
+        ...prev,
+        show: false,
+      }));
+    }, 2500);
   };
 
 
@@ -103,29 +142,15 @@ const ManageOrders = () => {
 
     if (!deliveryId) {
 
-      setToast({
-        show: true,
-        message: "Please select a delivery partner first",
-        type: "error",
-      });
-
-      setTimeout(() => {
-        setToast(prev => ({
-          ...prev,
-          show: false,
-        }));
-      }, 2000);
+      showToast("Please select a delivery partner first", "error");
 
       return;
     }
     try {
       await adminAxios.put(`/orders/admin/${orderId}/assign/${deliveryId}`);
-      setToast({
-        show: true,
-        message:
-          "Delivery assigned successfully. Out for delivery email sent to customer.",
-        type: "success",
-      });
+      showToast(
+        "Delivery assigned successfully. Out for delivery email sent to customer."
+      );
 
       // refresh orders
       const res = await adminAxios.get("/orders/admin");
@@ -154,13 +179,10 @@ const ManageOrders = () => {
 
     } catch (err) {
       console.error(err);
-      setToast({
-        show: true,
-        message: "Failed to assign delivery partner",
-        type: "error",
-      });
+      showToast("Failed to assign delivery partner", "error");
     }
   };
+
 
   return (
     <div className="min-h-screen text-gray-800 relative overflow-hidden">
@@ -300,7 +322,7 @@ hover:-translate-y-[2px]">
 
               <tbody>
                 {currentOrders.map((o, i) => {
-                  const { total } = calculateOrderTotal(o.items || []);
+
                   return (
 
                     <tr
@@ -386,7 +408,7 @@ hover:-translate-y-[2px]">
 
             font-bold"
                         >
-                          ${total.toFixed(2)}
+                          ${o.totalAmount?.toFixed(2)}
                         </span>
 
                       </td>
@@ -431,116 +453,36 @@ hover:-translate-y-[2px]">
 
                       </td>
 
-
                       {/* ACTIONS */}
                       <td className="p-5">
 
-                        <div className="flex items-center justify-end gap-4">
-                          {/* DELIVERED / FAILED → VIEW */}
-                          {(o.status === "DELIVERED" ||
-                            o.status === "DELIVERY_FAILED" ||
-                            o.status === "CANCELLED") && (
-                              <button
-                                onClick={() => {
-                                  setSelectedOrder(o);
-                                  setShowViewModal(true);
-                                }}
-                                className="px-5 py-2 rounded-xl
+                        <div className="flex items-center justify-end">
 
-                bg-gradient-to-r
-                from-indigo-500
-                to-purple-500
+                          <button
+                            onClick={() => {
+                              setSelectedOrder(o);
+                              setRejectReason("");
+                              setShowViewModal(true);
+                            }}
+                            className="
+        px-5 py-2 rounded-xl
 
-                text-white text-sm font-semibold
+        bg-gradient-to-r
+        from-indigo-500
+        to-purple-500
 
-                shadow-md
+        text-white text-sm font-semibold
 
-                hover:shadow-xl
+        shadow-md
 
-                hover:scale-[1.03]
+        hover:shadow-xl
+        hover:scale-[1.03]
 
-                transition-all duration-300"
-                              >
-                                View Details
-                              </button>
-                            )}
-
-                          {/* NOT DELIVERED */}
-                          {o.status !== "DELIVERED" &&
-                            o.status !== "DELIVERY_FAILED" &&
-                            o.status !== "CANCELLED" && (
-
-                              <>
-
-                                {/* DROPDOWN */}
-                                <select
-                                  className="w-[220px]
-
-                  px-4 py-2.5
-
-                  rounded-2xl
-
-                  text-sm
-
-                  bg-white/90
-
-                  border border-gray-200
-
-                  shadow-sm
-
-                  outline-none
-
-                  focus:ring-2 focus:ring-indigo-200"
-                                  value={selectedDelivery[o.orderId] || ""}
-                                  onChange={(e) =>
-                                    setSelectedDelivery({
-                                      ...selectedDelivery,
-                                      [o.orderId]: e.target.value,
-                                    })
-                                  }
-                                >
-
-                                  <option value="">
-                                    Select Delivery Partner
-                                  </option>
-
-                                  {users.map((u) => (
-
-                                    <option
-                                      key={u.id}
-                                      value={u.id}
-                                    >
-                                      {u.name} ({u.email})
-                                    </option>
-
-                                  ))}
-
-                                </select>
-
-                                {/* ASSIGN */}
-                                <button
-                                  onClick={() => handleAssign(o.orderId)}
-                                  className="px-5 py-2.5 rounded-2xl
-
-                  bg-gradient-to-r
-                  from-[#6366f1]
-                  to-[#a855f7]
-
-                  text-white text-sm font-semibold
-
-                  shadow-md
-
-                  hover:shadow-xl
-
-                  hover:scale-[1.03]
-
-                  transition-all duration-300"
-                                >
-                                  Assign
-                                </button>
-
-                              </>
-                            )}
+        transition-all duration-300
+      "
+                          >
+                            View Details
+                          </button>
 
                         </div>
 
@@ -575,22 +517,23 @@ hover:-translate-y-[2px]">
               </div>
             </div>
           </div>
-        </main>
+        </main >
         {/* VIEW ORDER MODAL */}
-        {showViewModal && selectedOrder && (
+        {
+          showViewModal && selectedOrder && (
 
-          <div
-            className="fixed inset-0 z-50
+            <div
+              className="fixed inset-0 z-50
 
     bg-black/40 backdrop-blur-sm
 
     flex items-center justify-center
 
     p-4"
-          >
+            >
 
-            <div
-              className="w-full max-w-3xl
+              <div
+                className="w-full max-w-3xl
 
       max-h-[90vh]
 
@@ -603,225 +546,536 @@ hover:-translate-y-[2px]">
       shadow-[0_25px_80px_rgba(0,0,0,0.18)]
 
       p-8"
-            >
+              >
 
-              {/* HEADER */}
-              <div className="flex items-start justify-between mb-8">
+                {/* HEADER */}
+                <div className="flex items-start justify-between mb-8">
 
-                <div>
+                  <div>
 
-                  <p className="text-sm text-indigo-500 font-semibold mb-2">
-                    ORDER DETAILS
-                  </p>
-
-                  <h2 className="text-3xl font-black text-gray-800">
-                    Order #{selectedOrder.orderId}
-                  </h2>
-
-                </div>
-
-                <button
-                  onClick={() => setShowViewModal(false)}
-                  className="w-11 h-11 rounded-full bg-gray-100 hover:bg-red-50 hover:text-red-500 transition-all duration-300"
-                >
-                  ✕
-                </button>
-
-              </div>
-
-              {/* STATUS */}
-              <div className="mb-8">
-
-                <span
-                  className={`px-4 py-2 rounded-full text-sm font-semibold ${getStatusStyle(
-                    selectedOrder.status
-                  )}`}
-                >
-                  {selectedOrder.status}
-                </span>
-
-              </div>
-
-              {/* CANCELLATION / FAILURE REASON */}
-              {(selectedOrder.status === "DELIVERY_FAILED" ||
-                selectedOrder.status === "CANCELLED") &&
-                selectedOrder.cancelReason && (
-
-                  <div className="mb-8 rounded-2xl border border-red-200 bg-red-50 p-5">
-
-                    <p className="text-xs uppercase tracking-wider text-red-400 mb-2">
-                      {selectedOrder.status === "CANCELLED"
-                        ? "Customer Cancellation Reason"
-                        : "Delivery Failure Reason"}
+                    <p className="text-sm text-indigo-500 font-semibold mb-2">
+                      ORDER DETAILS
                     </p>
 
-                    <p className="text-red-700 font-medium">
-                      {selectedOrder.cancelReason}
-                    </p>
-
-                  </div>
-                )}
-
-              {/* CUSTOMER + DELIVERY */}
-              <div className="grid md:grid-cols-2 gap-6 mb-8">
-
-                {/* CUSTOMER */}
-                <div className="rounded-3xl border border-gray-100 bg-gray-50 p-6">
-
-                  <p className="text-xs uppercase tracking-wider text-gray-400 mb-4">
-                    Customer Information
-                  </p>
-
-                  <h3 className="text-xl font-bold text-gray-800 mb-2">
-                    {selectedOrder.customerName || "Customer"}
-                  </h3>
-
-                  <p className="text-gray-600">
-                    {selectedOrder.customerEmail || "No email"}
-                  </p>
-
-                </div>
-
-                {/* DELIVERY */}
-                <div className="rounded-3xl border border-indigo-100 bg-indigo-50 p-6">
-
-                  <p className="text-xs uppercase tracking-wider text-indigo-400 mb-4">
-                    Delivery Partner
-                  </p>
-
-                  <h3 className="text-xl font-bold text-gray-800 mb-2">
-                    {selectedOrder.deliveryAgentName || "Not Assigned"}
-                  </h3>
-
-                  <p className="text-gray-600">
-                    {selectedOrder.deliveryAgentEmail || "No email"}
-                  </p>
-
-                </div>
-
-              </div>
-              {/* REASSIGN DELIVERY */}
-              {selectedOrder.status === "DELIVERY_FAILED" && (
-
-                <div className="mb-8 rounded-3xl border border-indigo-100 bg-indigo-50 p-6">
-
-                  <p className="text-xs uppercase tracking-wider text-indigo-400 mb-4">
-                    Reassign Delivery Partner
-                  </p>
-
-                  <div className="flex flex-col md:flex-row gap-4">
-
-                    <select
-                      className="flex-1 px-4 py-3 rounded-2xl border border-gray-200 bg-white outline-none"
-                      value={selectedDelivery[selectedOrder.orderId] || ""}
-                      onChange={(e) =>
-                        setSelectedDelivery({
-                          ...selectedDelivery,
-                          [selectedOrder.orderId]: e.target.value,
-                        })
-                      }
-                    >
-
-                      <option value="">
-                        Select Delivery Partner
-                      </option>
-
-                      {users.map((u) => (
-
-                        <option
-                          key={u.id}
-                          value={u.id}
-                        >
-                          {u.name} ({u.email})
-                        </option>
-
-                      ))}
-
-                    </select>
-
-                    <button
-                      onClick={() => handleAssign(selectedOrder.orderId)}
-                      className="px-6 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold"
-                    >
-                      Reassign Delivery
-                    </button>
+                    <h2 className="text-3xl font-black text-gray-800">
+                      Order #{selectedOrder.orderId}
+                    </h2>
 
                   </div>
 
+                  <button
+                    onClick={() => setShowViewModal(false)}
+                    className="w-11 h-11 rounded-full bg-gray-100 hover:bg-red-50 hover:text-red-500 transition-all duration-300"
+                  >
+                    ✕
+                  </button>
+
                 </div>
-              )}
 
-              {/* PRODUCTS */}
-              <div className="mb-8">
+                {/* STATUS */}
+                <div className="mb-8">
 
-                <h3 className="text-xl font-bold text-gray-800 mb-5">
-                  Ordered Products
-                </h3>
+                  <span
+                    className={`px-4 py-2 rounded-full text-sm font-semibold ${getStatusStyle(
+                      selectedOrder.status
+                    )}`}
+                  >
+                    {selectedOrder.status}
+                  </span>
 
-                <div className="space-y-4">
+                </div>
 
-                  {selectedOrder.items?.map((item, i) => (
+                {/* PAYMENT SECTION */}
+                <div className="mb-8">
 
-                    <div
-                      key={i}
-                      className="flex items-center justify-between rounded-2xl  border border-gray-100  bg-white  p-4"
-                    >
+                  <div
+                    className="
+      rounded-[28px]
+      border border-[#eadff5]
+      bg-gradient-to-br
+      from-[#fcf7ff]
+      via-white
+      to-[#f7f0ff]
+      p-6
+    "
+                  >
 
-                      <div className="flex items-center gap-4">
+                    <div className="flex items-center justify-between mb-6">
+
+                      <div>
+
+                        <p className="text-xs uppercase tracking-widest text-purple-400 mb-2">
+                          Payment Information
+                        </p>
+
+                        <h3 className="text-2xl font-black text-gray-800">
+                          {selectedOrder.paymentMethod}
+                        </h3>
+
+                      </div>
+
+                      <span
+                        className={`
+    px-4 py-2
+    rounded-full
+    text-xs
+    font-bold
+    ${getPaymentStatusStyle(selectedOrder.paymentStatus)}
+  `}
+                      >
+                        {selectedOrder.paymentStatus}
+                      </span>
+
+                    </div>
+
+                    {/* SCREENSHOT */}
+                    {selectedOrder.paymentScreenshot && (
+
+                      <div className="mb-6">
+
+                        <p className="text-sm font-semibold text-gray-500 mb-3">
+                          Uploaded Payment Screenshot
+                        </p>
 
                         <img
-                          src={
-                            item.image?.startsWith("http")
-                              ? item.image
-                              : `/products/${item.image}`
-                          }
-                          alt={item.productName}
-                          className="w-16 h-16 rounded-2xl object-cover border border-gray-100"
+                          src={selectedOrder.paymentScreenshot}
+                          alt="Payment Screenshot"
+                          className="
+            w-full
+            max-w-md
+            rounded-3xl
+            border border-white
+            shadow-[0_15px_40px_rgba(0,0,0,0.08)]
+          "
                         />
 
-                        <div>
+                      </div>
+                    )}
 
-                          <h4 className="font-semibold text-gray-800">
-                            {item.productName}
-                          </h4>
+                    {/* VERIFY ACTIONS */}
+                    {selectedOrder.paymentStatus === "PENDING_VERIFICATION" && (
 
-                          <p className="text-sm text-gray-500">
-                            Quantity: {item.quantity}
-                          </p>
+                      <div className="space-y-4">
+
+                        <textarea
+                          placeholder="Reason (required if rejecting payment)"
+                          value={rejectReason}
+                          onChange={(e) => setRejectReason(e.target.value)}
+                          className="
+            w-full
+            min-h-[100px]
+            rounded-2xl
+            border border-gray-200
+            bg-white
+            p-4
+            outline-none
+          "
+                        />
+
+                        <div className="flex flex-wrap gap-4">
+
+                          {/* APPROVE */}
+                          <button
+                            disabled={processingPayment}
+                            onClick={async () => {
+
+                              try {
+
+                                setProcessingPayment(true);
+
+                                await adminAxios.put(
+                                  `/orders/admin/${selectedOrder.orderId}/verify-payment`
+                                );
+
+                                const res = await adminAxios.get("/orders/admin");
+
+                                setOrders(res.data);
+
+                                const updated = res.data.find(
+                                  (o) => o.orderId === selectedOrder.orderId
+                                );
+
+                                setSelectedOrder(updated);
+
+                                showToast("Payment approved successfully");
+
+                              } catch (err) {
+
+                                console.error(err);
+
+                                showToast("Failed to approve payment", "error");
+
+                              } finally {
+
+                                setProcessingPayment(false);
+                              }
+                            }}
+                            className="
+              px-6 py-3 rounded-2xl
+
+              bg-gradient-to-r
+              from-emerald-500
+              to-green-500
+
+              text-white font-semibold
+
+              shadow-lg
+
+              hover:scale-[1.02]
+
+              transition-all duration-300
+            "
+                          >
+                            Approve Payment
+                          </button>
+
+                          {/* REJECT */}
+                          <button
+                            disabled={processingPayment}
+                            onClick={async () => {
+
+                              if (!rejectReason.trim()) {
+                                alert("Please enter rejection reason");
+                                return;
+                              }
+
+                              try {
+
+                                setProcessingPayment(true);
+
+                                await adminAxios.put(
+                                  `/orders/admin/${selectedOrder.orderId}/reject-payment?reason=${rejectReason}`
+                                );
+
+                                const res = await adminAxios.get("/orders/admin");
+
+                                setOrders(res.data);
+
+                                const updated = res.data.find(
+                                  (o) => o.orderId === selectedOrder.orderId
+                                );
+
+                                setSelectedOrder(updated);
+
+                                showToast(
+                                  "Payment rejected & order cancelled"
+                                );
+
+                              } catch (err) {
+
+                                console.error(err);
+
+                                showToast(
+                                  "Failed to reject payment",
+                                  "error"
+                                );
+
+                              } finally {
+
+                                setProcessingPayment(false);
+                              }
+                            }}
+                            className="
+              px-6 py-3 rounded-2xl
+
+              bg-gradient-to-r
+              from-red-500
+              to-rose-500
+
+              text-white font-semibold
+
+              shadow-lg
+
+              hover:scale-[1.02]
+
+              transition-all duration-300
+            "
+                          >
+                            Reject Payment
+                          </button>
 
                         </div>
 
                       </div>
+                    )}
 
-                      <p className="font-bold text-indigo-600">
-                        ${item.price}
+                  </div>
+
+                </div>
+
+                {/* CANCELLATION / FAILURE REASON */}
+                {(selectedOrder.status === "DELIVERY_FAILED" ||
+                  selectedOrder.status === "CANCELLED") &&
+                  selectedOrder.cancelReason && (
+
+                    <div className="mb-8 rounded-2xl border border-red-200 bg-red-50 p-5">
+
+                      <p className="text-xs uppercase tracking-wider text-red-400 mb-2">
+                        {selectedOrder.status === "CANCELLED"
+                          ? "Customer Cancellation Reason"
+                          : "Delivery Failure Reason"}
+                      </p>
+
+                      <p className="text-red-700 font-medium">
+                        {selectedOrder.cancelReason}
                       </p>
 
                     </div>
-                  ))}
+                  )}
+
+                {/* CUSTOMER + DELIVERY */}
+                <div className="grid md:grid-cols-2 gap-6 mb-8">
+
+                  {/* CUSTOMER */}
+                  <div className="rounded-3xl border border-gray-100 bg-gray-50 p-6">
+
+                    <p className="text-xs uppercase tracking-wider text-gray-400 mb-4">
+                      Customer Information
+                    </p>
+
+                    <h3 className="text-xl font-bold text-gray-800 mb-2">
+                      {selectedOrder.customerName || "Customer"}
+                    </h3>
+
+                    <p className="text-gray-600">
+                      {selectedOrder.customerEmail || "No email"}
+                    </p>
+
+                  </div>
+
+                  {/* DELIVERY */}
+                  <div className="rounded-3xl border border-indigo-100 bg-indigo-50 p-6">
+
+                    <p className="text-xs uppercase tracking-wider text-indigo-400 mb-4">
+                      Delivery Partner
+                    </p>
+
+                    <h3 className="text-xl font-bold text-gray-800 mb-2">
+                      {selectedOrder.deliveryAgentName || "Not Assigned"}
+                    </h3>
+
+                    <p className="text-gray-600">
+                      {selectedOrder.deliveryAgentEmail || "No email"}
+                    </p>
+
+                  </div>
 
                 </div>
-                {/* FINAL TOTAL */}
-                <div
-                  className="mt-6  flex items-center justify-between  rounded-2xl bg-indigo-50 border border-indigo-100 px-6 py-5"
-                >
 
-                  <p className="text-lg font-semibold text-gray-700">
-                    Final Total
-                  </p>
+                {/* ASSIGN DELIVERY AFTER PAYMENT APPROVAL */}
+                {(
+                  (
+                    selectedOrder.paymentStatus === "SUCCESS" ||
+                    selectedOrder.paymentStatus === "COD_PENDING"
+                  ) &&
+                  !selectedOrder.deliveryAgentName &&
+                  selectedOrder.status !== "CANCELLED"
+                ) && (
 
-                  <p className="text-3xl font-black text-indigo-600">
-                  ${calculateOrderTotal(selectedOrder.items || []).total.toFixed(2)}
-                  </p>
+                    <div className="mb-8 rounded-3xl border border-indigo-100 bg-indigo-50 p-6">
 
+                      <p className="text-xs uppercase tracking-wider text-indigo-400 mb-4">
+                        Assign Delivery Partner
+                      </p>
+
+                      <div className="flex flex-col md:flex-row gap-4">
+
+                        <select
+                          className="
+          flex-1
+          px-4 py-3
+          rounded-2xl
+          border border-gray-200
+          bg-white
+          outline-none
+        "
+                          value={selectedDelivery[selectedOrder.orderId] || ""}
+                          onChange={(e) =>
+                            setSelectedDelivery({
+                              ...selectedDelivery,
+                              [selectedOrder.orderId]: e.target.value,
+                            })
+                          }
+                        >
+
+                          <option value="">
+                            Select Delivery Partner
+                          </option>
+
+                          {users.map((u) => (
+
+                            <option
+                              key={u.id}
+                              value={u.id}
+                            >
+                              {u.name} ({u.email})
+                            </option>
+
+                          ))}
+
+                        </select>
+
+                        <button
+                          onClick={async () => {
+
+                            await handleAssign(selectedOrder.orderId);
+
+                            const res = await adminAxios.get("/orders/admin");
+
+                            setOrders(res.data);
+
+                            const updated = res.data.find(
+                              (o) => o.orderId === selectedOrder.orderId
+                            );
+
+                            setSelectedOrder(updated);
+                          }}
+                          className="
+          px-6 py-3 rounded-2xl
+
+          bg-gradient-to-r
+          from-indigo-600
+          to-purple-600
+
+          text-white font-semibold
+
+          shadow-lg
+
+          hover:scale-[1.02]
+
+          transition-all duration-300
+        "
+                        >
+                          Assign Delivery
+                        </button>
+
+                      </div>
+
+                    </div>
+                  )}
+
+                {/* REASSIGN DELIVERY */}
+                {selectedOrder.status === "DELIVERY_FAILED" && (
+
+                  <div className="mb-8 rounded-3xl border border-indigo-100 bg-indigo-50 p-6">
+
+                    <p className="text-xs uppercase tracking-wider text-indigo-400 mb-4">
+                      Reassign Delivery Partner
+                    </p>
+
+                    <div className="flex flex-col md:flex-row gap-4">
+
+                      <select
+                        className="flex-1 px-4 py-3 rounded-2xl border border-gray-200 bg-white outline-none"
+                        value={selectedDelivery[selectedOrder.orderId] || ""}
+                        onChange={(e) =>
+                          setSelectedDelivery({
+                            ...selectedDelivery,
+                            [selectedOrder.orderId]: e.target.value,
+                          })
+                        }
+                      >
+
+                        <option value="">
+                          Select Delivery Partner
+                        </option>
+
+                        {users.map((u) => (
+
+                          <option
+                            key={u.id}
+                            value={u.id}
+                          >
+                            {u.name} ({u.email})
+                          </option>
+
+                        ))}
+
+                      </select>
+
+                      <button
+                        onClick={() => handleAssign(selectedOrder.orderId)}
+                        className="px-6 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold"
+                      >
+                        Reassign Delivery
+                      </button>
+
+                    </div>
+
+                  </div>
+                )}
+
+                {/* PRODUCTS */}
+                <div className="mb-8">
+
+                  <h3 className="text-xl font-bold text-gray-800 mb-5">
+                    Ordered Products
+                  </h3>
+
+                  <div className="space-y-4">
+
+                    {selectedOrder.items?.map((item, i) => (
+
+                      <div
+                        key={i}
+                        className="flex items-center justify-between rounded-2xl  border border-gray-100  bg-white  p-4"
+                      >
+
+                        <div className="flex items-center gap-4">
+
+                          <img
+                            src={
+                              item.image?.startsWith("http")
+                                ? item.image
+                                : `/products/${item.image}`
+                            }
+                            alt={item.productName}
+                            className="w-16 h-16 rounded-2xl object-cover border border-gray-100"
+                          />
+
+                          <div>
+
+                            <h4 className="font-semibold text-gray-800">
+                              {item.productName}
+                            </h4>
+
+                            <p className="text-sm text-gray-500">
+                              Quantity: {item.quantity}
+                            </p>
+
+                          </div>
+
+                        </div>
+
+                        <p className="font-bold text-indigo-600">
+                          ${(item.price * item.quantity).toFixed(2)}
+                        </p>
+
+                      </div>
+                    ))}
+
+                  </div>
+                  {/* FINAL TOTAL */}
+                  <div
+                    className="mt-6  flex items-center justify-between  rounded-2xl bg-indigo-50 border border-indigo-100 px-6 py-5"
+                  >
+
+                    <p className="text-lg font-semibold text-gray-700">
+                      Final Total
+                    </p>
+
+                    <p className="text-3xl font-black text-indigo-600">
+                      ${selectedOrder.totalAmount?.toFixed(2)}
+                    </p>
+
+                  </div>
                 </div>
-              </div>
 
-              {/* FEEDBACK */}
-              {selectedOrder.deliveryRating && (
+                {/* FEEDBACK */}
+                {selectedOrder.deliveryRating && (
 
-                <div
-                  className="rounded-[28px]
+                  <div
+                    className="rounded-[28px]
 
           border border-yellow-100
 
@@ -831,45 +1085,45 @@ hover:-translate-y-[2px]">
           to-orange-50
 
           p-6"
-                >
+                  >
 
-                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center justify-between mb-4">
 
-                    <div>
+                      <div>
 
-                      <p className="text-xs uppercase tracking-widest text-gray-400 mb-2">
-                        Customer Feedback
-                      </p>
+                        <p className="text-xs uppercase tracking-widest text-gray-400 mb-2">
+                          Customer Feedback
+                        </p>
 
-                      <h3 className="text-2xl font-black text-gray-800">
-                        Delivery Experience
-                      </h3>
+                        <h3 className="text-2xl font-black text-gray-800">
+                          Delivery Experience
+                        </h3>
+
+                      </div>
+
+                      <div className="flex gap-1 text-3xl">
+
+                        {[1, 2, 3, 4, 5].map((star) => (
+
+                          <span
+                            key={star}
+                            className={
+                              star <= selectedOrder.deliveryRating
+                                ? "text-yellow-400"
+                                : "text-gray-200"
+                            }
+                          >
+                            ★
+                          </span>
+
+                        ))}
+
+                      </div>
 
                     </div>
 
-                    <div className="flex gap-1 text-3xl">
-
-                      {[1, 2, 3, 4, 5].map((star) => (
-
-                        <span
-                          key={star}
-                          className={
-                            star <= selectedOrder.deliveryRating
-                              ? "text-yellow-400"
-                              : "text-gray-200"
-                          }
-                        >
-                          ★
-                        </span>
-
-                      ))}
-
-                    </div>
-
-                  </div>
-
-                  <div
-                    className="rounded-2xl
+                    <div
+                      className="rounded-2xl
 
             bg-white/80
 
@@ -878,26 +1132,28 @@ hover:-translate-y-[2px]">
             p-5
 
             text-gray-700"
-                  >
+                    >
 
-                    {selectedOrder.deliveryFeedback ||
-                      "Customer gave rating without written feedback."}
+                      {selectedOrder.deliveryFeedback ||
+                        "Customer gave rating without written feedback."}
+
+                    </div>
 
                   </div>
+                )}
 
-                </div>
-              )}
+              </div>
 
             </div>
-
-          </div>
-        )}
-      </div>
+          )
+        }
+      </div >
       {/* TOAST */}
-      {toast.show && (
+      {
+        toast.show && (
 
-        <div
-          className="fixed top-24 left-1/2 -translate-x-1/2
+          <div
+            className="fixed top-24 left-1/2 -translate-x-1/2
 
     z-[9999]
 
@@ -916,55 +1172,56 @@ hover:-translate-y-[2px]">
     shadow-[0_10px_40px_rgba(0,0,0,0.12)]
 
     animate-[fadeIn_.25s_ease]"
-        >
+          >
 
-          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4">
 
-            {/* ICON */}
-            <div
-              className={`w-11 h-11 rounded-2xl flex items-center justify-center
+              {/* ICON */}
+              <div
+                className={`w-11 h-11 rounded-2xl flex items-center justify-center
 
         ${toast.type === "success"
-                  ? "bg-emerald-100 text-emerald-600"
-                  : "bg-red-100 text-red-500"
-                }`}
-            >
-
-              <span className="text-xl">
-                {toast.type === "success" ? "✨" : "⚠️"}
-              </span>
-
-            </div>
-
-            {/* MESSAGE */}
-            <div className="flex flex-col">
-
-              <p
-                className={`font-bold text-sm
-
-          ${toast.type === "success"
-                    ? "text-emerald-600"
-                    : "text-red-500"
+                    ? "bg-emerald-100 text-emerald-600"
+                    : "bg-red-100 text-red-500"
                   }`}
               >
 
-                {toast.type === "success"
-                  ? "Assignment Successful"
-                  : "Assignment Failed"}
+                <span className="text-xl">
+                  {toast.type === "success" ? "✨" : "⚠️"}
+                </span>
 
-              </p>
+              </div>
 
-              <p className="text-sm text-gray-500">
-                {toast.message}
-              </p>
+              {/* MESSAGE */}
+              <div className="flex flex-col">
+
+                <p
+                  className={`font-bold text-sm
+
+          ${toast.type === "success"
+                      ? "text-emerald-600"
+                      : "text-red-500"
+                    }`}
+                >
+
+                  {toast.type === "success"
+                    ? "Success"
+                    : "Error"}
+
+                </p>
+
+                <p className="text-sm text-gray-500">
+                  {toast.message}
+                </p>
+
+              </div>
 
             </div>
 
           </div>
-
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 };
 

@@ -123,7 +123,7 @@ const CompletedPickups = () => {
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-7">
 
           {orders.map((order) => {
-
+            console.log(JSON.stringify(order, null, 2));
             const items =
               order.items && order.items.length > 0
                 ? order.items
@@ -143,16 +143,12 @@ const CompletedPickups = () => {
                   }
                 ];
 
-            const totalPrice = items.reduce(
-              (acc, item) =>
-                acc + ((item.price || 0) * (item.quantity || 1)),
-              0
-            );
+
 
             return (
 
               <div
-                key={order.orderId}
+                key={order.returnId}
 
                 className="group
 
@@ -238,13 +234,24 @@ const CompletedPickups = () => {
                     : items[0]?.productName || "Order"}
 
                 </h2>
-
-                {/* PRICE */}
+                {/* PICKUP INFO */}
                 <div className="flex items-center gap-3 mb-5">
 
-                  <p className="text-xl font-bold text-indigo-600">
-                    ${totalPrice}
-                  </p>
+                  <div
+                    className="px-4 py-2 rounded-2xl
+
+    bg-indigo-50
+
+    border border-indigo-100
+
+    text-indigo-600
+
+    text-sm font-semibold"
+                  >
+
+                    Return Pickup
+
+                  </div>
 
                   <div className="w-1.5 h-1.5 rounded-full bg-gray-300"></div>
 
@@ -253,7 +260,6 @@ const CompletedPickups = () => {
                   </p>
 
                 </div>
-
                 {/* ADDRESS */}
                 <div className="flex items-start gap-3 mb-5">
 
@@ -297,11 +303,11 @@ const CompletedPickups = () => {
 
                   <p className="text-sm">
 
-                    Picked up on
+                    Return Requested on{" "}
 
 
-                    {order.orderDate
-                      ? new Date(order.orderDate).toLocaleDateString(
+                    {order.returnRequestedDate
+                      ? new Date(order.returnRequestedDate).toLocaleDateString(
                         "en-IN",
                         {
                           day: "numeric",
@@ -313,8 +319,8 @@ const CompletedPickups = () => {
 
                     {" "}at{" "}
 
-                    {order.orderDate
-                      ? new Date(order.orderDate).toLocaleTimeString(
+                    {order.returnRequestedDate
+                      ? new Date(order.returnRequestedDate).toLocaleTimeString(
                         "en-IN",
                         {
                           hour: "2-digit",
@@ -324,149 +330,6 @@ const CompletedPickups = () => {
                       : "--:--"}
 
                   </p>
-
-                </div>
-
-                {/* CUSTOMER FEEDBACK */}
-                {order.deliveryRating && (
-
-                  <div
-                    className="relative overflow-hidden
-
-    rounded-[24px]
-
-    border border-amber-100
-
-    bg-gradient-to-br
-    from-amber-50/90
-    via-white
-    to-yellow-50/80
-
-    p-4
-
-    mb-5
-
-    shadow-[0_8px_24px_rgba(251,191,36,0.10)]"
-                  >
-
-                    {/* LIGHT GLOW */}
-                    <div
-                      className="absolute -top-8 -right-8
-
-      w-24 h-24
-
-      bg-yellow-200/30
-
-      rounded-full
-
-      blur-2xl"
-                    ></div>
-
-                    <div className="relative z-10">
-
-                      {/* TOP */}
-                      <div className="flex items-start justify-between gap-3 mb-3">
-
-                        <div>
-
-
-                          <h3 className="text-[17px] font-bold text-gray-800 leading-none">
-                            Delivery Experience
-                          </h3>
-
-                        </div>
-
-                        {/* STARS */}
-                        <div className="flex gap-[2px] mt-1">
-
-                          {[1, 2, 3, 4, 5].map((star) => (
-
-                            <span
-                              key={star}
-                              className={`text-[20px] ${star <= order.deliveryRating
-                                ? "text-amber-400"
-                                : "text-gray-200"
-                                }`}
-                            >
-                              ★
-                            </span>
-
-                          ))}
-
-                        </div>
-
-                      </div>
-
-                      {/* FEEDBACK */}
-                      <div
-                        className="rounded-2xl
-
-        bg-white/85
-
-        border border-white
-
-        px-4 py-3
-
-        text-[14px]
-
-        leading-relaxed
-
-        text-gray-700
-
-        shadow-sm"
-                      >
-
-                        {order.deliveryFeedback?.trim()
-                          ? `“${order.deliveryFeedback}”`
-                          : "Customer gave rating without written feedback."}
-
-                      </div>
-
-                    </div>
-
-                  </div>
-                )}
-
-                {/* BUTTONS */}
-                <div className="flex gap-3">
-
-                  {/* RECEIPT */}
-                  <button
-                    className="flex-1 py-3 rounded-2xl
-
-                    bg-white/80
-
-                    border border-gray-100
-
-                    text-gray-700
-                    font-semibold
-
-                    hover:bg-white
-
-                    transition-all duration-300"
-                  >
-
-                    View Receipt
-
-                  </button>
-
-                  {/* COMPLETED */}
-                  <button
-                    className="flex-1 py-3 rounded-2xl
-
-                    bg-gradient-to-b
-                    from-[#7C83FF]
-                    to-[#6366F1]
-
-                    text-white
-                    font-semibold
-
-                    shadow-[0_8px_18px_rgba(99,102,241,0.18)]"
-                  >
-
-                    Completed
-
-                  </button>
 
                 </div>
 

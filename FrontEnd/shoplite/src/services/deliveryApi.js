@@ -146,6 +146,20 @@ export const getCompletedOrders = async () => {
     return res.data;
 };
 
+// ================= CONFIRM COD PAYMENT =================
+
+export const confirmCodPayment = async (
+    orderId
+) => {
+
+    const res =
+        await deliveryAxios.put(
+            `/orders/delivery/${orderId}/confirm-cod`
+        );
+
+    return res.data;
+};
+
 // ================= RETURN PICKUP APIs =================
 
 // GET ASSIGNED RETURN PICKUPS
@@ -197,4 +211,5 @@ export const getCompletedReturnPickups = async () => {
 
     return res.data;
 };
+
 export default deliveryAxios;

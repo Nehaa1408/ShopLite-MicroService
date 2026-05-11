@@ -42,9 +42,13 @@ public class Order {
 
     private LocalDateTime deliveredAt;
 
+    @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
+    private Transaction transaction;
+
     // AUTO SET DATE
     @PrePersist
     protected void onCreate() {
         this.orderDate = LocalDateTime.now();
     }
+
 }

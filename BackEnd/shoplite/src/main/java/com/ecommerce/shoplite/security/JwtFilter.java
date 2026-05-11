@@ -40,12 +40,12 @@ public class JwtFilter extends OncePerRequestFilter {
                 if (path.startsWith("/api/auth")
                                 || path.startsWith("/api/categories")
                                 || path.startsWith("/api/delivery/register")
-                                || path.startsWith("/api/products")) {
+                                || path.startsWith("/api/products")
+                                || path.startsWith("/api/upload")) {
 
                         filterChain.doFilter(request, response);
                         return;
                 }
-
                 // ================= GET TOKEN =================
                 String authHeader = request.getHeader("Authorization");
 

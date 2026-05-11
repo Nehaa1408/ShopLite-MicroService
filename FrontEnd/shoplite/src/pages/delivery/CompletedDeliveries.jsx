@@ -126,11 +126,7 @@ const CompletedDeliveries = () => {
 
             const items = order.items || [];
 
-            const totalPrice = items.reduce(
-              (acc, item) =>
-                acc + ((item.price || 0) * (item.quantity || 1)),
-              0
-            );
+
 
             return (
 
@@ -186,20 +182,6 @@ const CompletedDeliveries = () => {
 
                   </div>
 
-                  {/* STATUS */}
-                  <div
-                    className="px-4 py-2 rounded-full
-
-                    bg-emerald-50
-
-                    border border-emerald-100
-
-                    text-emerald-600
-
-                    text-xs font-semibold"
-                  >
-                    ✓ Delivered
-                  </div>
 
                 </div>
 
@@ -226,7 +208,7 @@ const CompletedDeliveries = () => {
                 <div className="flex items-center gap-3 mb-5">
 
                   <p className="text-xl font-bold text-indigo-600">
-                    ${totalPrice}
+                    ${order.totalAmount?.toFixed(2)}
                   </p>
 
                   <div className="w-1.5 h-1.5 rounded-full bg-gray-300"></div>
@@ -305,6 +287,53 @@ const CompletedDeliveries = () => {
 
                 </div>
 
+                {/* DELIVERY + PAYMENT STATUS */}
+                <div className="flex items-center gap-3 mb-5 flex-wrap">
+
+                  {/* DELIVERED */}
+                  <div
+                    className="px-4 py-2 rounded-full
+
+    bg-emerald-50
+
+    border border-emerald-100
+
+    text-emerald-600
+
+    text-xs font-semibold"
+                  >
+                    ✓ Delivered
+                  </div>
+
+                  {/* PAYMENT VERIFIED */}
+                  <div
+                    className={`px-4 py-2 rounded-full
+
+    border
+
+    text-[11px] font-bold tracking-wide
+
+    ${order.paymentMethod === "COD"
+                        ? `
+          bg-amber-50
+          border-amber-100
+          text-amber-600
+        `
+                        : `
+          bg-emerald-50
+          border-emerald-100
+          text-emerald-600
+        `
+                      }`}
+                  >
+
+                    {order.paymentMethod === "COD"
+                      ? "COD VERIFIED"
+                      : "PAYMENT VERIFIED"}
+
+                  </div>
+
+                </div>
                 {/* CUSTOMER FEEDBACK */}
                 {order.deliveryRating && (
 
@@ -404,50 +433,6 @@ const CompletedDeliveries = () => {
 
                   </div>
                 )}
-
-                {/* BUTTONS */}
-                <div className="flex gap-3">
-
-                  {/* RECEIPT */}
-                  <button
-                    className="flex-1 py-3 rounded-2xl
-
-                    bg-white/80
-
-                    border border-gray-100
-
-                    text-gray-700
-                    font-semibold
-
-                    hover:bg-white
-
-                    transition-all duration-300"
-                  >
-
-                    View Receipt
-
-                  </button>
-
-                  {/* COMPLETED */}
-                  <button
-                    className="flex-1 py-3 rounded-2xl
-
-                    bg-gradient-to-b
-                    from-[#7C83FF]
-                    to-[#6366F1]
-
-                    text-white
-                    font-semibold
-
-                    shadow-[0_8px_18px_rgba(99,102,241,0.18)]"
-                  >
-
-                    Completed
-
-                  </button>
-
-                </div>
-
               </div>
 
             );
