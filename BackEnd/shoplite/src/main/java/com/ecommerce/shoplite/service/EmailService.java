@@ -447,4 +447,33 @@ public class EmailService {
 
                 mailSender.send(message);
         }
+
+        // ================= FORGOT PASSWORD OTP =================
+        public void sendForgotPasswordOtp(
+                        String toEmail,
+                        String otp) {
+
+                SimpleMailMessage message = new SimpleMailMessage();
+
+                message.setTo(toEmail);
+
+                message.setSubject(
+                                "ShopLite Password Reset OTP");
+
+                message.setText(
+
+                                "Hello,\n\n"
+
+                                                + "Your ShopLite password reset OTP is: "
+                                                + otp
+
+                                                + "\n\nThis OTP is valid for 5 minutes.\n\n"
+
+                                                + "If you did not request password reset, please ignore this email.\n\n"
+
+                                                + "Regards,\n"
+                                                + "ShopLite");
+
+                mailSender.send(message);
+        }
 }

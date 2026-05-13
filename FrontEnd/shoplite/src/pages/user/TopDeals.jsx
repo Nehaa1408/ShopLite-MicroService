@@ -74,13 +74,13 @@ const TopDeals = () => {
 
           {/* NAV ITEMS */}
           <div className="hidden lg:flex items-center gap-8 text-sm font-medium text-gray-600">
-             {[
-                { name: "Home", path: "/" },
-                { name: "Categories", path: "/categories" },
-                { name: "Brands", path: "/brand/aurel" },
-                { name: "Deals", path: "/top-deals" },
- 
-              ].map((item, i) => {
+            {[
+              { name: "Home", path: "/" },
+              { name: "Categories", path: "/categories" },
+              { name: "Brands", path: "/brand/aurel" },
+              { name: "Deals", path: "/top-deals" },
+
+            ].map((item, i) => {
               const isActive = location.pathname === item.path;
 
               return (
@@ -105,13 +105,26 @@ const TopDeals = () => {
             </button>
 
             {/* CART */}
-            <button onClick={() => navigate("/cart")}>
-              <span className="material-symbols-outlined">shopping_cart</span>
+            <button
+              onClick={() => navigate("/cart")}
+              className="relative"
+            >
+              <span className="material-symbols-outlined">
+                shopping_cart
+              </span>
+
+              {cart.length > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center">
+                  {cart.length}
+                </span>
+              )}
             </button>
 
             {/* PROFILE */}
-            <button>
-              <span className="material-symbols-outlined">account_circle</span>
+            <button onClick={() => navigate("/profile")}>
+              <span className="material-symbols-outlined">
+                account_circle
+              </span>
             </button>
 
           </div>

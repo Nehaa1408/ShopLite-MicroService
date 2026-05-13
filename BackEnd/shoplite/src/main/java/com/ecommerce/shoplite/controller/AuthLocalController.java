@@ -61,4 +61,28 @@ public class AuthLocalController {
                                                 request.getEmail(),
                                                 request.getPassword()));
         }
+
+        // ================= SEND FORGOT PASSWORD OTP =================
+        @PostMapping("/forgot-password/send-otp")
+        public ResponseEntity<String> sendForgotPasswordOtp(
+                        @RequestBody Map<String, String> body) {
+
+                return ResponseEntity.ok(
+
+                                userService.sendForgotPasswordOtp(
+                                                body.get("email")));
+        }
+
+        // ================= RESET PASSWORD =================
+        @PostMapping("/forgot-password/reset")
+        public ResponseEntity<String> resetPassword(
+                        @RequestBody Map<String, String> body) {
+
+                return ResponseEntity.ok(
+
+                                userService.resetPassword(
+                                                body.get("email"),
+                                                body.get("otp"),
+                                                body.get("newPassword")));
+        }
 }

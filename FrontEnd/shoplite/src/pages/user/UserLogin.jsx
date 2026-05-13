@@ -7,10 +7,15 @@ import { useCart } from "../../context/CartContext";
 
 const UserLogin = () => {
   const navigate = useNavigate();
+
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotOtp, setForgotOtp] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [loading, setLoading] = useState(false);
   const { mergeGuestCartAfterLogin } = useCart();
-
   const [activeTab, setActiveTab] = useState("login");
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -58,7 +63,97 @@ const UserLogin = () => {
       }
     }
   };
+  const handleSendForgotOtp = async () => {
 
+    if (!forgotEmail) {
+
+      toast.error("Enter your email");
+      return;
+    }
+
+    try {
+
+      setLoading(true);
+
+      const res = await axios.post(
+        "http://localhost:8080/api/auth/forgot-password/send-otp",
+        {
+          email: forgotEmail,
+        }
+      );
+
+      toast.success(res.data);
+
+      setOtpSent(true);
+
+    } catch (err) {
+
+      console.error(err);
+
+      if (err.response?.data?.message) {
+
+        toast.error(err.response.data.message);
+
+      } else {
+
+        toast.error("Failed to send OTP");
+      }
+
+    } finally {
+
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+
+    if (!forgotOtp || !newPassword) {
+
+      toast.error("Fill all fields");
+      return;
+    }
+
+    try {
+
+      setLoading(true);
+
+      const res = await axios.post(
+        "http://localhost:8080/api/auth/forgot-password/reset",
+        {
+          email: forgotEmail,
+          otp: forgotOtp,
+          newPassword,
+        }
+      );
+
+      toast.success(res.data);
+
+      setShowForgotModal(false);
+
+      setOtpSent(false);
+
+      setForgotEmail("");
+      setForgotOtp("");
+      setNewPassword("");
+
+    } catch (err) {
+
+      console.error(err);
+
+      if (err.response?.data?.message) {
+
+        toast.error(err.response.data.message);
+
+      } else {
+
+        toast.error("Password reset failed");
+      }
+
+    } finally {
+
+      setLoading(false);
+    }
+  };
   return (
     <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden bg-gradient-to-br from-[#eef2ff] via-[#f8fafc] to-[#fdf2ff]">
 
@@ -227,7 +322,10 @@ const UserLogin = () => {
               Keep me logged in
             </label>
 
-            <span className="cursor-pointer text-gray-400 hover:text-pink-400 transition">
+            <span
+              onClick={() => setShowForgotModal(true)}
+              className="cursor-pointer text-gray-400 hover:text-pink-400 transition"
+            >
               Forgot Password?
             </span>
 
@@ -325,6 +423,132 @@ const UserLogin = () => {
         </div>
 
       </div>
+
+      {/* FORGOT PASSWORD MODAL */}
+      {
+        showForgotModal && (
+
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center px-4">
+
+            <div className="w-full max-w-md bg-white rounded-2xl p-6 shadow-2xl relative">
+
+              {/* CLOSE */}
+              <button
+                onClick={() => {
+                  setShowForgotModal(false);
+                  setOtpSent(false);
+                }}
+                className="absolute top-4 right-4 text-gray-400 hover:text-red-500"
+              >
+                ✕
+              </button>
+
+              <h2 className="text-2xl font-bold text-center text-gray-800 mb-2">
+                Forgot Password
+              </h2>
+
+              <p className="text-sm text-center text-gray-500 mb-6">
+                Reset your ShopLite account password
+              </p>
+
+              {/* EMAIL */}
+              <div className="mb-4">
+
+                <label className="text-sm text-gray-500">
+                  Email
+                </label>
+
+                <input
+                  type="email"
+                  value={forgotEmail}
+                  onChange={(e) =>
+                    setForgotEmail(e.target.value)
+                  }
+                  placeholder="Enter your email"
+                  className="w-full mt-2 px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-pink-100 outline-none"
+                />
+
+              </div>
+
+              {
+                otpSent && (
+                  <>
+                    {/* OTP */}
+                    <div className="mb-4">
+
+                      <label className="text-sm text-gray-500">
+                        OTP
+                      </label>
+
+                      <input
+                        type="text"
+                        value={forgotOtp}
+                        onChange={(e) =>
+                          setForgotOtp(e.target.value)
+                        }
+                        placeholder="Enter OTP"
+                        className="w-full mt-2 px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-pink-100 outline-none"
+                      />
+
+                    </div>
+
+                    {/* NEW PASSWORD */}
+                    <div className="mb-4">
+
+                      <label className="text-sm text-gray-500">
+                        New Password
+                      </label>
+
+                      <input
+                        type="password"
+                        value={newPassword}
+                        onChange={(e) =>
+                          setNewPassword(e.target.value)
+                        }
+                        placeholder="Enter new password"
+                        className="w-full mt-2 px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-pink-100 outline-none"
+                      />
+
+                    </div>
+                  </>
+                )
+              }
+
+              {/* BUTTON */}
+              <button
+                onClick={
+                  otpSent
+                    ? handleResetPassword
+                    : handleSendForgotOtp
+                }
+                disabled={loading}
+                className="
+            w-full
+            py-3
+            rounded-xl
+            text-white
+            font-semibold
+            bg-gradient-to-r
+            from-indigo-600
+            to-pink-500
+            hover:scale-[1.02]
+            transition
+          "
+              >
+                {
+                  loading
+                    ? "Please wait..."
+                    : otpSent
+                      ? "Reset Password"
+                      : "Send OTP"
+                }
+              </button>
+
+            </div>
+
+          </div>
+        )
+      }
 
       {/* FOOTER */}
       <div className="absolute bottom-0 left-0 w-full px-10 py-6 flex justify-between items-center text-sm text-gray-600">

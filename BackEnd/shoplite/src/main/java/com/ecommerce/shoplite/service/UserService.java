@@ -12,6 +12,8 @@ import com.ecommerce.shoplite.security.JwtUtil;
 import java.time.LocalDateTime;
 import java.util.Random;
 
+import com.ecommerce.shoplite.repository.ForgotPasswordOtpRepository;
+
 import com.ecommerce.shoplite.repository.SignupOtpRepository;
 import java.util.Collections;
 
@@ -36,6 +38,9 @@ public class UserService {
 
         @Autowired
         private SignupOtpRepository signupOtpRepository;
+
+        @Autowired
+        private ForgotPasswordOtpRepository forgotPasswordOtpRepository;
 
         @Autowired
         private EmailService emailService;
@@ -92,6 +97,87 @@ public class UserService {
                                 otp);
 
                 return "Signup OTP sent successfully";
+        }
+
+        // ================= SEND FORGOT PASSWORD OTP =================
+        public String sendForgotPasswordOtp(
+                        String email) {
+
+                User user = userRepository.findByEmail(email)
+                                .orElseThrow(() -> new RuntimeException("Email not registered"));
+
+                // GOOGLE ACCOUNT CHECK
+                if (user.getProvider() == Provider.GOOGLE) {
+
+                        throw new RuntimeException(
+                                        "This account uses Google login");
+                }
+
+                // GENERATE OTP
+                String otp = String.format(
+                                "%06d",
+                                new java.util.Random().nextInt(999999));
+
+                // FIND EXISTING
+                ForgotPasswordOtp forgotOtp = forgotPasswordOtpRepository
+                                .findByEmail(email)
+                                .orElse(new ForgotPasswordOtp());
+
+                forgotOtp.setEmail(email);
+
+                forgotOtp.setOtp(otp);
+
+                forgotOtp.setExpiryTime(
+                                LocalDateTime.now().plusMinutes(5));
+
+                forgotPasswordOtpRepository.save(forgotOtp);
+
+                // SEND EMAIL
+                emailService.sendForgotPasswordOtp(
+                                email,
+                                otp);
+
+                return "Password reset OTP sent successfully";
+        }
+
+        // ================= RESET PASSWORD =================
+        public String resetPassword(
+                        String email,
+                        String otp,
+                        String newPassword) {
+
+                ForgotPasswordOtp forgotOtp = forgotPasswordOtpRepository
+                                .findByEmail(email)
+                                .orElseThrow(() -> new RuntimeException(
+                                                "OTP request not found"));
+
+                // OTP CHECK
+                if (!forgotOtp.getOtp().equals(otp)) {
+
+                        throw new RuntimeException(
+                                        "Invalid OTP");
+                }
+
+                // EXPIRY CHECK
+                if (forgotOtp.getExpiryTime()
+                                .isBefore(LocalDateTime.now())) {
+
+                        throw new RuntimeException(
+                                        "OTP expired");
+                }
+
+                User user = userRepository.findByEmail(email)
+                                .orElseThrow(() -> new RuntimeException("User not found"));
+
+                user.setPassword(
+                                passwordEncoder.encode(newPassword));
+
+                userRepository.save(user);
+
+                // DELETE OTP ENTRY
+                forgotPasswordOtpRepository.delete(forgotOtp);
+
+                return "Password reset successful";
         }
 
         // ================= VERIFY SIGNUP OTP =================

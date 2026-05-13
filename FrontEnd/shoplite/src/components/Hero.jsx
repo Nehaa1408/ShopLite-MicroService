@@ -26,13 +26,13 @@ const Hero = () => {
                 </div>
 
                 {/* RIGHT */}
-                <div className="relative flex justify-center">
+                <div className="relative flex justify-center items-center">
 
-                    {/* GLOW */}
-                    <div className="absolute w-[380px] h-[380px] bg-purple-400/40 blur-[120px] rounded-full"></div>
+                    {/* SOFT GLOW */}
+                    <div className="absolute w-[420px] h-[420px] bg-[#f3d9c9]/40 blur-[120px] rounded-full"></div>
 
                     {/* PRODUCT */}
-                    <div className="relative bg-black rounded-[32px] p-6 shadow-[0_60px_140px_rgba(0,0,0,0.45)] animate-[floatY_4s_ease-in-out_infinite]">
+                    <div className="relative bg-black rounded-[32px] p-6 shadow-[0_25px_60px_rgba(0,0,0,0.20)] animate-[floatY_4s_ease-in-out_infinite]">
 
                         <img
                             src="/products/p1.webp"
