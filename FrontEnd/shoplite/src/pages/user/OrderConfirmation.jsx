@@ -20,41 +20,70 @@ const OrderConfirmation = () => {
   console.log("ORDER ITEMS:", order.items);
   return (
     <div className="bg-surface text-on-surface min-h-screen glow-bg pb-24 md:pb-0">
+
       {/* NAVBAR */}
-      <nav className="fixed top-0 w-full z-50 bg-[#f9f5ff]/80 backdrop-blur-xl shadow-[0px_12px_32px_rgba(43,42,81,0.06)]">
-        <div className="flex justify-between items-center px-6 py-4 max-w-7xl mx-auto">
-          <div className="flex items-center gap-8">
-            <span
-              onClick={() => navigate("/")}
-              className="text-2xl font-black tracking-tight text-primary cursor-pointer"
-            >
-              ShopLite
-            </span>
+      <nav className="fixed top-0 left-0 w-full z-50 border-b border-gray-200 bg-white/80 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex items-center justify-between h-16">
 
-            <div className="hidden md:flex gap-6">
-              <button
+            {/* LEFT */}
+            <div className="flex items-center gap-10">
+
+              {/* LOGO */}
+              <div
                 onClick={() => navigate("/")}
-                className="hover:text-primary"
+                className="cursor-pointer flex items-center gap-2"
               >
-                Shop
-              </button>
-              <button className="text-primary font-bold border-b-2 border-primary">
-                Orders
-              </button>
-              <button className="hover:text-primary">Support</button>
+                <span className="text-2xl font-extrabold tracking-tight text-gray-900">
+                  ShopLite
+                </span>
+              </div>
+
+              {/* NAV LINKS */}
+              <div className="hidden md:flex items-center gap-8">
+
+                {/* SHOP */}
+                <button
+                  onClick={() => navigate("/")}
+                  className="text-gray-600 hover:text-blue-600 font-medium transition"
+                >
+                  Shop
+                </button>
+
+                {/* ORDERS */}
+                <button
+                  onClick={() => navigate("/orders")}
+                  className="text-gray-600 hover:text-blue-600 font-medium transition"
+                >
+                  Orders
+                </button>
+              </div>
             </div>
-          </div>
 
-          <div className="flex items-center gap-4">
-            <span className="material-symbols-outlined cursor-pointer">
-              notifications
-            </span>
+            {/* RIGHT */}
+            <div className="flex items-center gap-4">
 
-            <div className="h-10 w-10 rounded-full overflow-hidden bg-surface-container-high">
-              <img
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgcj9i-xOULjXbKX_gAzqP3OP_0GxiEBwAFPjURfiNHeiove_rW5LSqbTrLaXOika9GUOCug1BZDM4pjJcvgJpgo8VE0bUDHJ9Dt_Y4R3S1TSi0TYN7TlG1NcXEuq9uf3Tl5IBPZgZqD5ggbaqv6PNT9ZYyVBk4TdE4BnjEu7WExWjF3uUBPvu2Iux7I2JMHX1JdziVvAtvFh4QYmhYEdxx1Vw7E1AK6f5T5ielO_yR6BfQN0ZMpAV14dYZGKBl_iDL-juLNgde-c"
-                className="w-full h-full object-cover"
-              />
+              {/* CART */}
+              <button
+                onClick={() => navigate("/cart")}
+                className="relative w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center transition"
+              >
+                <span className="material-symbols-outlined text-gray-700">
+                  shopping_cart
+                </span>
+              </button>
+
+              {/* PROFILE */}
+              <div
+                onClick={() => navigate("/profile")}
+                className="cursor-pointer"
+              >
+                <img
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgcj9i-xOULjXbKX_gAzqP3OP_0GxiEBwAFPjURfiNHeiove_rW5LSqbTrLaXOika9GUOCug1BZDM4pjJcvgJpgo8VE0bUDHJ9Dt_Y4R3S1TSi0TYN7TlG1NcXEuq9uf3Tl5IBPZgZqD5ggbaqv6PNT9ZYyVBk4TdE4BnjEu7WExWjF3uUBPvu2Iux7I2JMHX1JdziVvAtvFh4QYmhYEdxx1Vw7E1AK6f5T5ielO_yR6BfQN0ZMpAV14dYZGKBl_iDL-juLNgde-c"
+                  alt="profile"
+                  className="w-11 h-11 rounded-full object-cover border-2 border-white shadow"
+                />
+              </div>
             </div>
           </div>
         </div>

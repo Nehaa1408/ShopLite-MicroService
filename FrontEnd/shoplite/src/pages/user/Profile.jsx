@@ -172,13 +172,6 @@ const Profile = () => {
               onClick={() => navigate("/orders")}
               className="p-4 bg-white rounded-xl shadow cursor-pointer hover:bg-gray-50"
             >
-              Track Orders →
-            </div>
-
-            <div
-              onClick={() => navigate("/orders")}
-              className="p-4 bg-white rounded-xl shadow cursor-pointer hover:bg-gray-50"
-            >
               Order History →
             </div>
 
@@ -441,34 +434,18 @@ const Profile = () => {
         {/* SETTINGS */}
         <div>
 
-          <h2 className="text-lg font-bold mb-4">
-            Account Settings
-          </h2>
-
-          <div className="bg-white rounded-xl shadow divide-y">
-
-            <div className="p-4 cursor-pointer hover:bg-gray-50">
-              Change Password
-            </div>
-
-            <div className="p-4 cursor-pointer hover:bg-gray-50">
-              Notifications
-            </div>
-
-            <div
-              onClick={handleLogout}
-              className="p-4 text-red-600 font-bold cursor-pointer hover:bg-red-50"
-            >
-              Logout
-            </div>
-
+          <div
+            onClick={handleLogout}
+            className="p-4 text-red-600 font-bold cursor-pointer hover:bg-red-50"
+          >
+            Logout
           </div>
 
         </div>
 
-      </main>
+      </main >
 
-    </div>
+    </div >
   );
 };
 
