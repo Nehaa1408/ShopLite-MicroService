@@ -15,7 +15,9 @@ const DeliveryPartnerVerification = () => {
         licenseNumber: "",
         aadhaarNumber: "",
         profileImage: "",
-        documentImage: ""
+        drivingLicenseImage: "",
+        aadhaarImage: "",
+        vehicleRcImage: ""
     });
 
     const handleChange = (e) => {
@@ -33,14 +35,24 @@ const DeliveryPartnerVerification = () => {
         try {
 
             setLoading(true);
+
             const payload = {
                 phone: formData.phone,
                 vehicleType: formData.vehicleType,
                 vehicleNumber: formData.vehicleNumber,
                 licenseNumber: formData.licenseNumber,
                 aadhaarNumber: formData.aadhaarNumber,
-                profileImage: "",
-                documentImage: ""
+
+                profileImage: formData.profileImage,
+
+                drivingLicenseImage:
+                    formData.drivingLicenseImage,
+
+                aadhaarImage:
+                    formData.aadhaarImage,
+
+                vehicleRcImage:
+                    formData.vehicleRcImage
             };
 
             await deliveryAxios.put(
@@ -101,14 +113,14 @@ const DeliveryPartnerVerification = () => {
             className="min-h-screen overflow-x-hidden text-[#1a1c1c]"
             style={{
                 background:
-                    "linear-gradient(135deg, #f8f4ee 0%, #f7e8ea 50%, #fdf2f4 100%)",
+                    "linear-gradient(135deg, #f8fafc 0%, #eef2ff 50%, #ffffff 100%)",
             }}
         >
 
             {/* BLOBS */}
-            <div className="absolute w-[400px] h-[400px] bg-[#fdf2f4] top-[-100px] left-[-100px] blur-[80px] rounded-full opacity-60 -z-10"></div>
+            <div className="absolute w-[400px] h-[400px] bg-indigo-100 top-[-100px] left-[-100px] blur-[80px] rounded-full opacity-60 -z-10"></div>
 
-            <div className="absolute w-[300px] h-[300px] bg-[#f8f4ee] bottom-[-50px] right-[-50px] blur-[80px] rounded-full opacity-60 -z-10"></div>
+            <div className="absolute w-[300px] h-[300px] bg-blue-100 bottom-[-50px] right-[-50px] blur-[80px] rounded-full opacity-60 -z-10"></div>
 
             {/* HEADER */}
             <header
@@ -125,14 +137,14 @@ const DeliveryPartnerVerification = () => {
                 <div className="flex items-center gap-3">
 
                     <button className="flex items-center justify-center p-2 rounded-full hover:bg-[#f3f3f4] transition-colors">
-                        <span className="material-symbols-outlined text-[#a43073]">
+                        <span className="material-symbols-outlined text-[#4f46e5]">
                             arrow_back
                         </span>
                     </button>
 
                     <div className="flex items-center gap-2">
 
-                        <div className="size-8 text-[#a43073]">
+                        <div className="size-8 text-[#4f46e5]">
                             <svg
                                 fill="none"
                                 viewBox="0 0 48 48"
@@ -145,7 +157,7 @@ const DeliveryPartnerVerification = () => {
                             </svg>
                         </div>
 
-                        <h2 className="text-xl font-bold tracking-tight text-[#a43073]">
+                        <h2 className="text-xl font-bold tracking-tight text-[#4f46e5]">
                             ShopLite
                         </h2>
 
@@ -159,7 +171,7 @@ const DeliveryPartnerVerification = () => {
                         Verification Pending
                     </span>
 
-                    <div className="size-10 rounded-full overflow-hidden border-2 border-[#a4307330]">
+                    <div className="size-10 rounded-full overflow-hidden border-2 border-[#4f46e530]">
                         <img
                             alt="User Profile"
                             className="w-full h-full object-cover"
@@ -173,16 +185,38 @@ const DeliveryPartnerVerification = () => {
 
             {/* MAIN */}
             <main className="max-w-7xl mx-auto px-6 py-12">
+                <div className="
+absolute
+top-20
+left-20
+w-96
+h-96
+bg-indigo-400/20
+rounded-full
+blur-[120px]
+animate-pulse
+"></div>
 
+                <div className="
+absolute
+bottom-20
+right-20
+w-96
+h-96
+bg-cyan-400/20
+rounded-full
+blur-[120px]
+animate-pulse
+"></div>
                 {/* TITLE */}
                 <div className="text-center mb-12">
 
                     <h1 className="text-5xl font-extrabold mb-4">
-                        Become a Delivery Partner
+                    Join ShopLite Logistics Network
                     </h1>
 
                     <p className="text-[#544249] max-w-2xl mx-auto">
-                        Submit your verification details to join the premium
+                        Complete your verification to join the premium
                         ShopLite delivery network and start earning today.
                     </p>
 
@@ -190,57 +224,24 @@ const DeliveryPartnerVerification = () => {
 
                 {/* CARD */}
                 <div
-                    className="rounded-[32px] overflow-hidden grid lg:grid-cols-2 shadow-2xl"
+                    className="
+    max-w-4xl
+    mx-auto
+    rounded-[36px]
+    overflow-hidden
+    shadow-2xl
+    "
+
                     style={{
-                        background: "rgba(255,255,255,0.4)",
-                        backdropFilter: "blur(40px)",
-                        WebkitBackdropFilter: "blur(40px)",
-                        border: "1px solid rgba(255,255,255,0.6)",
-                        boxShadow: "0 10px 30px rgba(164,48,115,0.05)",
+                        background: "rgba(255,255,255,0.18)",
+                        backdropFilter: "blur(30px)",
+                        WebkitBackdropFilter: "blur(30px)",
+                        border: "1px solid rgba(255,255,255,0.3)",
+                        boxShadow:
+                            "0 20px 60px rgba(79,70,229,0.15)"
                     }}
                 >
 
-                    {/* LEFT */}
-                    <div className="relative bg-gradient-to-br from-[#a4307310] to-[#fd933d10] p-12 flex flex-col items-center justify-center min-h-[400px]">
-
-                        <div
-                            className="absolute inset-0 opacity-10 pointer-events-none"
-                            style={{
-                                backgroundImage:
-                                    "radial-gradient(#a43073 1px, transparent 1px)",
-                                backgroundSize: "24px 24px",
-                            }}
-                        ></div>
-
-                        <div
-                            className="w-full aspect-square max-w-md bg-center bg-no-repeat bg-contain"
-                            style={{
-                                backgroundImage:
-                                    "url('https://lh3.googleusercontent.com/aida-public/AB6AXuAkIc-Ry3kIcXFYHAHgy8HnL__kTw7HP_HLCc0Hnaj9fwQAqVvbc3_WbjQoR33J8aTNFa35IUWb_GmGPRyDFPK8ZjXbZI9ouwktsNwaQ4ctkZt9QEhWAGcykvOyx6R4J4tWMpK34kz7Px_v6YL0SfKZivyxtbJ8Yzg7wGsKi4VPpOyKkC6Dmp5au9p4N5dmPreAOzW90O9oV5-kUT-GH8V1XUUiy_IpLHSKGBVZlhyRrkVN_FKAJPIYtHyKZQSajVwaSSKGprb4GqU')",
-                            }}
-                        ></div>
-
-                        <div className="mt-8 text-center space-y-4">
-
-                            <div className="flex items-center gap-3 justify-center text-[#a43073] font-semibold">
-                                <span className="material-symbols-outlined">
-                                    shield
-                                </span>
-                                <span>Tier-1 Document Verification</span>
-                            </div>
-
-                            <div className="p-6 rounded-xl bg-white/40 border border-white/60 backdrop-blur-sm">
-                                <p className="text-sm italic text-[#544249]">
-                                    "Join a community of 5000+ elite partners
-                                    delivering excellence every day."
-                                </p>
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                    {/* RIGHT */}
                     <div className="p-8 lg:p-12">
 
                         <form
@@ -250,7 +251,7 @@ const DeliveryPartnerVerification = () => {
 
                             {/* PROFILE */}
                             <div className="flex flex-col items-center gap-4 mb-8">
-                                <div className="size-28 rounded-full border-2 border-dashed border-[#a4307340] flex flex-col items-center justify-center cursor-pointer hover:bg-[#a4307305] transition-all relative group overflow-hidden">
+                                <div className="size-28 rounded-full border-2 border-dashed border-[#4f46e540] flex flex-col items-center justify-center cursor-pointer hover:bg-[#4f46e505] transition-all relative group overflow-hidden">
 
                                     {formData.profileImage ? (
 
@@ -262,11 +263,11 @@ const DeliveryPartnerVerification = () => {
 
                                     ) : (
                                         <>
-                                            <span className="material-symbols-outlined text-[#a43073] text-4xl group-hover:scale-110 transition-transform">
+                                            <span className="material-symbols-outlined text-[#4f46e5] text-4xl group-hover:scale-110 transition-transform">
                                                 add_a_photo
                                             </span>
 
-                                            <span className="text-[10px] font-bold uppercase text-[#a4307390] mt-1">
+                                            <span className="text-[10px] font-bold uppercase text-[#4f46e590] mt-1">
                                                 Photo
                                             </span>
                                         </>
@@ -295,7 +296,7 @@ const DeliveryPartnerVerification = () => {
                             <div className="grid md:grid-cols-2 gap-6">
 
                                 <div className="md:col-span-2">
-                                    <label className="block text-xs font-bold uppercase tracking-widest text-[#a43073] mb-2">
+                                    <label className="block text-xs font-bold uppercase tracking-widest text-[#4f46e5] mb-2">
                                         Phone Number
                                     </label>
 
@@ -320,7 +321,7 @@ const DeliveryPartnerVerification = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold uppercase tracking-widest text-[#a43073] mb-2">
+                                    <label className="block text-xs font-bold uppercase tracking-widest text-[#4f46e5] mb-2">
                                         Vehicle Type
                                     </label>
                                     <select
@@ -337,7 +338,7 @@ const DeliveryPartnerVerification = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold uppercase tracking-widest text-[#a43073] mb-2">
+                                    <label className="block text-xs font-bold uppercase tracking-widest text-[#4f46e5] mb-2">
                                         Vehicle Number
                                     </label>
 
@@ -352,7 +353,7 @@ const DeliveryPartnerVerification = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold uppercase tracking-widest text-[#a43073] mb-2">
+                                    <label className="block text-xs font-bold uppercase tracking-widest text-[#4f46e5] mb-2">
                                         License Number
                                     </label>
 
@@ -367,7 +368,7 @@ const DeliveryPartnerVerification = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold uppercase tracking-widest text-[#a43073] mb-2">
+                                    <label className="block text-xs font-bold uppercase tracking-widest text-[#4f46e5] mb-2">
                                         Aadhaar Number
                                     </label>
 
@@ -384,46 +385,131 @@ const DeliveryPartnerVerification = () => {
                             </div>
 
                             {/* UPLOAD */}
-                            <div className="space-y-2">
+                            <div className="space-y-6">
 
-                                <label className="block text-xs font-bold uppercase tracking-widest text-[#a43073]">
-                                    Vehicle Image
-                                </label>
+                                <h3 className="text-lg font-bold text-[#4f46e5]">
+                                    Required Documents
+                                </h3>
 
-                                <div className="border-2 border-dashed border-[#a4307320] rounded-xl p-8 text-center bg-[#a4307305] hover:bg-[#a4307310] transition-colors cursor-pointer relative overflow-hidden">
+                                <div className="grid md:grid-cols-3 gap-5">
 
-                                    <span className="material-symbols-outlined text-[#a43073] text-4xl mb-3">
-                                        cloud_upload
-                                    </span>
+                                    {/* DRIVING LICENSE */}
+                                    <label className="relative cursor-pointer">
 
-                                    <p className="text-sm font-semibold mb-1">
-                                        Drag and drop Aadhaar or License
-                                    </p>
+                                        <div className="h-[320px] border-2 border-dashed border-[#4f46e530] rounded-2xl p-6 text-center bg-white/50 hover:bg-[#4f46e505] transition-all flex flex-col items-center justify-center">
 
-                                    <p className="text-xs text-[#544249]">
-                                        Maximum file size: 5MB (JPG, PNG, PDF)
-                                    </p>
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={(e) =>
-                                            handleImageUpload(
-                                                e,
-                                                "documentImage"
-                                            )
-                                        }
-                                        className="absolute inset-0 opacity-0 cursor-pointer"
-                                    />
+                                            <span className="material-symbols-outlined text-5xl text-[#4f46e5]">
+                                                badge
+                                            </span>
 
-                                    {formData.documentImage && (
+                                            <h4 className="font-bold mt-3">
+                                                Driving License
+                                            </h4>
 
-                                        <img
-                                            src={formData.documentImage}
-                                            alt="vehicle"
-                                            className="w-full h-52 object-cover rounded-2xl mt-4"
+                                            <p className="text-xs text-gray-500 mt-2">
+                                                Upload clear front image
+                                            </p>
+
+                                            {formData.drivingLicenseImage && (
+                                                <img
+                                                    src={formData.drivingLicenseImage}
+                                                    alt=""
+                                                    className="mt-4 h-32 w-full object-cover rounded-xl"
+                                                />
+                                            )}
+                                        </div>
+
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={(e) =>
+                                                handleImageUpload(
+                                                    e,
+                                                    "drivingLicenseImage"
+                                                )
+                                            }
                                         />
+                                    </label>
 
-                                    )}
+                                    {/* AADHAAR */}
+                                    <label className="relative cursor-pointer">
+
+                                        <div className="h-[320px] border-2 border-dashed border-[#4f46e530] rounded-2xl p-6 text-center bg-white/50 hover:bg-[#4f46e505] transition-all flex flex-col items-center justify-center">
+
+                                            <span className="material-symbols-outlined text-5xl text-[#4f46e5]">
+                                                credit_card
+                                            </span>
+
+                                            <h4 className="font-bold mt-3">
+                                                Aadhaar Card
+                                            </h4>
+
+                                            <p className="text-xs text-gray-500 mt-2">
+                                                Upload Aadhaar image
+                                            </p>
+
+                                            {formData.aadhaarImage && (
+                                                <img
+                                                    src={formData.aadhaarImage}
+                                                    alt=""
+                                                    className="mt-4 h-32 w-full object-cover rounded-xl"
+                                                />
+                                            )}
+                                        </div>
+
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={(e) =>
+                                                handleImageUpload(
+                                                    e,
+                                                    "aadhaarImage"
+                                                )
+                                            }
+                                        />
+                                    </label>
+
+                                    {/* VEHICLE RC */}
+                                    <label className="relative cursor-pointer">
+
+                                        <div className="h-[320px] border-2 border-dashed border-[#4f46e530] rounded-2xl p-6 text-center bg-white/50 hover:bg-[#4f46e505] transition-all flex flex-col items-center justify-center">
+
+                                            <span className="material-symbols-outlined text-5xl text-[#4f46e5]">
+                                                directions_car
+                                            </span>
+
+                                            <h4 className="font-bold mt-3">
+                                                Vehicle RC
+                                            </h4>
+
+                                            <p className="text-xs text-gray-500 mt-2">
+                                                Upload RC document
+                                            </p>
+
+                                            {formData.vehicleRcImage && (
+                                                <img
+                                                    src={formData.vehicleRcImage}
+                                                    alt=""
+                                                    className="mt-4 h-32 w-full object-cover rounded-xl"
+                                                />
+                                            )}
+                                        </div>
+
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={(e) =>
+                                                handleImageUpload(
+                                                    e,
+                                                    "vehicleRcImage"
+                                                )
+                                            }
+                                        />
+                                    </label>
+
                                 </div>
 
                             </div>
@@ -448,7 +534,7 @@ const DeliveryPartnerVerification = () => {
                                         className="sr-only peer"
                                     />
 
-                                    <div className="w-11 h-6 bg-[#87717a] rounded-full peer peer-checked:bg-[#a43073] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
+                                    <div className="w-11 h-6 bg-[#87717a] rounded-full peer peer-checked:bg-[#4f46e5] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
                                 </label>
 
                             </div>
@@ -476,7 +562,7 @@ const DeliveryPartnerVerification = () => {
                                     className="w-full py-4 rounded-xl text-white font-bold text-lg tracking-wide flex items-center justify-center gap-2"
                                     style={{
                                         background:
-                                            "linear-gradient(90deg, #a43073 0%, #f472b6 100%)",
+                                            "linear-gradient(90deg, #4f46e5 0%, #f472b6 100%)",
                                         boxShadow:
                                             "0 8px 20px rgba(164,48,115,0.3)",
                                     }}

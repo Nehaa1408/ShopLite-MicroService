@@ -19,5 +19,9 @@ public class DeliveryVerificationRequest {
 
     private String profileImage;
 
-    private String documentImage;
+    private String drivingLicenseImage;
+
+    private String aadhaarImage;
+
+    private String vehicleRcImage;
 }

@@ -105,8 +105,14 @@ public class DeliveryPartnerController {
                 System.out.println("PROFILE IMAGE EXISTS : "
                                 + (request.getProfileImage() != null));
 
-                System.out.println("DOCUMENT IMAGE EXISTS : "
-                                + (request.getDocumentImage() != null));
+                System.out.println("DRIVING LICENSE IMAGE EXISTS : "
+                                + (request.getDrivingLicenseImage() != null));
+
+                System.out.println("AADHAAR IMAGE EXISTS : "
+                                + (request.getAadhaarImage() != null));
+
+                System.out.println("VEHICLE RC IMAGE EXISTS : "
+                                + (request.getVehicleRcImage() != null));
 
                 DeliveryPartner updatedPartner = deliveryPartnerService.updateVerificationProfile(
                                 user,

@@ -211,67 +211,89 @@ const ManageDeliveryPartnerDetails = () => {
                                     </h2>
 
                                     {/* BUTTONS */}
-                                    <div className="flex flex-col gap-3 w-full mt-6">
+                                    <div className="w-full mt-6">
 
-                                        {/* REQUEST INFO */}
-                                        <button
-                                            className="w-full h-11 rounded-2xl
-        bg-slate-100/80
-        border border-slate-200
-        text-slate-700 text-sm font-semibold
-        hover:bg-slate-200/70
-        transition-all duration-300"
-                                        >
-                                            Request More Info
-                                        </button>
+                                        {!partner.approved && !partner.rejected ? (
 
-                                        {/* MESSAGE */}
-                                        <button
-                                            className="w-full h-11 rounded-2xl
-        bg-indigo-50
-        border border-indigo-100
-        text-indigo-600 text-sm font-semibold
-        hover:bg-indigo-100
-        transition-all duration-300"
-                                        >
-                                            Message Partner
-                                        </button>
+                                            <div className="flex flex-col gap-3">
 
-                                        {/* REJECT */}
-                                        <button
-                                            onClick={handleReject}
-                                            disabled={partner.approved || actionLoading}
-                                            className={`w-full h-11 rounded-2xl text-sm font-semibold
-    transition-all duration-300 border
-    ${partner.approved
-                                                    ? "bg-red-100 border-red-200 text-red-300 cursor-not-allowed"
-                                                    : "bg-red-50 border-red-100 text-red-500 hover:bg-red-100"
-                                                }`}
-                                        >
-                                            {actionLoading
-                                                ? "Processing..."
-                                                : "Reject Application"}
-                                        </button>
-                                        {/* APPROVE */}
-                                        <button
-                                            onClick={handleApprove}
-                                            disabled={partner.approved || actionLoading}
-                                            className={`w-full h-11 rounded-2xl text-sm font-semibold
-    transition-all duration-300 border
-    ${partner.approved
-                                                    ? "bg-emerald-100 border-emerald-200 text-emerald-400 cursor-not-allowed"
-                                                    : "bg-emerald-50 border-emerald-100 text-emerald-600 hover:bg-emerald-100"
-                                                }`}
-                                        >
-                                            {actionLoading
-                                                ? "Processing..."
-                                                : partner.approved
-                                                    ? "Partner Approved"
-                                                    : "Approve Partner"}
-                                        </button>
+                                                <button
+                                                    onClick={handleReject}
+                                                    disabled={actionLoading}
+                                                    className="
+                w-full h-11 rounded-2xl
+                bg-red-50 border border-red-100
+                text-red-600 text-sm font-semibold
+                hover:bg-red-100
+                transition-all duration-300
+                "
+                                                >
+                                                    {actionLoading
+                                                        ? "Processing..."
+                                                        : "Reject Application"}
+                                                </button>
+
+                                                <button
+                                                    onClick={handleApprove}
+                                                    disabled={actionLoading}
+                                                    className="
+                w-full h-11 rounded-2xl
+                bg-emerald-50 border border-emerald-100
+                text-emerald-700 text-sm font-semibold
+                hover:bg-emerald-100
+                transition-all duration-300
+                "
+                                                >
+                                                    {actionLoading
+                                                        ? "Processing..."
+                                                        : "Approve Partner"}
+                                                </button>
+
+                                            </div>
+
+                                        ) : partner.approved ? (
+
+                                            <div
+                                                className="
+            bg-emerald-50
+            border border-emerald-200
+            rounded-2xl
+            p-4
+            text-center
+            "
+                                            >
+                                                <p className="font-bold text-emerald-700">
+                                                    ✅ Partner Approved
+                                                </p>
+
+                                                <p className="text-xs text-emerald-600 mt-1">
+                                                    This delivery partner has been verified and approved.
+                                                </p>
+                                            </div>
+
+                                        ) : (
+
+                                            <div
+                                                className="
+            bg-red-50
+            border border-red-200
+            rounded-2xl
+            p-4
+            text-center
+            "
+                                            >
+                                                <p className="font-bold text-red-700">
+                                                    ❌ Application Rejected
+                                                </p>
+
+                                                <p className="text-xs text-red-600 mt-1">
+                                                    This application has been rejected.
+                                                </p>
+                                            </div>
+
+                                        )}
 
                                     </div>
-
                                 </div>
 
                             </div>
@@ -333,65 +355,92 @@ const ManageDeliveryPartnerDetails = () => {
                                 {/* DOCUMENTS */}
                                 <div>
 
-                                    <h3 className="text-base font-bold text-slate-800 mb-3">
+                                    <h3 className="text-base font-bold text-slate-800 mb-4">
                                         Uploaded Documents
                                     </h3>
 
-                                    <div className="space-y-3">
+                                    <div className="grid md:grid-cols-3 gap-4">
 
                                         {[
-                                            "Driving License",
-                                            "Aadhaar Card",
-                                            "Vehicle RC",
+                                            {
+                                                name: "Driving License",
+                                                image: partner.drivingLicenseImage
+                                            },
+                                            {
+                                                name: "Aadhaar Card",
+                                                image: partner.aadhaarImage
+                                            },
+                                            {
+                                                name: "Vehicle RC",
+                                                image: partner.vehicleRcImage
+                                            }
                                         ].map((doc, index) => (
 
                                             <div
                                                 key={index}
-                                                className="flex items-center justify-between
-                                                p-3 rounded-xl border border-slate-100
-                                                bg-white shadow-sm hover:shadow-md
-                                                transition-all"
+                                                className="bg-white border border-slate-100 rounded-2xl
+                overflow-hidden shadow-sm hover:shadow-lg
+                transition-all duration-300"
                                             >
 
-                                                <div className="flex items-center gap-3">
+                                                {/* IMAGE */}
+                                                <div className="h-56 bg-slate-50 overflow-hidden">
 
-                                                    <div
-                                                        className="w-10 h-10 rounded-xl
-                                                        bg-indigo-50 flex items-center
-                                                        justify-center"
-                                                    >
+                                                    {doc.image ? (
 
-                                                        <span
-                                                            className="material-symbols-outlined
-                                                            text-indigo-600 text-[18px]"
-                                                        >
-                                                            description
-                                                        </span>
+                                                        <img
+                                                            src={doc.image}
+                                                            alt={doc.name}
+                                                            className="
+            w-full
+            h-full
+            object-cover
+            "
+                                                        />
 
-                                                    </div>
+                                                    ) : (
 
-                                                    <div>
+                                                        <div className="h-full flex items-center justify-center">
 
-                                                        <p className="font-medium text-sm">
-                                                            {doc}
-                                                        </p>
+                                                            <div className="text-center text-slate-400">
 
-                                                        <p className="text-[11px] text-emerald-600">
-                                                            Uploaded Successfully
-                                                        </p>
+                                                                <span className="material-symbols-outlined text-5xl">
+                                                                    image_not_supported
+                                                                </span>
 
-                                                    </div>
+                                                                <p className="text-xs mt-2">
+                                                                    Not Uploaded
+                                                                </p>
+
+                                                            </div>
+
+                                                        </div>
+
+                                                    )}
 
                                                 </div>
 
-                                                <button
-                                                    className="h-8 px-3 rounded-xl
-                                                    bg-slate-900 text-white
-                                                    text-[11px] font-semibold
-                                                    hover:bg-black transition-all"
-                                                >
-                                                    View
-                                                </button>
+                                                {/* DETAILS */}
+                                                <div className="p-4">
+
+                                                    <h4 className="font-semibold text-sm text-slate-800">
+                                                        {doc.name}
+                                                    </h4>
+
+                                                    <p
+                                                        className={`text-xs mt-1 ${doc.image
+                                                            ? "text-emerald-600"
+                                                            : "text-red-500"
+                                                            }`}
+                                                    >
+                                                        {doc.image
+                                                            ? "Uploaded Successfully"
+                                                            : "Document Missing"}
+                                                    </p>
+
+
+
+                                                </div>
 
                                             </div>
 

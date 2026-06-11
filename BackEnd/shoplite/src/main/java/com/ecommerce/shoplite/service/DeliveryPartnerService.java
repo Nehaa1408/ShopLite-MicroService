@@ -78,10 +78,13 @@ public class DeliveryPartnerService {
                 partner.setLicenseNumber(null);
 
                 partner.setAadhaarNumber(null);
-
                 partner.setProfileImage(null);
 
-                partner.setDocumentImage(null);
+                partner.setDrivingLicenseImage(null);
+
+                partner.setAadhaarImage(null);
+
+                partner.setVehicleRcImage(null);
 
                 // DEFAULT STATES
                 partner.setApproved(false);
@@ -236,8 +239,14 @@ public class DeliveryPartnerService {
                 partner.setProfileImage(
                                 request.getProfileImage());
 
-                partner.setDocumentImage(
-                                request.getDocumentImage());
+                partner.setDrivingLicenseImage(
+                                request.getDrivingLicenseImage());
+
+                partner.setAadhaarImage(
+                                request.getAadhaarImage());
+
+                partner.setVehicleRcImage(
+                                request.getVehicleRcImage());
 
                 // RESET REJECTION WHEN RESUBMITTED
                 partner.setRejected(false);

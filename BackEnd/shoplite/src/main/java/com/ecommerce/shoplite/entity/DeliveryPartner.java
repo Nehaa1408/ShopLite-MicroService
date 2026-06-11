@@ -31,7 +31,8 @@ public class DeliveryPartner {
     @Column(length = 20)
     private String phone;
 
-    // PROFILE IMAGE
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
     private String profileImage;
 
     // VEHICLE TYPE
@@ -50,15 +51,26 @@ public class DeliveryPartner {
     @Column(length = 20)
     private String aadhaarNumber;
 
-    // DOCUMENT IMAGE
-    private String documentImage;
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
+    private String drivingLicenseImage;
+
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
+    private String aadhaarImage;
+
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
+    private String vehicleRcImage;
 
     // CURRENTLY AVAILABLE?
     private boolean active = true;
 
     // ADMIN APPROVAL
     private boolean approved = false;
+
     private boolean rejected = false;
+
     // RATING
     private double rating = 5.0;
 

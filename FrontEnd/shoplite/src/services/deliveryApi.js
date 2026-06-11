@@ -14,7 +14,11 @@ deliveryAxios.interceptors.request.use(
         const adminToken =
             sessionStorage.getItem("adminToken");
 
-        let token = deliveryToken;
+        const userToken =
+            localStorage.getItem("token");
+
+        let token =
+            deliveryToken || userToken;
 
         // ADMIN DELIVERY MANAGEMENT APIs
         if (
@@ -27,7 +31,10 @@ deliveryAxios.interceptors.request.use(
                 !config.url?.includes("/profile")
             )
         ) {
-            token = adminToken || deliveryToken;
+            token =
+                adminToken ||
+                deliveryToken ||
+                userToken;
         }
 
         if (
