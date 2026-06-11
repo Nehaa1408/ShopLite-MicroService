@@ -6,7 +6,7 @@ services:
     container_name: shoplite-mysql
 
     environment:
-      MYSQL_ROOT_PASSWORD: Nehaa@1408
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: shoplite_db
 
     ports:
