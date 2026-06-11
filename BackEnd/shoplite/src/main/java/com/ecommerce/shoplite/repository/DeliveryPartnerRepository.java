@@ -20,4 +20,7 @@ public interface DeliveryPartnerRepository
 
     // PENDING PARTNERS
     List<DeliveryPartner> findByApprovedFalse();
+
+    List<DeliveryPartner> findByApprovedTrueAndActiveTrue();
+
 }

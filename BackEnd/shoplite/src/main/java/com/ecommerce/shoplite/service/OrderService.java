@@ -16,6 +16,7 @@ import com.ecommerce.shoplite.repository.OrderRepository;
 import com.ecommerce.shoplite.repository.ProductRepository;
 import com.ecommerce.shoplite.repository.UserRepository;
 import com.ecommerce.shoplite.repository.DeliveryOtpRepository;
+import com.ecommerce.shoplite.repository.DeliveryPartnerRepository;
 import com.ecommerce.shoplite.dto.DeliveryFeedbackRequest;
 import com.ecommerce.shoplite.repository.DeliveryFeedbackRepository;
 import org.springframework.data.domain.PageRequest;
@@ -45,8 +46,12 @@ public class OrderService {
 
         @Autowired
         private EmailService emailService;
+
         @Autowired
         private DeliveryFeedbackRepository deliveryFeedbackRepository;
+
+        @Autowired
+        private DeliveryPartnerRepository deliveryPartnerRepository;
 
         // ================= PLACE ORDER =================
         @Transactional
@@ -145,7 +150,6 @@ public class OrderService {
                                 paymentScreenshot);
 
                 // ================= PAYMENT STATUS =================
-
                 if (method == PaymentMethod.COD) {
 
                         transaction.setPaymentStatus(
@@ -164,6 +168,11 @@ public class OrderService {
                 savedOrder.setTransaction(transaction);
 
                 orderRepository.save(savedOrder);
+
+                // AUTO ASSIGN DELIVERY FOR COD
+                if (method == PaymentMethod.COD) {
+                        autoAssignDeliveryPartner(savedOrder);
+                }
 
                 // ================= CLEAR CART =================
 
@@ -193,8 +202,10 @@ public class OrderService {
                 // MARK SUCCESS
                 transaction.setPaymentStatus(
                                 PaymentStatus.SUCCESS);
-
                 transactionRepository.save(transaction);
+
+                // AUTO ASSIGN DELIVERY PARTNER
+                autoAssignDeliveryPartner(order);
 
                 // SEND PAYMENT SUCCESS EMAIL
                 emailService.sendPaymentSuccessEmail(
@@ -723,6 +734,32 @@ public class OrderService {
                                 reason);
 
                 return mapToResponse(order);
+        }
+
+        // ================= AUTO ASSIGN DELIVERY PARTNER =================
+        private void autoAssignDeliveryPartner(Order order) {
+
+                if (order.getDeliveryAgent() != null) {
+                        return;
+                }
+                List<DeliveryPartner> partners = deliveryPartnerRepository.findByApprovedTrueAndActiveTrue();
+
+                if (partners.isEmpty()) {
+                        return;
+                }
+
+                DeliveryPartner partner = partners.get(0);
+
+                order.setDeliveryAgent(partner.getUser());
+
+                order.setStatus(OrderStatus.PACKED);
+
+                emailService.sendOutForDeliveryEmail(
+                                order.getUser().getEmail(),
+                                order.getUser().getName(),
+                                partner.getUser().getName());
+
+                orderRepository.save(order);
         }
 
         // ================= DTO MAPPER =================
