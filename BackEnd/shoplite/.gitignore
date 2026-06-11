@@ -54,3 +54,5 @@ application.yml
 # OS files
 .DS_Store
 Thumbs.db
+
+*.sql
