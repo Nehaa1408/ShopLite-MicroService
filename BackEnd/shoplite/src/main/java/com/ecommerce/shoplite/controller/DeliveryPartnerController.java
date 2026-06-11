@@ -30,6 +30,17 @@ public class DeliveryPartnerController {
                 return ResponseEntity.ok(response);
         }
 
+        @PostMapping("/apply")
+        public ResponseEntity<?> applyForDeliveryPartner(
+                        Authentication authentication) {
+
+                User user = (User) authentication.getPrincipal();
+
+                DeliveryPartner partner = deliveryPartnerService.createDeliveryPartner(user);
+
+                return ResponseEntity.ok(partner);
+        }
+
         // ================= GET PROFILE =================
         @GetMapping("/profile")
         public ResponseEntity<?> getProfile(
@@ -149,4 +160,5 @@ public class DeliveryPartnerController {
                 return ResponseEntity.ok(
                                 deliveryPartnerService.getPendingPartners());
         }
+
 }

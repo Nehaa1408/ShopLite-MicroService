@@ -40,6 +40,9 @@ public class SecurityConfig {
                                                 .requestMatchers("/api/delivery/register")
                                                 .permitAll()
 
+                                                .requestMatchers("/api/delivery/apply")
+                                                .authenticated()
+
                                                 .requestMatchers(
                                                                 HttpMethod.GET,
                                                                 "/api/products/**")
@@ -53,7 +56,7 @@ public class SecurityConfig {
 
                                                 .requestMatchers("/uploads/**")
                                                 .permitAll()
-                                                
+
                                                 // ================= ADMIN =================
                                                 .requestMatchers("/api/orders/admin/**")
                                                 .hasAuthority("ROLE_ADMIN")
@@ -99,12 +102,11 @@ public class SecurityConfig {
 
                                                 .requestMatchers("/api/returns/*/verify-pickup-otp")
                                                 .hasAuthority("ROLE_DELIVERY")
-
                                                 .requestMatchers("/api/delivery/profile")
-                                                .hasAuthority("ROLE_DELIVERY")
+                                                .authenticated()
 
                                                 .requestMatchers("/api/delivery/profile/update")
-                                                .hasAuthority("ROLE_DELIVERY")
+                                                .authenticated()
 
                                                 // ================= USER =================
                                                 .requestMatchers("/api/cart/**")
