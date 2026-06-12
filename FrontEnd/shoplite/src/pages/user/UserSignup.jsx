@@ -65,7 +65,7 @@ const UserSignup = () => {
 
       // SEND SIGNUP OTP
       await axios.post(
-        "http://localhost:8080/api/auth/send-signup-otp",
+        `${import.meta.env.VITE_API_URL}/api/auth/send-signup-otp`,
         {
           name,
           email,
@@ -115,7 +115,7 @@ const UserSignup = () => {
 
       // VERIFY OTP
       await axios.post(
-        "http://localhost:8080/api/auth/verify-signup-otp",
+        `${import.meta.env.VITE_API_URL}/api/auth/verify-signup-otp`,
         {
           email,
           otp,
@@ -253,7 +253,7 @@ const UserSignup = () => {
             onSuccess={async (credentialResponse) => {
               try {
                 const res = await axios.post(
-                  "http://localhost:8080/api/auth/google",
+                  `${import.meta.env.VITE_API_URL}/api/auth/google`,
                   {
                     token: credentialResponse.credential,
                   }
@@ -561,7 +561,7 @@ const UserSignup = () => {
 
               <button
                 disabled={!canResend || loading}
-                onClick={handleSignup}
+                onClick={() => handleSignup()}
                 className={`text-sm font-semibold
 
     transition-all

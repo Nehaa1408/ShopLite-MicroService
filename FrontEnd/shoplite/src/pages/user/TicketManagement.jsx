@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { useLocation, useNavigate } from "react-router-dom";
+import api from "../../api/axios";
 
 const TicketManagement = () => {
+  const location = useLocation();
   const navigate = useNavigate();
   const [successMsg, setSuccessMsg] = useState("");
 
@@ -18,7 +19,7 @@ const TicketManagement = () => {
       const token = localStorage.getItem("token");
       if (!token) return;
 
-      const res = await axios.get("http://localhost:8080/api/tickets", {
+      const res = await api.get("/api/tickets", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -62,8 +63,8 @@ const TicketManagement = () => {
         return;
       }
 
-      const res = await axios.post(
-        "http://localhost:8080/api/tickets",
+      const res = await api.post(
+        "/api/tickets",
         {
           subject: form.subject,
           message: form.description,

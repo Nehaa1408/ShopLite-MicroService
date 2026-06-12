@@ -39,7 +39,7 @@ const OrderHistory = () => {
 
         // ORDERS
         const res = await axios.get(
-          "http://localhost:8080/api/orders",
+          `${import.meta.env.VITE_API_URL}/api/orders`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -51,7 +51,7 @@ const OrderHistory = () => {
 
         // RETURNS
         const returnRes = await axios.get(
-          "http://localhost:8080/api/returns/my",
+          `${import.meta.env.VITE_API_URL}/api/returns/my`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -213,7 +213,7 @@ const OrderHistory = () => {
           : cancelReason;
 
       await axios.put(
-        `http://localhost:8080/api/orders/${cancelOrderId}/cancel?reason=${encodeURIComponent(finalReason)}`,
+        `${import.meta.env.VITE_API_URL}/api/orders/${cancelOrderId}/cancel?reason=${encodeURIComponent(finalReason)}`,
         {},
         {
           headers: {
@@ -224,7 +224,7 @@ const OrderHistory = () => {
 
       // REFRESH ORDERS
       const res = await axios.get(
-        "http://localhost:8080/api/orders",
+        `${import.meta.env.VITE_API_URL}/api/orders`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -265,7 +265,7 @@ const OrderHistory = () => {
       const token = localStorage.getItem("token");
 
       await axios.post(
-        "http://localhost:8080/api/delivery-feedback/add",
+        `${import.meta.env.VITE_API_URL}/api/delivery-feedback/add`,
         {
           orderId,
           rating: ratings[orderId],
@@ -280,7 +280,7 @@ const OrderHistory = () => {
 
       // REFRESH ORDERS
       const res = await axios.get(
-        "http://localhost:8080/api/orders",
+        `${import.meta.env.VITE_API_URL}/api/orders`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -332,7 +332,7 @@ const OrderHistory = () => {
           .join(",");
 
       await axios.post(
-        "http://localhost:8080/api/returns/request",
+        `${import.meta.env.VITE_API_URL}/api/returns/request`,
         {
           orderId: returnOrderId,
           returnReason: finalReason,
@@ -347,7 +347,7 @@ const OrderHistory = () => {
 
       // REFRESH RETURNS
       const returnRes = await axios.get(
-        "http://localhost:8080/api/returns/my",
+        `${import.meta.env.VITE_API_URL}/api/returns/my`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

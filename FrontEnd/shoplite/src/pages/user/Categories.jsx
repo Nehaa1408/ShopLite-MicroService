@@ -12,8 +12,8 @@ const Categories = () => {
     const fetchProducts = async () => {
       try {
         const url = category
-          ? `http://localhost:8080/api/products?category=${category}`
-          : `http://localhost:8080/api/products`;
+          ? `${import.meta.env.VITE_API_URL}/api/products?category=${category}`
+          : `${import.meta.env.VITE_API_URL}/api/products`;
 
         const res = await axios.get(url);
         setProducts(res.data.content);
@@ -51,13 +51,13 @@ const Categories = () => {
 
           {/* NAV ITEMS */}
           <div className="hidden lg:flex items-center gap-8 text-sm font-medium text-gray-600">
-             {[
-                { name: "Home", path: "/" },
-                { name: "Categories", path: "/categories" },
-                { name: "Brands", path: "/brand/aurel" },
-                { name: "Deals", path: "/top-deals" }
-    
-              ].map((item, i) => {
+            {[
+              { name: "Home", path: "/" },
+              { name: "Categories", path: "/categories" },
+              { name: "Brands", path: "/brand/aurel" },
+              { name: "Deals", path: "/top-deals" }
+
+            ].map((item, i) => {
               const isActive = location.pathname === item.path;
 
               return (
@@ -88,7 +88,7 @@ const Categories = () => {
         {/* HEADER */}
         <div className="mb-16">
           <p className="text-xs font-bold text-primary mb-4">
-            COLLECTIONS 
+            COLLECTIONS
           </p>
 
           <h1 className="text-5xl md:text-6xl font-black mb-6">

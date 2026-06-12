@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useCart } from "../../context/CartContext";
 import { useNavigate } from "react-router-dom";
-
+import axios from "axios";
 
 const ProductDetails = () => {
   const images = [
@@ -157,7 +157,7 @@ const ProductDetails = () => {
                     if (!token) return;
 
                     await axios.post(
-                      "http://localhost:8080/cart/add",
+                      `${import.meta.env.VITE_API_URL}/api/cart/add`,
                       null,
                       {
                         params: {
@@ -244,7 +244,7 @@ const ProductDetails = () => {
                   {item.icon}
                 </span>
                 <h4 className="font-bold">{item.title}</h4>
-                
+
               </div>
             ))}
           </div>

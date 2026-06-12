@@ -76,7 +76,7 @@ const UserLogin = () => {
       setLoading(true);
 
       const res = await axios.post(
-        "http://localhost:8080/api/auth/forgot-password/send-otp",
+        `${import.meta.env.VITE_API_URL}/api/auth/forgot-password/send-otp`,
         {
           email: forgotEmail,
         }
@@ -118,7 +118,7 @@ const UserLogin = () => {
       setLoading(true);
 
       const res = await axios.post(
-        "http://localhost:8080/api/auth/forgot-password/reset",
+        `${import.meta.env.VITE_API_URL}/api/auth/forgot-password/reset`,
         {
           email: forgotEmail,
           otp: forgotOtp,
@@ -385,7 +385,7 @@ const UserLogin = () => {
             onSuccess={async (credentialResponse) => {
               try {
                 const res = await axios.post(
-                  "http://localhost:8080/api/auth/google",
+                 `${import.meta.env.VITE_API_URL}/api/auth/google`,
                   {
                     token: credentialResponse.credential,
                   }

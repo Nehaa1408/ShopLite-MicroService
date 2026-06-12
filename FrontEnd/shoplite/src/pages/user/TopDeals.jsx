@@ -1,9 +1,10 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
 import axios from "axios";
 
 const TopDeals = () => {
+  const location = useLocation();
   const navigate = useNavigate();
   const { addToCart, cart } = useCart();
   const [deals, setDeals] = React.useState([]);
@@ -25,7 +26,7 @@ const TopDeals = () => {
     const fetchDeals = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:8080/api/products?page=0&size=20"
+          `${import.meta.env.VITE_API_URL}/api/products?page=0&size=20`
         );
 
         const dealNames = [
@@ -35,8 +36,8 @@ const TopDeals = () => {
           "omnipod speaker"
         ];
 
-        const filtered = res.data.content.filter(p =>
-          dealNames.includes(p.name.toLowerCase().trim())
+        const filtered = res.data.content.filter(
+          p => p.name && dealNames.includes(p.name.toLowerCase().trim())
         );
 
         setDeals(filtered);
@@ -194,10 +195,11 @@ const TopDeals = () => {
 
               <img
                 src={
-                  item.imageUrl.startsWith("http")
+                  item.imageUrl?.startsWith("http")
                     ? item.imageUrl
-                    : `/products/${item.imageUrl}`
+                    : `${import.meta.env.VITE_API_URL}/products/${item.imageUrl}`
                 }
+
                 alt={item.name}
                 className="w-full h-40 object-cover mb-3"
               />

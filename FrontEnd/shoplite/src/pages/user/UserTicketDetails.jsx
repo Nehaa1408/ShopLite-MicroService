@@ -16,7 +16,7 @@ const UserTicketDetails = () => {
             const token = localStorage.getItem("token");
 
             const res = await axios.get(
-                `http://localhost:8080/api/tickets/${id}/messages`,
+                `${import.meta.env.VITE_API_URL}/api/tickets/${id}/messages`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -43,7 +43,7 @@ const UserTicketDetails = () => {
             const token = localStorage.getItem("token");
 
             await axios.post(
-                `http://localhost:8080/api/tickets/${id}/messages`,
+                `${import.meta.env.VITE_API_URL}/api/tickets/${id}/messages`,
                 null,
                 {
                     params: { content: input },
@@ -76,10 +76,10 @@ const UserTicketDetails = () => {
             <div className="space-y-4 max-h-[400px] overflow-y-auto">
                 {Array.isArray(messages) && messages.map((msg) => (
                     <div
-                        key={msg.id}
+                        key={msg.id || index}
                         className={`p-3 rounded-lg ${msg.sender === "USER"
-                                ? "bg-blue-100 text-right"
-                                : "bg-gray-100"
+                            ? "bg-blue-100 text-right"
+                            : "bg-gray-100"
                             }`}
                     >
                         <p>{msg.content}</p>

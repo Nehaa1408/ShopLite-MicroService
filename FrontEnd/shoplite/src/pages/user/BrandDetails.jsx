@@ -14,7 +14,7 @@ const BrandDetails = () => {
         const fetchProducts = async () => {
             try {
                 const res = await axios.get(
-                    `http://localhost:8080/api/products?brand=${brandName.toUpperCase()}&size=10`
+                    `${import.meta.env.VITE_API_URL}/api/products?brand=${brandName.toUpperCase()}&size=10`
                 );
 
                 console.log("API FULL RESPONSE:", res.data);
@@ -73,7 +73,7 @@ const BrandDetails = () => {
         const fetchProducts = async () => {
             try {
                 const res = await axios.get(
-                    `http://localhost:8080/api/products?brand=${brandName.toUpperCase()}&size=10`
+                    `${import.meta.env.VITE_API_URL}/api/products?brand=${brandName.toUpperCase()}&size=10`
                 );
 
                 console.log("API FULL RESPONSE:", res.data);

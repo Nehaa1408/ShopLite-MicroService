@@ -301,7 +301,7 @@ const Checkout = () => {
                                 formData.append("file", file);
 
                                 const res = await axios.post(
-                                  "http://localhost:8080/api/upload/payment-screenshot",
+                                  `${import.meta.env.VITE_API_URL}/api/upload/payment-screenshot`,
                                   formData,
                                   {
                                     headers: {
@@ -512,7 +512,7 @@ const Checkout = () => {
                       };
 
                       const res = await axios.post(
-                        "http://localhost:8080/api/orders",
+                        `${import.meta.env.VITE_API_URL}/api/orders`,
                         payload,
                         {
                           headers: {

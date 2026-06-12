@@ -12,16 +12,12 @@ const Active = () => {
             const res = await getDeliveryOrders();
             console.log("ACTIVE RESPONSE:", res);
 
-            
-            const active = orders.filter(
 
-                o =>
-
+            const activeOrders = res.filter(
+                (o) =>
                     o.status === "OUT_FOR_DELIVERY" ||
-
                     o.status === "PICKUP_PARTNER_ASSIGNED"
-
-            ).length;
+            );
 
             setOrders(activeOrders);
         } catch (err) {

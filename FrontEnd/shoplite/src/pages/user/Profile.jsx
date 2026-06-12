@@ -18,7 +18,7 @@ const Profile = () => {
     }
 
     axios.get(
-      "http://localhost:8080/api/users/profile",
+      `${import.meta.env.VITE_API_URL}/api/users/profile`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -58,7 +58,7 @@ const Profile = () => {
       const token = localStorage.getItem("token");
 
       await axios.post(
-        "http://localhost:8080/api/delivery/apply",
+        `${import.meta.env.VITE_API_URL}/api/delivery/apply`,
         {},
         {
           headers: {

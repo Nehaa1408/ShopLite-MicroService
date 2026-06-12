@@ -41,7 +41,7 @@ const DeliverySignup = () => {
         try {
 
             const response = await axios.post(
-                "http://localhost:8080/api/delivery/register",
+                `${import.meta.env.VITE_API_URL}/api/delivery/register`,
                 {
                     name: form.name,
                     phone: form.phone,

@@ -7,7 +7,7 @@ export const useCart = () => useContext(CartContext);
 
 const getToken = () => localStorage.getItem("token");
 
-const BASE = "http://localhost:8080/api/cart";
+const BASE = `${import.meta.env.VITE_API_URL}/api/cart`;
 
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
