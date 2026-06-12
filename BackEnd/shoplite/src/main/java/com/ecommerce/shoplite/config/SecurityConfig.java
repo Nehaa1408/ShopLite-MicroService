@@ -160,7 +160,7 @@ public class SecurityConfig {
                 config.setAllowedHeaders(
                                 java.util.List.of("*"));
 
-                config.setAllowCredentials(true);
+                config.setAllowCredentials(false);
 
                 org.springframework.web.cors.UrlBasedCorsConfigurationSource source = new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
 
