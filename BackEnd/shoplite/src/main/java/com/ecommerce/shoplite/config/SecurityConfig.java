@@ -152,7 +152,8 @@ public class SecurityConfig {
                                 java.util.List.of(
                                                 "http://13.204.61.123",
                                                 "http://localhost:5173",
-                                                "http://localhost:3000"));
+                                                "http://localhost:3000",
+                                                "http://shoplite.webhop.me"));
 
                 config.setAllowedMethods(
                                 java.util.List.of(
