@@ -144,6 +144,8 @@ public class SecurityConfig {
         @Bean
         public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
 
+                System.out.println("===== CORS CONFIG LOADED =====");
+
                 org.springframework.web.cors.CorsConfiguration config = new org.springframework.web.cors.CorsConfiguration();
 
                 config.setAllowedOriginPatterns(
