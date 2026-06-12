@@ -146,7 +146,8 @@ public class SecurityConfig {
                 config.setAllowedOrigins(
                                 java.util.List.of(
                                                 "http://localhost:5173",
-                                                "http://localhost:3000"));
+                                                "http://localhost:3000",
+                                                "http://13.204.61.123"));
 
                 config.setAllowedMethods(
                                 java.util.List.of(
