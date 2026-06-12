@@ -148,8 +148,11 @@ public class SecurityConfig {
 
                 org.springframework.web.cors.CorsConfiguration config = new org.springframework.web.cors.CorsConfiguration();
 
-                config.setAllowedOriginPatterns(
-                                java.util.List.of("*"));
+                config.setAllowedOrigins(
+                                java.util.List.of(
+                                                "http://13.204.61.123",
+                                                "http://localhost:5173",
+                                                "http://localhost:3000"));
 
                 config.setAllowedMethods(
                                 java.util.List.of(
