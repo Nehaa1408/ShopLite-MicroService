@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.*;
 
 import com.ecommerce.shoplite.entity.Product;
 import com.ecommerce.shoplite.dto.OrderResponse;
-import com.ecommerce.shoplite.entity.User;
 import com.ecommerce.shoplite.service.OrderService;
+import com.ecommerce.user_service.entity.User;
 import com.ecommerce.shoplite.dto.VerifyOtpRequest;
 import com.ecommerce.shoplite.dto.PlaceOrderRequest;
 import com.ecommerce.shoplite.dto.TransactionResponse;

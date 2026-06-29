@@ -1,7 +1,7 @@
-package com.ecommerce.shoplite.dto;
+package com.ecommerce.user_service.dto;
 
-import com.ecommerce.shoplite.entity.Provider;
-import com.ecommerce.shoplite.entity.Role;
+import com.ecommerce.user_service.entity.Provider;
+import com.ecommerce.user_service.entity.Role;
 
 import lombok.Getter;
 import lombok.Setter;

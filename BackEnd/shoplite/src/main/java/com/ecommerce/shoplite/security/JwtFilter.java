@@ -12,8 +12,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.ecommerce.shoplite.entity.User;
-import com.ecommerce.shoplite.repository.UserRepository;
+import com.ecommerce.user_service.entity.User;
+import com.ecommerce.user_service.repository.UserRepository;
+import com.ecommerce.user_service.security.JwtUtil;
 
 import java.io.IOException;
 import java.util.List;

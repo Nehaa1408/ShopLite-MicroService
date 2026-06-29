@@ -9,8 +9,8 @@ import com.ecommerce.shoplite.dto.DeliveryRegisterRequest;
 import com.ecommerce.shoplite.dto.DeliveryRegisterResponse;
 import com.ecommerce.shoplite.dto.DeliveryVerificationRequest;
 import com.ecommerce.shoplite.entity.DeliveryPartner;
-import com.ecommerce.shoplite.entity.User;
 import com.ecommerce.shoplite.service.DeliveryPartnerService;
+import com.ecommerce.user_service.entity.User;
 
 @RestController
 @RequestMapping("/api/delivery")

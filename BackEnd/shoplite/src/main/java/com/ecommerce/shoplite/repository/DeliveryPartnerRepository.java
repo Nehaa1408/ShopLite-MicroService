@@ -6,7 +6,7 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.ecommerce.shoplite.entity.DeliveryPartner;
-import com.ecommerce.shoplite.entity.User;
+import com.ecommerce.user_service.entity.User;
 
 public interface DeliveryPartnerRepository
         extends JpaRepository<DeliveryPartner, Long> {

@@ -13,9 +13,9 @@ import com.ecommerce.shoplite.dto.MessageResponse;
 import com.ecommerce.shoplite.dto.TicketResponse;
 import com.ecommerce.shoplite.entity.Message;
 import com.ecommerce.shoplite.entity.Ticket;
-import com.ecommerce.shoplite.entity.User;
 import com.ecommerce.shoplite.repository.MessageRepository;
 import com.ecommerce.shoplite.service.TicketService;
+import com.ecommerce.user_service.entity.User;
 
 @RestController
 @RequestMapping("/api/tickets")

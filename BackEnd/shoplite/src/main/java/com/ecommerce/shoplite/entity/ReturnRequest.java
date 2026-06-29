@@ -2,6 +2,8 @@ package com.ecommerce.shoplite.entity;
 
 import java.time.LocalDateTime;
 
+import com.ecommerce.user_service.entity.User;
+
 import jakarta.persistence.*;
 import lombok.*;
 

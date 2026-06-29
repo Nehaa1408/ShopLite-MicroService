@@ -1,10 +1,10 @@
-package com.ecommerce.shoplite.dto;
+package com.ecommerce.user_service.dto;
 
-import lombok.Data;
+import com.ecommerce.user_service.entity.Role;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-
-import com.ecommerce.shoplite.entity.Role;
+import lombok.Data;
 
 @Data
 public class RegisterRequest {

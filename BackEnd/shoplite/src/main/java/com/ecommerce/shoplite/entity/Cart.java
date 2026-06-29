@@ -1,5 +1,6 @@
 package com.ecommerce.shoplite.entity;
 
+import com.ecommerce.user_service.entity.User;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.*;

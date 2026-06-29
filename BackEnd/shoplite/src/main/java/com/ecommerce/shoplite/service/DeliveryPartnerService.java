@@ -10,12 +10,12 @@ import com.ecommerce.shoplite.dto.DeliveryRegisterRequest;
 import com.ecommerce.shoplite.dto.DeliveryRegisterResponse;
 import com.ecommerce.shoplite.dto.DeliveryVerificationRequest;
 import com.ecommerce.shoplite.entity.DeliveryPartner;
-import com.ecommerce.shoplite.entity.Provider;
-import com.ecommerce.shoplite.entity.Role;
-import com.ecommerce.shoplite.entity.User;
 import com.ecommerce.shoplite.repository.DeliveryPartnerRepository;
-import com.ecommerce.shoplite.repository.UserRepository;
-import com.ecommerce.shoplite.security.JwtUtil;
+import com.ecommerce.user_service.entity.Provider;
+import com.ecommerce.user_service.entity.Role;
+import com.ecommerce.user_service.entity.User;
+import com.ecommerce.user_service.repository.UserRepository;
+import com.ecommerce.user_service.security.JwtUtil;
 
 @Service
 public class DeliveryPartnerService {

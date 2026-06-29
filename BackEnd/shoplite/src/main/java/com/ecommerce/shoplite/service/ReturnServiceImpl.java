@@ -11,7 +11,9 @@ import com.ecommerce.shoplite.dto.ReturnRequestResponse;
 import com.ecommerce.shoplite.entity.*;
 import com.ecommerce.shoplite.repository.OrderRepository;
 import com.ecommerce.shoplite.repository.ReturnRequestRepository;
-import com.ecommerce.shoplite.repository.UserRepository;
+import com.ecommerce.user_service.entity.Role;
+import com.ecommerce.user_service.entity.User;
+import com.ecommerce.user_service.repository.UserRepository;
 import com.ecommerce.shoplite.dto.OrderItemResponse;
 
 @Service

@@ -2,6 +2,8 @@ package com.ecommerce.shoplite.entity;
 
 import java.util.*;
 
+import com.ecommerce.user_service.entity.User;
+
 import jakarta.persistence.*;
 
 import lombok.*;

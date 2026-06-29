@@ -1,4 +1,4 @@
-package com.ecommerce.shoplite.entity;
+package com.ecommerce.user_service.entity;
 
 public enum Provider {
 

@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.ecommerce.shoplite.entity.Cart;
 import com.ecommerce.shoplite.entity.Product;
-import com.ecommerce.shoplite.entity.User;
+import com.ecommerce.user_service.entity.User;
 
 public interface CartRepository extends JpaRepository<Cart, Long> {
 

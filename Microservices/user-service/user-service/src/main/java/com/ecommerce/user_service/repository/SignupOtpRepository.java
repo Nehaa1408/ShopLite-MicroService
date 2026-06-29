@@ -1,10 +1,10 @@
-package com.ecommerce.shoplite.repository;
+package com.ecommerce.user_service.repository;
 
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.ecommerce.shoplite.entity.SignupOtp;
+import com.ecommerce.user_service.entity.SignupOtp;
 
 public interface SignupOtpRepository
         extends JpaRepository<SignupOtp, Long> {

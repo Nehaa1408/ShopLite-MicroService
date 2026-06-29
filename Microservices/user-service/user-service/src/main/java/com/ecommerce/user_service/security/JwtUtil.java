@@ -1,4 +1,4 @@
-package com.ecommerce.shoplite.security;
+package com.ecommerce.user_service.security;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;

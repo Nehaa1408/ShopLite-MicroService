@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.time.LocalDate;
 
+import com.ecommerce.user_service.entity.User;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity

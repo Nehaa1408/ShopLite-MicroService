@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.*;
 
 import com.ecommerce.shoplite.dto.CartRequest;
 import com.ecommerce.shoplite.dto.CartResponse;
-import com.ecommerce.shoplite.entity.User;
 import com.ecommerce.shoplite.service.CartService;
+import com.ecommerce.user_service.entity.User;
 
 import jakarta.validation.Valid;
 

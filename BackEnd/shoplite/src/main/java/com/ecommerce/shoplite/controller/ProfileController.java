@@ -4,7 +4,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import com.ecommerce.shoplite.entity.User;
+import com.ecommerce.user_service.entity.User;
 
 @RestController
 @RequestMapping("/api/users")

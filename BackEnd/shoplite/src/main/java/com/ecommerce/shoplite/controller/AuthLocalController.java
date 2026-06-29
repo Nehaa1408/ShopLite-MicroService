@@ -6,9 +6,10 @@ import org.springframework.web.bind.annotation.*;
 
 import com.ecommerce.shoplite.dto.LoginRequest;
 import com.ecommerce.shoplite.dto.LoginResponse;
-import com.ecommerce.shoplite.dto.RegisterRequest;
-import com.ecommerce.shoplite.dto.RegisterResponse;
 import com.ecommerce.shoplite.service.UserService;
+import com.ecommerce.user_service.dto.RegisterRequest;
+import com.ecommerce.user_service.dto.RegisterResponse;
+
 import java.util.Map;
 import jakarta.validation.Valid;
 

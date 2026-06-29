@@ -6,6 +6,8 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.ecommerce.user_service.entity.User;
+
 @Entity
 @Table(name = "orders")
 @Getter

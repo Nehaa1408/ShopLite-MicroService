@@ -9,8 +9,8 @@ import org.springframework.stereotype.Service;
 
 import com.ecommerce.shoplite.entity.Message;
 import com.ecommerce.shoplite.entity.Ticket;
-import com.ecommerce.shoplite.entity.User;
 import com.ecommerce.shoplite.repository.TicketRepository;
+import com.ecommerce.user_service.entity.User;
 
 @Service
 public class TicketService {

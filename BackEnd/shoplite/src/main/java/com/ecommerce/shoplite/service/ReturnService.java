@@ -4,7 +4,7 @@ import java.util.List;
 
 import com.ecommerce.shoplite.dto.CreateReturnRequestDTO;
 import com.ecommerce.shoplite.dto.ReturnRequestResponse;
-import com.ecommerce.shoplite.entity.User;
+import com.ecommerce.user_service.entity.User;
 
 public interface ReturnService {
 

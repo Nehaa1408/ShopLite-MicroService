@@ -10,9 +10,9 @@ import org.springframework.web.bind.annotation.*;
 import com.ecommerce.shoplite.dto.CreateReturnRequestDTO;
 import com.ecommerce.shoplite.dto.OtpVerificationRequest;
 import com.ecommerce.shoplite.dto.ReturnRequestResponse;
-import com.ecommerce.shoplite.entity.Role;
-import com.ecommerce.shoplite.entity.User;
 import com.ecommerce.shoplite.service.ReturnService;
+import com.ecommerce.user_service.entity.Role;
+import com.ecommerce.user_service.entity.User;
 
 @RestController
 @RequestMapping("/api/returns")

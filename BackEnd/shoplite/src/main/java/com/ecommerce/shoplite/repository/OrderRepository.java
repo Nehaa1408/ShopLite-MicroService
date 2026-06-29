@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import com.ecommerce.shoplite.entity.Order;
 import com.ecommerce.shoplite.entity.OrderStatus;
 import com.ecommerce.shoplite.entity.Product;
-import com.ecommerce.shoplite.entity.User;
+import com.ecommerce.user_service.entity.User;
 
 import java.util.Optional;
 import java.util.List;

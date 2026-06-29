@@ -9,9 +9,9 @@ import org.springframework.stereotype.Service;
 import com.ecommerce.shoplite.dto.CartResponse;
 import com.ecommerce.shoplite.entity.Cart;
 import com.ecommerce.shoplite.entity.Product;
-import com.ecommerce.shoplite.entity.User;
 import com.ecommerce.shoplite.repository.CartRepository;
 import com.ecommerce.shoplite.repository.ProductRepository;
+import com.ecommerce.user_service.entity.User;
 
 @Service
 public class CartService {

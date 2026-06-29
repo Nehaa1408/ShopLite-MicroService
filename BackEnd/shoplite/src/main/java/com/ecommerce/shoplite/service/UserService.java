@@ -7,14 +7,20 @@ import org.springframework.stereotype.Service;
 import com.ecommerce.shoplite.dto.*;
 import com.ecommerce.shoplite.entity.*;
 import com.ecommerce.shoplite.repository.DeliveryPartnerRepository;
-import com.ecommerce.shoplite.repository.UserRepository;
-import com.ecommerce.shoplite.security.JwtUtil;
+import com.ecommerce.user_service.dto.RegisterRequest;
+import com.ecommerce.user_service.dto.RegisterResponse;
+import com.ecommerce.user_service.entity.ForgotPasswordOtp;
+import com.ecommerce.user_service.entity.Provider;
+import com.ecommerce.user_service.entity.Role;
+import com.ecommerce.user_service.entity.SignupOtp;
+import com.ecommerce.user_service.entity.User;
+import com.ecommerce.user_service.repository.ForgotPasswordOtpRepository;
+import com.ecommerce.user_service.repository.SignupOtpRepository;
+import com.ecommerce.user_service.repository.UserRepository;
+import com.ecommerce.user_service.security.JwtUtil;
+
 import java.time.LocalDateTime;
 import java.util.Random;
-
-import com.ecommerce.shoplite.repository.ForgotPasswordOtpRepository;
-
-import com.ecommerce.shoplite.repository.SignupOtpRepository;
 import java.util.Collections;
 
 import com.google.api.client.googleapis.auth.oauth2.*;

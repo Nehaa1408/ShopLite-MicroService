@@ -5,6 +5,8 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
+import com.ecommerce.user_service.entity.User;
+
 @Entity
 @Table(name = "delivery_feedback")
 @Getter
