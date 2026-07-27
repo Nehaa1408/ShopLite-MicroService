@@ -1,4 +1,4 @@
-package com.ecommerce.shoplite.dto;
+package com.ecommerce.user_service.dto;
 
 import lombok.Data;
 import lombok.Getter;
