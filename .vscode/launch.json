@@ -2,6 +2,12 @@
     "configurations": [
         {
             "type": "java",
+            "name": "ProductServiceApplication",
+            "request": "launch",
+            "mainClass": "com.ecommerce.product_service.ProductServiceApplication"
+        },
+        {
+            "type": "java",
             "name": "UserServiceApplication",
             "request": "launch",
             "mainClass": "com.ecommerce.user_service.UserServiceApplication",
