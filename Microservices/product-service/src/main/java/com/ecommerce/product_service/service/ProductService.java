@@ -73,22 +73,24 @@ public class ProductService {
     }
 
     // GET HOME PRODUCTS
-    public Page<Product> getHomeProducts(int page, int size) {
+    public Page<ProductResponse> getHomeProducts(int page, int size) {
 
         PageRequest pageable = PageRequest.of(page, size);
 
-        return productRepository.findByTypeAndActiveTrue(HOME, pageable);
+        return productRepository.findByTypeAndActiveTrue(HOME, pageable)
+                .map(productMapper::toResponse);
     }
 
     // GET BRAND PRODUCTS
-    public Page<Product> getBrandProducts(String brand, int page, int size) {
+    public Page<ProductResponse> getBrandProducts(String brand, int page, int size) {
 
         PageRequest pageable = PageRequest.of(page, size);
 
         return productRepository.findByBrandAndTypeAndActiveTrue(
                 brand,
                 BRAND,
-                pageable);
+                pageable)
+                .map(productMapper::toResponse);
     }
 
     // GET PRODUCT BY ID
