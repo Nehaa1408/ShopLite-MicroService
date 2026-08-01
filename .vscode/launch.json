@@ -2,6 +2,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "CartServiceApplication",
+            "request": "launch",
+            "mainClass": "com.ecommerce.cart_service.CartServiceApplication",
+            "projectName": "cart-service"
+        },
+        {
+            "type": "java",
             "name": "ApiGatewayApplication",
             "request": "launch",
             "mainClass": "com.ecommerce.api_gateway.ApiGatewayApplication",
