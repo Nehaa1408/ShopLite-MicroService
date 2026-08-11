@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.ecommerce.cart_service.client.ProductClient;
 import com.ecommerce.cart_service.dto.CartRequest;
@@ -138,8 +139,8 @@ public class CartServiceImpl implements CartService {
 
     // ================= CLEAR CART =================
     @Override
+    @Transactional
     public void clearCart(Long userId) {
-
         cartRepository.deleteByUserId(userId);
     }
 
