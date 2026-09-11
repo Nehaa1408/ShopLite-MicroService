@@ -1,0 +1,27 @@
+package com.ecommerce.delivery_service.dto;
+
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+public class DeliveryVerificationRequest {
+
+    private String phone;
+
+    private String vehicleType;
+
+    private String vehicleNumber;
+
+    private String licenseNumber;
+
+    private String aadhaarNumber;
+
+    private String profileImage;
+
+    private String drivingLicenseImage;
+
+    private String aadhaarImage;
+
+    private String vehicleRcImage;
+}

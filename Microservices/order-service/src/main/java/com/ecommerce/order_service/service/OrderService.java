@@ -32,18 +32,14 @@ public class OrderService {
 
         private final ProductClient productClient;
 
-        // =====================================================
         // PLACE ORDER
-        // =====================================================
 
         @Transactional
         public OrderResponse placeOrder(
                         Long userId,
                         PlaceOrderRequest request) {
 
-                // -------------------------------------------------
                 // 1. GET CART
-                // -------------------------------------------------
 
                 List<CartItemResponse> cartItems = cartClient.getCart(userId);
 
@@ -51,9 +47,7 @@ public class OrderService {
                         throw new RuntimeException("Cart is empty");
                 }
 
-                // -------------------------------------------------
                 // 2. CREATE ORDER
-                // -------------------------------------------------
 
                 Order order = new Order();
 
@@ -61,9 +55,7 @@ public class OrderService {
 
                 order.setStatus(OrderStatus.PENDING);
 
-                // -------------------------------------------------
                 // 3. PAYMENT METHOD
-                // -------------------------------------------------
 
                 PaymentMethod paymentMethod;
 
@@ -80,9 +72,7 @@ public class OrderService {
 
                 order.setPaymentMethod(paymentMethod);
 
-                // -------------------------------------------------
                 // 4. PAYMENT STATUS
-                // -------------------------------------------------
 
                 if (paymentMethod == PaymentMethod.COD) {
 
@@ -95,9 +85,7 @@ public class OrderService {
                                         PaymentStatus.PENDING_VERIFICATION);
                 }
 
-                // -------------------------------------------------
                 // 5. CREATE ORDER ITEMS
-                // -------------------------------------------------
 
                 List<OrderItem> orderItems = new ArrayList<>();
 
@@ -109,9 +97,7 @@ public class OrderService {
                         ProductResponse product = productClient.getProductById(
                                         cartItem.getProductId());
 
-                        // -------------------------------------------------
                         // PRODUCT VALIDATION
-                        // -------------------------------------------------
 
                         if (product == null) {
 
@@ -127,9 +113,7 @@ public class OrderService {
                                                                 + product.getName());
                         }
 
-                        // -------------------------------------------------
                         // STOCK VALIDATION
-                        // -------------------------------------------------
 
                         if (product.getQuantity() < cartItem.getQuantity()) {
 
@@ -138,9 +122,7 @@ public class OrderService {
                                                                 + product.getName());
                         }
 
-                        // -------------------------------------------------
                         // CREATE ORDER ITEM
-                        // -------------------------------------------------
 
                         OrderItem orderItem = new OrderItem();
 
@@ -166,44 +148,32 @@ public class OrderService {
                         orderItems.add(orderItem);
                 }
 
-                // -------------------------------------------------
                 // 6. CALCULATE TAX
-                // -------------------------------------------------
 
                 double tax = subtotal * 0.04;
 
                 double finalTotal = subtotal + tax;
 
-                // -------------------------------------------------
                 // 7. SET ORDER DETAILS
-                // -------------------------------------------------
 
                 order.setItems(orderItems);
 
                 order.setTotalAmount(finalTotal);
 
-                // -------------------------------------------------
                 // 8. SAVE ORDER
-                // -------------------------------------------------
 
                 Order savedOrder = orderRepository.save(order);
 
-                // -------------------------------------------------
                 // 9. CLEAR CART
-                // -------------------------------------------------
 
                 cartClient.clearCart(userId);
 
-                // -------------------------------------------------
                 // 10. RETURN RESPONSE
-                // -------------------------------------------------
 
                 return mapToResponse(savedOrder);
         }
 
-        // =====================================================
         // GET USER ORDERS
-        // =====================================================
 
         @Transactional(readOnly = true)
         public List<OrderResponse> getUserOrders(Long userId) {
@@ -215,9 +185,7 @@ public class OrderService {
                                 .toList();
         }
 
-        // =====================================================
         // GET ORDER BY ID
-        // =====================================================
 
         @Transactional(readOnly = true)
         public OrderResponse getOrderById(Long orderId, Long userId) {
@@ -228,9 +196,8 @@ public class OrderService {
 
                 return mapToResponse(order);
         }
-        // =====================================================
+
         // CANCEL ORDER
-        // =====================================================
 
         @Transactional
         public OrderResponse cancelOrder(
@@ -260,9 +227,7 @@ public class OrderService {
                                 orderRepository.save(order));
         }
 
-        // =====================================================
         // UPDATE ORDER STATUS
-        // =====================================================
 
         @Transactional
         public OrderResponse updateOrderStatus(
@@ -291,9 +256,7 @@ public class OrderService {
                                 orderRepository.save(order));
         }
 
-        // =====================================================
         // GET ALL ORDERS - ADMIN
-        // =====================================================
 
         @Transactional(readOnly = true)
         public List<OrderResponse> getAllOrders() {
@@ -304,9 +267,7 @@ public class OrderService {
                                 .toList();
         }
 
-        // =====================================================
         // MAP ORDER → RESPONSE
-        // =====================================================
 
         private OrderResponse mapToResponse(Order order) {
 
