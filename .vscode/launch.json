@@ -2,6 +2,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "NotificationServiceApplication",
+            "request": "launch",
+            "mainClass": "com.ecommerce.notification_service.NotificationServiceApplication",
+            "projectName": "notification-service"
+        },
+        {
+            "type": "java",
             "name": "DeliveryServiceApplication",
             "request": "launch",
             "mainClass": "com.ecommerce.delivery_service.DeliveryServiceApplication",

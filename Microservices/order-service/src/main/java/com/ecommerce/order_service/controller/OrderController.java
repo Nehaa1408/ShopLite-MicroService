@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ecommerce.order_service.dto.OrderResponse;
 import com.ecommerce.order_service.dto.PlaceOrderRequest;
+import com.ecommerce.order_service.dto.UpdatePaymentStatusRequest;
+import com.ecommerce.order_service.dto.VerifyDeliveryOtpRequest;
 import com.ecommerce.order_service.service.OrderService;
 
 import lombok.RequiredArgsConstructor;
@@ -24,100 +26,127 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class OrderController {
 
-    private final OrderService orderService;
+        private final OrderService orderService;
 
+        // =====================================================
+        // PLACE ORDER
+        // =====================================================
 
-    // =====================================================
-    // PLACE ORDER
-    // =====================================================
+        @PostMapping
+        public ResponseEntity<OrderResponse> placeOrder(
+                        @RequestHeader("X-User-Id") Long userId,
+                        @RequestBody PlaceOrderRequest request) {
 
-    @PostMapping
-    public ResponseEntity<OrderResponse> placeOrder(
-            @RequestHeader("X-User-Id") Long userId,
-            @RequestBody PlaceOrderRequest request) {
+                return ResponseEntity.ok(
+                                orderService.placeOrder(userId, request));
+        }
 
-        return ResponseEntity.ok(
-                orderService.placeOrder(userId, request)
-        );
-    }
+        // =====================================================
+        // GET USER ORDERS
+        // =====================================================
 
+        @GetMapping
+        public ResponseEntity<List<OrderResponse>> getUserOrders(
+                        @RequestHeader("X-User-Id") Long userId) {
 
-    // =====================================================
-    // GET USER ORDERS
-    // =====================================================
+                return ResponseEntity.ok(
+                                orderService.getUserOrders(userId));
+        }
 
-    @GetMapping
-    public ResponseEntity<List<OrderResponse>> getUserOrders(
-            @RequestHeader("X-User-Id") Long userId) {
+        // =====================================================
+        // GET ORDER DETAILS
+        // =====================================================
 
-        return ResponseEntity.ok(
-                orderService.getUserOrders(userId)
-        );
-    }
+        @GetMapping("/{orderId}")
+        public ResponseEntity<OrderResponse> getOrderById(
+                        @RequestHeader("X-User-Id") Long userId,
+                        @PathVariable Long orderId) {
 
+                return ResponseEntity.ok(
+                                orderService.getOrderById(orderId, userId));
+        }
 
-    // =====================================================
-    // GET ORDER DETAILS
-    // =====================================================
+        // =====================================================
+        // CANCEL ORDER
+        // =====================================================
 
-    @GetMapping("/{orderId}")
-    public ResponseEntity<OrderResponse> getOrderById(
-            @RequestHeader("X-User-Id") Long userId,
-            @PathVariable Long orderId) {
+        @PutMapping("/{orderId}/cancel")
+        public ResponseEntity<OrderResponse> cancelOrder(
+                        @RequestHeader("X-User-Id") Long userId,
+                        @PathVariable Long orderId,
+                        @RequestParam String reason) {
 
-        return ResponseEntity.ok(
-                orderService.getOrderById(orderId, userId)
-        );
-    }
+                return ResponseEntity.ok(
+                                orderService.cancelOrder(
+                                                orderId,
+                                                reason,
+                                                userId));
+        }
 
+        // =====================================================
+        // ADMIN - UPDATE ORDER STATUS
+        // =====================================================
 
-    // =====================================================
-    // CANCEL ORDER
-    // =====================================================
+        @PutMapping("/{orderId}/status")
+        public ResponseEntity<OrderResponse> updateOrderStatus(
+                        @PathVariable Long orderId,
+                        @RequestParam String status) {
 
-    @PutMapping("/{orderId}/cancel")
-    public ResponseEntity<OrderResponse> cancelOrder(
-            @RequestHeader("X-User-Id") Long userId,
-            @PathVariable Long orderId,
-            @RequestParam String reason) {
+                return ResponseEntity.ok(
+                                orderService.updateOrderStatus(
+                                                orderId,
+                                                status));
+        }
 
-        return ResponseEntity.ok(
-                orderService.cancelOrder(
-                        orderId,
-                        reason,
-                        userId
-                )
-        );
-    }
+        // =====================================================
+        // UPDATE PAYMENT STATUS
+        // =====================================================
 
+        @PutMapping("/{orderId}/payment-status")
+        public ResponseEntity<OrderResponse> updatePaymentStatus(
+                        @PathVariable Long orderId,
+                        @RequestBody UpdatePaymentStatusRequest request) {
 
-    // =====================================================
-    // ADMIN - UPDATE ORDER STATUS
-    // =====================================================
+                return ResponseEntity.ok(
+                                orderService.updatePaymentStatus(
+                                                orderId,
+                                                request.getPaymentStatus()));
+        }
 
-    @PutMapping("/{orderId}/status")
-    public ResponseEntity<OrderResponse> updateOrderStatus(
-            @PathVariable Long orderId,
-            @RequestParam String status) {
+        // =====================================================
+        // ADMIN - GET ALL ORDERS
+        // =====================================================
 
-        return ResponseEntity.ok(
-                orderService.updateOrderStatus(
-                        orderId,
-                        status
-                )
-        );
-    }
+        @GetMapping("/admin")
+        public ResponseEntity<List<OrderResponse>> getAllOrders() {
 
+                return ResponseEntity.ok(
+                                orderService.getAllOrders());
+        }
+        // ================= DELIVERY → SEND OTP =================
 
-    // =====================================================
-    // ADMIN - GET ALL ORDERS
-    // =====================================================
+        @PostMapping("/{orderId}/delivery-otp")
+        public ResponseEntity<String> sendDeliveryOtp(
+                        @PathVariable Long orderId,
+                        @RequestHeader("X-User-Id") Long deliveryPartnerId) {
 
-    @GetMapping("/admin")
-    public ResponseEntity<List<OrderResponse>> getAllOrders() {
+                return ResponseEntity.ok(
+                                orderService.sendDeliveryOtp(
+                                                orderId,
+                                                deliveryPartnerId));
+        }
+        // ================= DELIVERY → VERIFY OTP =================
 
-        return ResponseEntity.ok(
-                orderService.getAllOrders()
-        );
-    }
+        @PostMapping("/{orderId}/delivery-otp/verify")
+        public ResponseEntity<OrderResponse> verifyDeliveryOtp(
+                        @PathVariable Long orderId,
+                        @RequestHeader("X-User-Id") Long deliveryPartnerId,
+                        @RequestBody VerifyDeliveryOtpRequest request) {
+
+                return ResponseEntity.ok(
+                                orderService.verifyDeliveryOtp(
+                                                orderId,
+                                                request.getOtp(),
+                                                deliveryPartnerId));
+        }
 }

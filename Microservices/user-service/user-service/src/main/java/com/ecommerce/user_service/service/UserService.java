@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.ecommerce.user_service.client.NotificationClient;
 import com.ecommerce.user_service.dto.ChangePasswordRequest;
 import com.ecommerce.user_service.dto.LoginRequest;
 import com.ecommerce.user_service.dto.LoginResponse;
@@ -46,7 +47,7 @@ public class UserService {
 
         private final PasswordEncoder passwordEncoder;
 
-        private final EmailService emailService;
+        private final NotificationClient notificationClient;
 
         private final ForgotPasswordOtpRepository forgotPasswordOtpRepository;
 
@@ -59,14 +60,14 @@ public class UserService {
                         UserRepository userRepository,
                         SignupOtpRepository signupOtpRepository,
                         PasswordEncoder passwordEncoder,
-                        EmailService emailService,
+                        NotificationClient notificationClient,
                         ForgotPasswordOtpRepository forgotPasswordOtpRepository,
                         JwtUtil jwtUtil) {
 
                 this.userRepository = userRepository;
                 this.signupOtpRepository = signupOtpRepository;
                 this.passwordEncoder = passwordEncoder;
-                this.emailService = emailService;
+                this.notificationClient = notificationClient;
                 this.forgotPasswordOtpRepository = forgotPasswordOtpRepository;
                 this.jwtUtil = jwtUtil;
         }
@@ -117,7 +118,7 @@ public class UserService {
 
                 System.out.println("STEP 4");
 
-                emailService.sendSignupOtp(
+                notificationClient.sendSignupOtp(
                                 request.getEmail(),
                                 request.getName(),
                                 otp);
@@ -217,6 +218,11 @@ public class UserService {
                 // GENERATE JWT TOKEN
                 String token = jwtUtil.generateToken(user.getEmail());
 
+                // SEND LOGIN SUCCESS EMAIL
+                notificationClient.sendLoginSuccessEmail(
+                                user.getEmail(),
+                                user.getName());
+
                 return new LoginResponse(
                                 user.getId(),
                                 user.getName(),
@@ -250,7 +256,7 @@ public class UserService {
 
                 forgotPasswordOtpRepository.save(forgotOtp);
 
-                emailService.sendForgotPasswordOtp(email, otp);
+                notificationClient.sendForgotPasswordOtp(email, otp);
 
                 return "Password reset OTP sent successfully";
         }
@@ -295,9 +301,15 @@ public class UserService {
                 User user = userRepository.findByEmail(request.getEmail())
                                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-                user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+                user.setPassword(
+                                passwordEncoder.encode(request.getNewPassword()));
 
                 userRepository.save(user);
+
+                // SEND PASSWORD RESET CONFIRMATION EMAIL
+                notificationClient.sendPasswordResetSuccessEmail(
+                                user.getEmail(),
+                                user.getName());
 
                 // DELETE OTP AFTER SUCCESSFUL RESET
                 forgotPasswordOtpRepository.delete(forgotOtp);
@@ -355,6 +367,10 @@ public class UserService {
                         }
 
                         String jwt = jwtUtil.generateToken(user.getEmail());
+
+                        notificationClient.sendLoginSuccessEmail(
+                                        user.getEmail(),
+                                        user.getName());
 
                         return new LoginResponse(
                                         user.getId(),
@@ -418,5 +434,18 @@ public class UserService {
         public void deleteAccount(User user) {
 
                 userRepository.delete(user);
+        }
+
+        public ProfileResponse getUserById(Long userId) {
+
+                User user = userRepository.findById(userId)
+                                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+                return new ProfileResponse(
+                                user.getId(),
+                                user.getName(),
+                                user.getEmail(),
+                                user.getRole(),
+                                user.getProvider());
         }
 }

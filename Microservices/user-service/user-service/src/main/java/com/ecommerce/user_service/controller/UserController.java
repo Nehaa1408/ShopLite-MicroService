@@ -4,14 +4,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ecommerce.user_service.dto.ChangePasswordRequest;
 import com.ecommerce.user_service.dto.ProfileResponse;
+import com.ecommerce.user_service.dto.ResetPasswordRequest;
 import com.ecommerce.user_service.dto.UpdateProfileRequest;
 import com.ecommerce.user_service.entity.User;
 import com.ecommerce.user_service.service.UserService;
@@ -66,5 +69,40 @@ public class UserController {
         userService.deleteAccount(user);
 
         return ResponseEntity.ok("Account deleted successfully.");
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<String> sendForgotPasswordOtp(
+            @RequestParam String email) {
+
+        return ResponseEntity.ok(
+                userService.sendForgotPasswordOtp(email));
+    }
+
+    // Verify Forgot Password OTP
+    @PostMapping("/verify-forgot-password-otp")
+    public ResponseEntity<String> verifyForgotPasswordOtp(
+            @RequestParam String email,
+            @RequestParam String otp) {
+
+        return ResponseEntity.ok(
+                userService.verifyForgotPasswordOtp(email, otp));
+    }
+
+    // Reset Password
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request) {
+
+        return ResponseEntity.ok(
+                userService.resetPassword(request));
+    }
+
+    @GetMapping("/{userId}")
+    public ResponseEntity<ProfileResponse> getUserById(
+            @PathVariable Long userId) {
+
+        return ResponseEntity.ok(
+                userService.getUserById(userId));
     }
 }
