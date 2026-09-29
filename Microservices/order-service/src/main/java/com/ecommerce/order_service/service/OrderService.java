@@ -14,6 +14,7 @@ import com.ecommerce.order_service.client.NotificationClient;
 import com.ecommerce.order_service.client.ProductClient;
 import com.ecommerce.order_service.client.UserClient;
 import com.ecommerce.order_service.dto.CartItemResponse;
+import com.ecommerce.order_service.dto.DeliveryFeedbackRequest;
 import com.ecommerce.order_service.dto.DeliveryOtpNotificationRequest;
 import com.ecommerce.order_service.dto.OrderItemNotification;
 import com.ecommerce.order_service.dto.OrderItemResponse;
@@ -24,12 +25,14 @@ import com.ecommerce.order_service.dto.PaymentNotificationRequest;
 import com.ecommerce.order_service.dto.PlaceOrderRequest;
 import com.ecommerce.order_service.dto.ProductResponse;
 import com.ecommerce.order_service.dto.UserResponse;
+import com.ecommerce.order_service.entity.DeliveryFeedback;
 import com.ecommerce.order_service.entity.DeliveryOtp;
 import com.ecommerce.order_service.entity.Order;
 import com.ecommerce.order_service.entity.OrderItem;
 import com.ecommerce.order_service.entity.OrderStatus;
 import com.ecommerce.order_service.entity.PaymentMethod;
 import com.ecommerce.order_service.entity.PaymentStatus;
+import com.ecommerce.order_service.repository.DeliveryFeedbackRepository;
 import com.ecommerce.order_service.repository.DeliveryOtpRepository;
 import com.ecommerce.order_service.repository.OrderRepository;
 
@@ -50,6 +53,8 @@ public class OrderService {
         private final NotificationClient notificationClient;
 
         private final DeliveryOtpRepository deliveryOtpRepository;
+
+        private final DeliveryFeedbackRepository deliveryFeedbackRepository;
 
         // PLACE ORDER
 
@@ -585,5 +590,50 @@ public class OrderService {
                                 notificationRequest);
 
                 return mapToResponse(savedOrder);
+        }
+        // ================= DELIVERY FEEDBACK =================
+
+        @Transactional
+        public String addDeliveryFeedback(
+                        DeliveryFeedbackRequest request,
+                        Long userId) {
+
+                Order order = orderRepository
+                                .findByIdAndUserId(request.getOrderId(), userId)
+                                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+                // FEEDBACK ONLY AFTER DELIVERY
+                if (order.getStatus() != OrderStatus.DELIVERED) {
+                        throw new RuntimeException(
+                                        "Feedback can only be submitted for delivered orders");
+                }
+
+                // ONE FEEDBACK PER ORDER
+                if (deliveryFeedbackRepository
+                                .findByOrderId(order.getId())
+                                .isPresent()) {
+
+                        throw new RuntimeException(
+                                        "Feedback already submitted for this order");
+                }
+
+                // RATING VALIDATION
+                if (request.getRating() < 1 || request.getRating() > 5) {
+                        throw new RuntimeException(
+                                        "Rating must be between 1 and 5");
+                }
+
+                DeliveryFeedback feedback = new DeliveryFeedback();
+
+                feedback.setOrderId(order.getId());
+                feedback.setCustomerId(userId);
+                feedback.setDeliveryPartnerId(
+                                order.getDeliveryPartnerId());
+                feedback.setRating(request.getRating());
+                feedback.setFeedback(request.getFeedback());
+
+                deliveryFeedbackRepository.save(feedback);
+
+                return "Delivery feedback submitted successfully";
         }
 }

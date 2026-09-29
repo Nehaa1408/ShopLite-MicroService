@@ -2,7 +2,11 @@ package com.ecommerce.delivery_service.service;
 
 import org.springframework.stereotype.Service;
 
+import com.ecommerce.delivery_service.client.NotificationClient;
+import com.ecommerce.delivery_service.client.UserClient;
+import com.ecommerce.delivery_service.dto.DeliveryPartnerNotificationRequest;
 import com.ecommerce.delivery_service.dto.DeliveryVerificationRequest;
+import com.ecommerce.delivery_service.dto.UserResponse;
 import com.ecommerce.delivery_service.entity.ApprovalStatus;
 import com.ecommerce.delivery_service.entity.AvailabilityStatus;
 import com.ecommerce.delivery_service.entity.DeliveryPartner;
@@ -10,13 +14,18 @@ import com.ecommerce.delivery_service.repository.DeliveryPartnerRepository;
 
 @Service
 public class DeliveryPartnerService {
-
         private final DeliveryPartnerRepository deliveryPartnerRepository;
+        private final UserClient userClient;
+        private final NotificationClient notificationClient;
 
         public DeliveryPartnerService(
-                        DeliveryPartnerRepository deliveryPartnerRepository) {
+                        DeliveryPartnerRepository deliveryPartnerRepository,
+                        UserClient userClient,
+                        NotificationClient notificationClient) {
 
                 this.deliveryPartnerRepository = deliveryPartnerRepository;
+                this.userClient = userClient;
+                this.notificationClient = notificationClient;
         }
 
         // ================= APPLY FOR DELIVERY PARTNER =================
@@ -44,7 +53,25 @@ public class DeliveryPartnerService {
 
                                         partner.setCompletedDeliveries(0);
 
-                                        return deliveryPartnerRepository.save(partner);
+                                        DeliveryPartner savedPartner = deliveryPartnerRepository.save(partner);
+
+                                        // GET USER DETAILS
+                                        UserResponse user = userClient.getUserById(userId);
+
+                                        // PREPARE NOTIFICATION
+                                        DeliveryPartnerNotificationRequest request = new DeliveryPartnerNotificationRequest();
+
+                                        request.setEmail(user.getEmail());
+                                        request.setName(user.getName());
+                                        request.setDeliveryPartnerId(savedPartner.getId());
+                                        request.setNotificationType(
+                                                        "APPLICATION_SUBMITTED");
+
+                                        // SEND EMAIL
+                                        notificationClient.sendDeliveryPartnerNotification(
+                                                        request);
+
+                                        return savedPartner;
                                 });
         }
 
@@ -152,6 +179,24 @@ public class DeliveryPartnerService {
                 partner.setAvailabilityStatus(
                                 AvailabilityStatus.OFFLINE);
 
-                return deliveryPartnerRepository.save(partner);
+                DeliveryPartner savedPartner = deliveryPartnerRepository.save(partner);
+
+                // GET USER DETAILS
+                UserResponse user = userClient.getUserById(savedPartner.getUserId());
+
+                // PREPARE NOTIFICATION
+                DeliveryPartnerNotificationRequest request = new DeliveryPartnerNotificationRequest();
+
+                request.setEmail(user.getEmail());
+                request.setName(user.getName());
+                request.setDeliveryPartnerId(savedPartner.getId());
+                request.setNotificationType(
+                                "APPLICATION_REJECTED");
+
+                // SEND REJECTION EMAIL
+                notificationClient.sendDeliveryPartnerNotification(
+                                request);
+
+                return savedPartner;
         }
 }

@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ecommerce.order_service.dto.DeliveryFeedbackRequest;
 import com.ecommerce.order_service.dto.OrderResponse;
 import com.ecommerce.order_service.dto.PlaceOrderRequest;
 import com.ecommerce.order_service.dto.UpdatePaymentStatusRequest;
@@ -148,5 +149,16 @@ public class OrderController {
                                                 orderId,
                                                 request.getOtp(),
                                                 deliveryPartnerId));
+        }
+
+        @PostMapping("/delivery-feedback")
+        public ResponseEntity<String> addDeliveryFeedback(
+                        @RequestHeader("X-User-Id") Long userId,
+                        @RequestBody DeliveryFeedbackRequest request) {
+
+                return ResponseEntity.ok(
+                                orderService.addDeliveryFeedback(
+                                                request,
+                                                userId));
         }
 }

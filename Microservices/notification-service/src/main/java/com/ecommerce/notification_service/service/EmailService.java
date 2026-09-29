@@ -5,10 +5,12 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 import com.ecommerce.notification_service.dto.DeliveryOtpNotificationRequest;
+import com.ecommerce.notification_service.dto.DeliveryPartnerNotificationRequest;
 import com.ecommerce.notification_service.dto.OrderItemNotification;
 import com.ecommerce.notification_service.dto.OrderPlacedNotificationRequest;
 import com.ecommerce.notification_service.dto.OrderStatusNotificationRequest;
 import com.ecommerce.notification_service.dto.PaymentNotificationRequest;
+import com.ecommerce.notification_service.dto.ReturnNotificationRequest;
 
 @Service
 public class EmailService {
@@ -340,6 +342,154 @@ public class EmailService {
                                                 + "Please share this OTP with the delivery partner when your order is delivered.\n\n"
                                                 + "Regards,\n"
                                                 + "ShopLite Team");
+
+                mailSender.send(mail);
+        }
+
+        public void sendDeliveryPartnerNotificationEmail(
+                        DeliveryPartnerNotificationRequest request) {
+
+                String subject;
+                String body;
+
+                switch (request.getNotificationType()) {
+
+                        case "APPLICATION_SUBMITTED" -> {
+                                subject = "ShopLite - Delivery Partner Application Submitted";
+                                body = "Hello " + request.getName() + ",\n\n"
+                                                + "Your delivery partner application has been submitted successfully.\n"
+                                                + "Delivery Partner ID: #" + request.getDeliveryPartnerId() + "\n\n"
+                                                + "Your application is currently pending admin approval.\n\n"
+                                                + "Regards,\nShopLite Team";
+                        }
+
+                        case "APPLICATION_APPROVED" -> {
+                                subject = "ShopLite - Delivery Partner Application Approved";
+                                body = "Hello " + request.getName() + ",\n\n"
+                                                + "Congratulations! Your delivery partner application has been approved.\n"
+                                                + "Delivery Partner ID: #" + request.getDeliveryPartnerId() + "\n\n"
+                                                + "You can now start accepting delivery orders.\n\n"
+                                                + "Regards,\nShopLite Team";
+                        }
+
+                        case "APPLICATION_REJECTED" -> {
+                                subject = "ShopLite - Delivery Partner Application Rejected";
+                                body = "Hello " + request.getName() + ",\n\n"
+                                                + "Your delivery partner application has been rejected.\n"
+                                                + "Delivery Partner ID: #" + request.getDeliveryPartnerId() + "\n\n"
+                                                + "Please contact ShopLite support for more information.\n\n"
+                                                + "Regards,\nShopLite Team";
+                        }
+
+                        case "NEW_DELIVERY_AVAILABLE" -> {
+                                subject = "ShopLite - New Delivery Available";
+                                body = "Hello " + request.getName() + ",\n\n"
+                                                + "A new delivery is available for you.\n"
+                                                + "Please open ShopLite to view the delivery details.\n\n"
+                                                + "Regards,\nShopLite Team";
+                        }
+
+                        case "ORDER_ASSIGNED" -> {
+                                subject = "ShopLite - Order Assigned";
+                                body = "Hello " + request.getName() + ",\n\n"
+                                                + "A new order has been assigned to you for delivery.\n"
+                                                + "Please open ShopLite to view the order details.\n\n"
+                                                + "Regards,\nShopLite Team";
+                        }
+
+                        default -> throw new IllegalArgumentException(
+                                        "Unknown delivery partner notification type: "
+                                                        + request.getNotificationType());
+                }
+
+                SimpleMailMessage mail = new SimpleMailMessage();
+                mail.setTo(request.getEmail());
+                mail.setSubject(subject);
+                mail.setText(body);
+
+                mailSender.send(mail);
+        }
+        // ================= RETURN NOTIFICATION =================
+
+        public void sendReturnNotificationEmail(
+                        ReturnNotificationRequest request) {
+
+                String subject;
+                String body;
+
+                switch (request.getStatus()) {
+
+                        case "RETURN_REQUESTED" -> {
+                                subject = "ShopLite - Return Request Submitted";
+                                body = "Hello " + request.getName() + ",\n\n"
+                                                + "Your return request has been submitted successfully.\n\n"
+                                                + "Return Details:\n"
+                                                + "Return ID: #" + request.getReturnId() + "\n"
+                                                + "Order ID: #" + request.getOrderId() + "\n"
+                                                + "Status: RETURN REQUESTED\n\n"
+                                                + "We will process your return request shortly.\n\n"
+                                                + "Regards,\n"
+                                                + "ShopLite Team";
+                        }
+
+                        case "PICKUP_PARTNER_ASSIGNED" -> {
+                                subject = "ShopLite - Return Pickup Partner Assigned";
+                                body = "Hello " + request.getName() + ",\n\n"
+                                                + "A pickup partner has been assigned to your return request.\n\n"
+                                                + "Return ID: #" + request.getReturnId() + "\n"
+                                                + "Order ID: #" + request.getOrderId() + "\n"
+                                                + "Status: PICKUP PARTNER ASSIGNED\n\n"
+                                                + "Please keep the product ready for pickup.\n\n"
+                                                + "Regards,\n"
+                                                + "ShopLite Team";
+                        }
+
+                        case "PICKUP_COMPLETED" -> {
+                                subject = "ShopLite - Return Pickup Completed";
+                                body = "Hello " + request.getName() + ",\n\n"
+                                                + "Your return product has been picked up successfully.\n\n"
+                                                + "Return ID: #" + request.getReturnId() + "\n"
+                                                + "Order ID: #" + request.getOrderId() + "\n"
+                                                + "Status: PICKUP COMPLETED\n\n"
+                                                + "Your refund will be processed shortly.\n\n"
+                                                + "Regards,\n"
+                                                + "ShopLite Team";
+                        }
+
+                        case "REFUND_PROCESSED" -> {
+                                subject = "ShopLite - Refund Processed";
+                                body = "Hello " + request.getName() + ",\n\n"
+                                                + "Your return has been completed and your refund has been processed.\n\n"
+                                                + "Return ID: #" + request.getReturnId() + "\n"
+                                                + "Order ID: #" + request.getOrderId() + "\n"
+                                                + "Refund Amount: ₹" + request.getRefundAmount() + "\n"
+                                                + "Status: REFUND PROCESSED\n\n"
+                                                + "Thank you for shopping with ShopLite.\n\n"
+                                                + "Regards,\n"
+                                                + "ShopLite Team";
+                        }
+
+                        case "RETURN_REJECTED" -> {
+                                subject = "ShopLite - Return Request Rejected";
+                                body = "Hello " + request.getName() + ",\n\n"
+                                                + "Unfortunately, your return request has been rejected.\n\n"
+                                                + "Return ID: #" + request.getReturnId() + "\n"
+                                                + "Order ID: #" + request.getOrderId() + "\n"
+                                                + "Status: RETURN REJECTED\n\n"
+                                                + "Please contact ShopLite support if you need further assistance.\n\n"
+                                                + "Regards,\n"
+                                                + "ShopLite Team";
+                        }
+
+                        default -> throw new IllegalArgumentException(
+                                        "Unsupported return status: " + request.getStatus());
+                }
+
+                SimpleMailMessage mail = new SimpleMailMessage();
+
+                mail.setTo(request.getEmail());
+                mail.setSubject(subject);
+                mail.setText(body);
 
                 mailSender.send(mail);
         }

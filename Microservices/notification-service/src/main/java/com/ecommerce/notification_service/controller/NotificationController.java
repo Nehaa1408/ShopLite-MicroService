@@ -8,9 +8,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ecommerce.notification_service.dto.DeliveryOtpNotificationRequest;
+import com.ecommerce.notification_service.dto.DeliveryPartnerNotificationRequest;
 import com.ecommerce.notification_service.dto.OrderPlacedNotificationRequest;
 import com.ecommerce.notification_service.dto.OrderStatusNotificationRequest;
 import com.ecommerce.notification_service.dto.PaymentNotificationRequest;
+import com.ecommerce.notification_service.dto.ReturnNotificationRequest;
 import com.ecommerce.notification_service.service.EmailService;
 
 @RestController
@@ -105,5 +107,24 @@ public class NotificationController {
         emailService.sendDeliveryOtpEmail(request);
 
         return ResponseEntity.ok("Delivery OTP email sent successfully");
+    }
+
+    @PostMapping("/delivery-partner")
+    public ResponseEntity<String> sendDeliveryPartnerNotification(
+            @RequestBody DeliveryPartnerNotificationRequest request) {
+
+        emailService.sendDeliveryPartnerNotificationEmail(request);
+
+        return ResponseEntity.ok("Delivery partner notification sent successfully");
+    }
+
+    @PostMapping("/return")
+    public ResponseEntity<String> sendReturnNotification(
+            @RequestBody ReturnNotificationRequest request) {
+
+        emailService.sendReturnNotificationEmail(request);
+
+        return ResponseEntity.ok(
+                "Return notification email sent successfully");
     }
 }
