@@ -15,16 +15,17 @@ export const CartProvider = ({ children }) => {
   // ================= FETCH CART =================
   const fetchCart = async () => {
     const token = getToken();
+
     // ================= GUEST USER =================
     if (!token || token === "null" || token === "undefined") {
-
       const guestCart =
         JSON.parse(localStorage.getItem("guest_cart")) || [];
 
       setCart(guestCart);
 
-      return;
+      return guestCart;
     }
+
     // ================= LOGGED IN USER =================
     try {
       const res = await axios.get(BASE, {
@@ -34,6 +35,8 @@ export const CartProvider = ({ children }) => {
       });
 
       setCart(res.data);
+
+      return res.data;
     } catch (err) {
       if ([401, 403].includes(err.response?.status)) {
         console.warn("Session expired → clearing token");
@@ -45,18 +48,17 @@ export const CartProvider = ({ children }) => {
 
         setCart(guestCart);
 
-        return;
+        return guestCart;
       }
 
       console.error("Fetch cart error:", err);
+
+      return [];
     }
   };
 
-  // ================= GUEST USER =================
-
-
+  // ================= MERGE GUEST CART AFTER LOGIN =================
   const mergeGuestCartAfterLogin = async () => {
-
     const token = getToken();
 
     if (!token) return;
@@ -71,11 +73,9 @@ export const CartProvider = ({ children }) => {
     }
 
     try {
-
       for (const item of guestCart) {
-
         await axios.post(
-          `${BASE}/add`,
+          BASE,
           {
             productId: item.productId,
             quantity: item.quantity,
@@ -93,7 +93,6 @@ export const CartProvider = ({ children }) => {
 
       // LOAD DATABASE CART
       await fetchCart();
-
     } catch (err) {
       console.error("Merge cart error:", err);
     }
@@ -140,7 +139,9 @@ export const CartProvider = ({ children }) => {
             product.productName ||
             product.name,
 
-          price: product.priceValue || product.price,
+          price:
+            product.priceValue ||
+            product.price,
 
           imageUrl:
             product.imageUrl ||
@@ -164,7 +165,7 @@ export const CartProvider = ({ children }) => {
     // ================= LOGGED IN USER =================
     try {
       await axios.post(
-        `${BASE}/add`,
+        BASE,
         {
           productId: product.id,
           quantity: 1,
@@ -189,7 +190,7 @@ export const CartProvider = ({ children }) => {
   };
 
   // ================= REMOVE ITEM =================
-  const removeFromCart = async (productId) => {
+  const removeFromCart = async (cartId) => {
     const token = getToken();
 
     // ================= GUEST USER =================
@@ -198,7 +199,7 @@ export const CartProvider = ({ children }) => {
         JSON.parse(localStorage.getItem("guest_cart")) || [];
 
       const updatedCart = guestCart.filter(
-        (item) => item.productId !== productId
+        (item) => item.productId !== cartId
       );
 
       localStorage.setItem(
@@ -212,17 +213,24 @@ export const CartProvider = ({ children }) => {
     }
 
     // ================= LOGGED IN USER =================
-    await axios.delete(`${BASE}/remove/${productId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    try {
+      await axios.delete(`${BASE}/${cartId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-    fetchCart();
+      await fetchCart();
+    } catch (err) {
+      console.error(
+        "Remove cart item error:",
+        err.response?.data || err
+      );
+    }
   };
 
   // ================= INCREASE QTY =================
-  const increaseQty = async (productId, currentQty) => {
+  const increaseQty = async (cartId, currentQty) => {
     const token = getToken();
 
     // ================= GUEST USER =================
@@ -231,7 +239,7 @@ export const CartProvider = ({ children }) => {
         JSON.parse(localStorage.getItem("guest_cart")) || [];
 
       const updatedCart = guestCart.map((item) =>
-        item.productId === productId
+        item.productId === cartId
           ? {
             ...item,
             quantity: item.quantity + 1,
@@ -250,24 +258,34 @@ export const CartProvider = ({ children }) => {
     }
 
     // ================= LOGGED IN USER =================
-    await axios.put(
-      `${BASE}/update`,
-      {
-        productId,
-        quantity: currentQty + 1,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
+    try {
+      const response = await axios.put(
+        `${BASE}/${cartId}`,
+        {
+          quantity: currentQty + 1,
         },
-      }
-    );
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-    fetchCart();
+      console.log("INCREASE RESPONSE:", response.data);
+
+      const updatedCart = await fetchCart();
+
+      console.log("UPDATED CART AFTER INCREASE:", updatedCart);
+    } catch (err) {
+      console.error(
+        "INCREASE ERROR:",
+        err.response?.data || err
+      );
+    }
   };
 
   // ================= DECREASE QTY =================
-  const decreaseQty = async (productId, currentQty) => {
+  const decreaseQty = async (cartId, currentQty) => {
     if (currentQty <= 1) return;
 
     const token = getToken();
@@ -278,7 +296,7 @@ export const CartProvider = ({ children }) => {
         JSON.parse(localStorage.getItem("guest_cart")) || [];
 
       const updatedCart = guestCart.map((item) =>
-        item.productId === productId
+        item.productId === cartId
           ? {
             ...item,
             quantity: item.quantity - 1,
@@ -297,20 +315,30 @@ export const CartProvider = ({ children }) => {
     }
 
     // ================= LOGGED IN USER =================
-    await axios.put(
-      `${BASE}/update`,
-      {
-        productId,
-        quantity: currentQty - 1,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
+    try {
+      const response = await axios.put(
+        `${BASE}/${cartId}`,
+        {
+          quantity: currentQty - 1,
         },
-      }
-    );
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-    fetchCart();
+      console.log("DECREASE RESPONSE:", response.data);
+
+      const updatedCart = await fetchCart();
+
+      console.log("UPDATED CART AFTER DECREASE:", updatedCart);
+    } catch (err) {
+      console.error(
+        "DECREASE ERROR:",
+        err.response?.data || err
+      );
+    }
   };
 
   // ================= CLEAR CART =================
@@ -327,13 +355,20 @@ export const CartProvider = ({ children }) => {
     }
 
     // ================= LOGGED IN USER =================
-    await axios.delete(`${BASE}/clear`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    try {
+      await axios.delete(`${BASE}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-    setCart([]);
+      setCart([]);
+    } catch (err) {
+      console.error(
+        "Clear cart error:",
+        err.response?.data || err
+      );
+    }
   };
 
   return (

@@ -2,6 +2,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "TicketServiceApplication",
+            "request": "launch",
+            "mainClass": "com.ecommerce.ticket_service.TicketServiceApplication",
+            "projectName": "ticket-service"
+        },
+        {
+            "type": "java",
             "name": "NotificationServiceApplication",
             "request": "launch",
             "mainClass": "com.ecommerce.notification_service.NotificationServiceApplication",
