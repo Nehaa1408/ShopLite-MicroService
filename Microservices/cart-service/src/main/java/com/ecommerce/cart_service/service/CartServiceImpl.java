@@ -153,9 +153,14 @@ public class CartServiceImpl implements CartService {
             subtotal = cart.getPrice() * cart.getQuantity();
         }
 
+        ProductResponse product
+                = productClient.getProductById(cart.getProductId());
+
         return new CartResponse(
                 cart.getId(),
                 cart.getProductId(),
+                product.getName(),
+                product.getImageUrl(),
                 cart.getQuantity(),
                 cart.getPrice(),
                 subtotal);

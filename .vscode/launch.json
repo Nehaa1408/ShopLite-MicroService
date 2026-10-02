@@ -2,6 +2,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "AdminServiceApplication",
+            "request": "launch",
+            "mainClass": "com.ecommerce.admin_service.AdminServiceApplication",
+            "projectName": ""
+        },
+        {
+            "type": "java",
             "name": "TicketServiceApplication",
             "request": "launch",
             "mainClass": "com.ecommerce.ticket_service.TicketServiceApplication",

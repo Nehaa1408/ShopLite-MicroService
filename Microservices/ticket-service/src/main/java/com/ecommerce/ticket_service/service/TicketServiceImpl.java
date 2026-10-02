@@ -26,7 +26,6 @@ public class TicketServiceImpl implements TicketService {
     // =========================
     // CUSTOMER OPERATIONS
     // =========================
-
     @Override
     public TicketResponse createTicket(
             Long userId,
@@ -94,7 +93,6 @@ public class TicketServiceImpl implements TicketService {
     // =========================
     // ADMIN OPERATIONS
     // =========================
-
     @Override
     @Transactional(readOnly = true)
     public List<TicketResponse> getAllTickets() {
@@ -104,6 +102,13 @@ public class TicketServiceImpl implements TicketService {
                 .stream()
                 .map(this::mapToResponse)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long getTicketCount() {
+
+        return ticketRepository.count();
     }
 
     @Override
@@ -139,14 +144,13 @@ public class TicketServiceImpl implements TicketService {
     // =========================
     // HELPER METHODS
     // =========================
-
     private Ticket findTicket(Long ticketId) {
 
         return ticketRepository.findById(ticketId)
-                .orElseThrow(() ->
-                        new RuntimeException(
-                                "Ticket not found with id: " + ticketId
-                        )
+                .orElseThrow(()
+                        -> new RuntimeException(
+                        "Ticket not found with id: " + ticketId
+                )
                 );
     }
 

@@ -14,49 +14,47 @@ import com.ecommerce.user_service.security.JwtFilter;
 @Configuration
 public class SecurityConfig {
 
-        private final JwtFilter jwtFilter;
+    private final JwtFilter jwtFilter;
 
-        public SecurityConfig(JwtFilter jwtFilter) {
-                this.jwtFilter = jwtFilter;
-        }
+    public SecurityConfig(JwtFilter jwtFilter) {
+        this.jwtFilter = jwtFilter;
+    }
 
-        @Bean
-        public SecurityFilterChain securityFilterChain(
-                        HttpSecurity http) throws Exception {
+    @Bean
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http) throws Exception {
 
-                System.out.println("===== CUSTOM SECURITY CONFIG LOADED =====");
+        System.out.println("===== CUSTOM SECURITY CONFIG LOADED =====");
 
-                http
-                                .csrf(csrf -> csrf.disable())
+        http
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                .requestMatchers(
+                        "/test",
+                        "/api/auth/**",
+                        "/api/user/forgot-password",
+                        "/api/user/verify-forgot-password-otp",
+                        "/api/user/reset-password",
+                        "/api/user/*",
+                        "/api/user/admin/role/**",
+                        "/api/user/admin/search/**",
+                        "/swagger-ui/**",
+                        "/v3/api-docs/**",
+                        "/swagger-ui.html")
+                .permitAll()
+                .anyRequest()
+                .authenticated())
+                .addFilterBefore(
+                        jwtFilter,
+                        UsernamePasswordAuthenticationFilter.class);
 
-                                .sessionManagement(session -> session
-                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        return http.build();
+    }
 
-                                .authorizeHttpRequests(auth -> auth
-                                                .requestMatchers(
-                                                                "/test",
-                                                                "/api/auth/**",
-                                                                "/api/user/forgot-password",
-                                                                "/api/user/verify-forgot-password-otp",
-                                                                "/api/user/reset-password",
-                                                                "/api/user/*",
-                                                                "/swagger-ui/**",
-                                                                "/v3/api-docs/**",
-                                                                "/swagger-ui.html")
-                                                .permitAll()
-
-                                                .anyRequest()
-                                                .authenticated())
-
-                                .addFilterBefore(
-                                                jwtFilter,
-                                                UsernamePasswordAuthenticationFilter.class);
-
-                return http.build();
-        }
-
-        @Bean
-        public PasswordEncoder passwordEncoder() {
-                return new BCryptPasswordEncoder();
-        }
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 }

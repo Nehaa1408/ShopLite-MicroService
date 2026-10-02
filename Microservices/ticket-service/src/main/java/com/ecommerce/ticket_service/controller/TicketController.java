@@ -122,4 +122,12 @@ public class TicketController {
                 )
         );
     }
+
+    @GetMapping("/admin/count")
+    public ResponseEntity<Long> getTicketCount() {
+
+        return ResponseEntity.ok(
+                ticketService.getTicketCount()
+        );
+    }
 }

@@ -10,12 +10,20 @@ import com.ecommerce.ticket_service.dto.UpdateTicketStatusRequest;
 
 public interface TicketService {
 
-    // Customer
-    TicketResponse createTicket(Long userId, CreateTicketRequest request);
+    // =========================
+    // CUSTOMER OPERATIONS
+    // =========================
+    TicketResponse createTicket(
+            Long userId,
+            CreateTicketRequest request
+    );
 
     List<TicketResponse> getMyTickets(Long userId);
 
-    TicketResponse getMyTicketById(Long userId, Long ticketId);
+    TicketResponse getMyTicketById(
+            Long userId,
+            Long ticketId
+    );
 
     TicketResponse updateMyTicket(
             Long userId,
@@ -23,8 +31,12 @@ public interface TicketService {
             UpdateTicketRequest request
     );
 
-    // Admin
+    // =========================
+    // ADMIN OPERATIONS
+    // =========================
     List<TicketResponse> getAllTickets();
+
+    long getTicketCount();
 
     TicketResponse updateTicketStatus(
             Long ticketId,

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
@@ -41,411 +42,453 @@ import com.google.api.client.json.gson.GsonFactory;
 @Service
 public class UserService {
 
-        private final UserRepository userRepository;
+    private final UserRepository userRepository;
 
-        private final SignupOtpRepository signupOtpRepository;
+    private final SignupOtpRepository signupOtpRepository;
 
-        private final PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
-        private final NotificationClient notificationClient;
+    private final NotificationClient notificationClient;
 
-        private final ForgotPasswordOtpRepository forgotPasswordOtpRepository;
+    private final ForgotPasswordOtpRepository forgotPasswordOtpRepository;
 
-        private final JwtUtil jwtUtil;
+    private final JwtUtil jwtUtil;
 
-        @Value("${google.client-id}")
-        private String googleClientId;
+    @Value("${google.client-id}")
+    private String googleClientId;
 
-        public UserService(
-                        UserRepository userRepository,
-                        SignupOtpRepository signupOtpRepository,
-                        PasswordEncoder passwordEncoder,
-                        NotificationClient notificationClient,
-                        ForgotPasswordOtpRepository forgotPasswordOtpRepository,
-                        JwtUtil jwtUtil) {
+    public UserService(
+            UserRepository userRepository,
+            SignupOtpRepository signupOtpRepository,
+            PasswordEncoder passwordEncoder,
+            NotificationClient notificationClient,
+            ForgotPasswordOtpRepository forgotPasswordOtpRepository,
+            JwtUtil jwtUtil) {
 
-                this.userRepository = userRepository;
-                this.signupOtpRepository = signupOtpRepository;
-                this.passwordEncoder = passwordEncoder;
-                this.notificationClient = notificationClient;
-                this.forgotPasswordOtpRepository = forgotPasswordOtpRepository;
-                this.jwtUtil = jwtUtil;
+        this.userRepository = userRepository;
+        this.signupOtpRepository = signupOtpRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.notificationClient = notificationClient;
+        this.forgotPasswordOtpRepository = forgotPasswordOtpRepository;
+        this.jwtUtil = jwtUtil;
+    }
+
+    // ================= SEND SIGNUP OTP =================
+    public String sendSignupOtp(RegisterRequest request) {
+
+        System.out.println("STEP 1");
+
+        if (request.getEmail() == null
+                || request.getPassword() == null
+                || request.getName() == null) {
+
+            throw new RuntimeException("Invalid signup data");
         }
 
-        // ================= SEND SIGNUP OTP =================
-        public String sendSignupOtp(RegisterRequest request) {
+        System.out.println("STEP 2");
 
-                System.out.println("STEP 1");
+        if (userRepository.findByEmail(
+                request.getEmail()).isPresent()) {
 
-                if (request.getEmail() == null
-                                || request.getPassword() == null
-                                || request.getName() == null) {
-
-                        throw new RuntimeException("Invalid signup data");
-                }
-
-                System.out.println("STEP 2");
-
-                if (userRepository.findByEmail(
-                                request.getEmail()).isPresent()) {
-
-                        throw new EmailAlreadyExistsException("Email already exists");
-                }
-
-                System.out.println("STEP 3");
-
-                String otp = String.format(
-                                "%06d",
-                                new Random().nextInt(999999));
-
-                SignupOtp signupOtp = signupOtpRepository
-                                .findByEmail(request.getEmail())
-                                .orElse(new SignupOtp());
-
-                signupOtp.setEmail(request.getEmail());
-                signupOtp.setName(request.getName());
-
-                signupOtp.setPassword(
-                                passwordEncoder.encode(
-                                                request.getPassword()));
-
-                signupOtp.setOtp(otp);
-
-                signupOtp.setExpiryTime(
-                                LocalDateTime.now().plusMinutes(5));
-
-                signupOtpRepository.save(signupOtp);
-
-                System.out.println("STEP 4");
-
-                notificationClient.sendSignupOtp(
-                                request.getEmail(),
-                                request.getName(),
-                                otp);
-
-                System.out.println("STEP 5");
-
-                return "Signup OTP sent successfully";
+            throw new EmailAlreadyExistsException("Email already exists");
         }
 
-        // ================= VERIFY SIGNUP OTP =================
-        public RegisterResponse verifySignupOtp(
-                        String email,
-                        String otp) {
+        System.out.println("STEP 3");
 
-                System.out.println("EMAIL = " + email);
-                System.out.println("OTP = " + otp);
-                System.out.println("VERIFY STEP 1");
+        String otp = String.format(
+                "%06d",
+                new Random().nextInt(999999));
 
-                SignupOtp signupOtp = signupOtpRepository
-                                .findByEmail(email)
-                                .orElseThrow(() -> new RuntimeException(
-                                                "OTP request not found"));
+        SignupOtp signupOtp = signupOtpRepository
+                .findByEmail(request.getEmail())
+                .orElse(new SignupOtp());
 
-                System.out.println("DB OTP = " + signupOtp.getOtp());
-                System.out.println("DB EXPIRY = " + signupOtp.getExpiryTime());
-                System.out.println("NOW = " + LocalDateTime.now());
+        signupOtp.setEmail(request.getEmail());
+        signupOtp.setName(request.getName());
 
-                // OTP CHECK
-                if (!signupOtp.getOtp().equals(otp)) {
+        signupOtp.setPassword(
+                passwordEncoder.encode(
+                        request.getPassword()));
 
-                        throw new InvalidOtpException("Invalid OTP");
-                }
+        signupOtp.setOtp(otp);
 
-                // EXPIRY CHECK
-                if (signupOtp.getExpiryTime()
-                                .isBefore(LocalDateTime.now())) {
+        signupOtp.setExpiryTime(
+                LocalDateTime.now().plusMinutes(5));
 
-                        throw new IllegalArgumentException("OTP expired");
-                }
+        signupOtpRepository.save(signupOtp);
 
-                // DOUBLE CHECK EMAIL
-                if (userRepository.findByEmail(email)
-                                .isPresent()) {
+        System.out.println("STEP 4");
 
-                        throw new RuntimeException(
-                                        "Email already registered");
-                }
+        notificationClient.sendSignupOtp(
+                request.getEmail(),
+                request.getName(),
+                otp);
 
-                // CREATE USER
-                User user = new User();
+        System.out.println("STEP 5");
 
-                user.setName(signupOtp.getName());
+        return "Signup OTP sent successfully";
+    }
 
-                user.setEmail(signupOtp.getEmail());
+    // ================= VERIFY SIGNUP OTP =================
+    public RegisterResponse verifySignupOtp(
+            String email,
+            String otp) {
 
-                user.setPassword(signupOtp.getPassword());
+        System.out.println("EMAIL = " + email);
+        System.out.println("OTP = " + otp);
+        System.out.println("VERIFY STEP 1");
 
+        SignupOtp signupOtp = signupOtpRepository
+                .findByEmail(email)
+                .orElseThrow(() -> new RuntimeException(
+                "OTP request not found"));
+
+        System.out.println("DB OTP = " + signupOtp.getOtp());
+        System.out.println("DB EXPIRY = " + signupOtp.getExpiryTime());
+        System.out.println("NOW = " + LocalDateTime.now());
+
+        // OTP CHECK
+        if (!signupOtp.getOtp().equals(otp)) {
+
+            throw new InvalidOtpException("Invalid OTP");
+        }
+
+        // EXPIRY CHECK
+        if (signupOtp.getExpiryTime()
+                .isBefore(LocalDateTime.now())) {
+
+            throw new IllegalArgumentException("OTP expired");
+        }
+
+        // DOUBLE CHECK EMAIL
+        if (userRepository.findByEmail(email)
+                .isPresent()) {
+
+            throw new RuntimeException(
+                    "Email already registered");
+        }
+
+        // CREATE USER
+        User user = new User();
+
+        user.setName(signupOtp.getName());
+
+        user.setEmail(signupOtp.getEmail());
+
+        user.setPassword(signupOtp.getPassword());
+
+        user.setRole(Role.USER);
+
+        user.setProvider(Provider.LOCAL);
+
+        User savedUser = userRepository.save(user);
+
+        // DELETE TEMP OTP
+        signupOtpRepository.delete(signupOtp);
+
+        return new RegisterResponse(
+                savedUser.getId(),
+                savedUser.getName(),
+                savedUser.getEmail(),
+                savedUser.getRole(),
+                savedUser.getProvider());
+    }
+
+    // ================= LOGIN =================
+    public LoginResponse login(LoginRequest request) {
+
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+        // GOOGLE ACCOUNT CHECK
+        if (user.getProvider() == Provider.GOOGLE) {
+            throw new RuntimeException("Use Google login for this account");
+        }
+
+        String storedPassword = user.getPassword();
+
+        if (storedPassword == null) {
+            throw new RuntimeException("Use Google login for this account");
+        }
+
+        // PASSWORD CHECK
+        if (!passwordEncoder.matches(request.getPassword(), storedPassword)) {
+            throw new RuntimeException("Invalid password");
+        }
+
+        // GENERATE JWT TOKEN
+        String token = jwtUtil.generateToken(user.getId(), user.getEmail());
+        // SEND LOGIN SUCCESS EMAIL
+        notificationClient.sendLoginSuccessEmail(
+                user.getEmail(),
+                user.getName());
+
+        return new LoginResponse(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getRole(),
+                user.getProvider(),
+                token);
+    }
+
+    // ================= SEND FORGOT PASSWORD OTP =================
+    public String sendForgotPasswordOtp(String email) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Email not registered"));
+
+        // GOOGLE ACCOUNT CHECK
+        if (user.getProvider() == Provider.GOOGLE) {
+            throw new RuntimeException("This account uses Google login");
+        }
+
+        // GENERATE OTP
+        String otp = String.format("%06d", new Random().nextInt(999999));
+
+        ForgotPasswordOtp forgotOtp = forgotPasswordOtpRepository
+                .findByEmail(email)
+                .orElse(new ForgotPasswordOtp());
+
+        forgotOtp.setEmail(email);
+        forgotOtp.setOtp(otp);
+        forgotOtp.setExpiryTime(LocalDateTime.now().plusMinutes(5));
+
+        forgotPasswordOtpRepository.save(forgotOtp);
+
+        notificationClient.sendForgotPasswordOtp(email, otp);
+
+        return "Password reset OTP sent successfully";
+    }
+
+    // ================= VERIFY FORGOT PASSWORD OTP =================
+    public String verifyForgotPasswordOtp(String email, String otp) {
+
+        ForgotPasswordOtp forgotOtp = forgotPasswordOtpRepository
+                .findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("OTP request not found"));
+
+        // OTP CHECK
+        if (!forgotOtp.getOtp().equals(otp)) {
+            throw new RuntimeException("Invalid OTP");
+        }
+
+        // EXPIRY CHECK
+        if (forgotOtp.getExpiryTime().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("OTP expired");
+        }
+
+        return "OTP verified successfully";
+    }
+
+    // ================= RESET PASSWORD =================
+    public String resetPassword(ResetPasswordRequest request) {
+
+        ForgotPasswordOtp forgotOtp = forgotPasswordOtpRepository
+                .findByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("OTP request not found"));
+
+        // OTP CHECK
+        if (!forgotOtp.getOtp().equals(request.getOtp())) {
+            throw new RuntimeException("Invalid OTP");
+        }
+
+        // EXPIRY CHECK
+        if (forgotOtp.getExpiryTime().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("OTP expired");
+        }
+
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setPassword(
+                passwordEncoder.encode(request.getNewPassword()));
+
+        userRepository.save(user);
+
+        // SEND PASSWORD RESET CONFIRMATION EMAIL
+        notificationClient.sendPasswordResetSuccessEmail(
+                user.getEmail(),
+                user.getName());
+
+        // DELETE OTP AFTER SUCCESSFUL RESET
+        forgotPasswordOtpRepository.delete(forgotOtp);
+
+        return "Password reset successful";
+    }
+
+    // ================= GOOGLE LOGIN =================
+    public LoginResponse googleLogin(String token) {
+
+        try {
+
+            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
+                    new NetHttpTransport(),
+                    GsonFactory.getDefaultInstance())
+                    .setAudience(Collections.singletonList(googleClientId))
+                    .build();
+
+            GoogleIdToken idToken = verifier.verify(token);
+
+            if (idToken == null) {
+                throw new RuntimeException("Invalid Google token");
+            }
+
+            GoogleIdToken.Payload payload = idToken.getPayload();
+
+            if (!Boolean.TRUE.equals(payload.getEmailVerified())) {
+                throw new RuntimeException("Email not verified");
+            }
+
+            String email = payload.getEmail();
+            String name = (String) payload.get("name");
+
+            User user = userRepository.findByEmail(email).orElse(null);
+
+            if (user == null) {
+
+                user = new User();
+
+                user.setEmail(email);
+                user.setName(name);
+                user.setPassword(
+                        passwordEncoder.encode(UUID.randomUUID().toString()));
                 user.setRole(Role.USER);
+                user.setProvider(Provider.GOOGLE);
 
-                user.setProvider(Provider.LOCAL);
+                user = userRepository.save(user);
 
-                User savedUser = userRepository.save(user);
+            } else {
 
-                // DELETE TEMP OTP
-                signupOtpRepository.delete(signupOtp);
-
-                return new RegisterResponse(
-                                savedUser.getId(),
-                                savedUser.getName(),
-                                savedUser.getEmail(),
-                                savedUser.getRole(),
-                                savedUser.getProvider());
-        }
-
-        // ================= LOGIN =================
-        public LoginResponse login(LoginRequest request) {
-
-                User user = userRepository.findByEmail(request.getEmail())
-                                .orElseThrow(() -> new UserNotFoundException("User not found"));
-
-                // GOOGLE ACCOUNT CHECK
-                if (user.getProvider() == Provider.GOOGLE) {
-                        throw new RuntimeException("Use Google login for this account");
+                if (user.getProvider() == Provider.LOCAL) {
+                    throw new RuntimeException(
+                            "Use email/password login for this account");
                 }
+            }
 
-                String storedPassword = user.getPassword();
+            String jwt = jwtUtil.generateToken(user.getId(), user.getEmail());
 
-                if (storedPassword == null) {
-                        throw new RuntimeException("Use Google login for this account");
-                }
+            notificationClient.sendLoginSuccessEmail(
+                    user.getEmail(),
+                    user.getName());
 
-                // PASSWORD CHECK
-                if (!passwordEncoder.matches(request.getPassword(), storedPassword)) {
-                        throw new RuntimeException("Invalid password");
-                }
+            return new LoginResponse(
+                    user.getId(),
+                    user.getName(),
+                    user.getEmail(),
+                    user.getRole(),
+                    user.getProvider(),
+                    jwt);
 
-                // GENERATE JWT TOKEN
-                String token = jwtUtil.generateToken(user.getEmail());
+        } catch (IOException | RuntimeException | GeneralSecurityException e) {
 
-                // SEND LOGIN SUCCESS EMAIL
-                notificationClient.sendLoginSuccessEmail(
-                                user.getEmail(),
-                                user.getName());
+            throw new RuntimeException(e.getMessage());
+        }
+    }
 
-                return new LoginResponse(
-                                user.getId(),
-                                user.getName(),
-                                user.getEmail(),
-                                user.getRole(),
-                                user.getProvider(),
-                                token);
+    public ProfileResponse getProfile(User user) {
+
+        return new ProfileResponse(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getRole(),
+                user.getProvider());
+    }
+
+    public ProfileResponse updateProfile(
+            User user,
+            UpdateProfileRequest request) {
+
+        user.setName(request.getName());
+
+        User updatedUser = userRepository.save(user);
+
+        return new ProfileResponse(
+                updatedUser.getId(),
+                updatedUser.getName(),
+                updatedUser.getEmail(),
+                updatedUser.getRole(),
+                updatedUser.getProvider());
+    }
+
+    public void changePassword(
+            User user,
+            ChangePasswordRequest request) {
+
+        // Verify current password
+        if (!passwordEncoder.matches(
+                request.getCurrentPassword(),
+                user.getPassword())) {
+
+            throw new InvalidPasswordException("Current password is incorrect");
         }
 
-        // ================= SEND FORGOT PASSWORD OTP =================
-        public String sendForgotPasswordOtp(String email) {
+        // Update password
+        user.setPassword(
+                passwordEncoder.encode(request.getNewPassword()));
 
-                User user = userRepository.findByEmail(email)
-                                .orElseThrow(() -> new RuntimeException("Email not registered"));
+        userRepository.save(user);
+    }
 
-                // GOOGLE ACCOUNT CHECK
-                if (user.getProvider() == Provider.GOOGLE) {
-                        throw new RuntimeException("This account uses Google login");
-                }
+    public void deleteAccount(User user) {
 
-                // GENERATE OTP
-                String otp = String.format("%06d", new Random().nextInt(999999));
+        userRepository.delete(user);
+    }
 
-                ForgotPasswordOtp forgotOtp = forgotPasswordOtpRepository
-                                .findByEmail(email)
-                                .orElse(new ForgotPasswordOtp());
+    public ProfileResponse getUserById(Long userId) {
 
-                forgotOtp.setEmail(email);
-                forgotOtp.setOtp(otp);
-                forgotOtp.setExpiryTime(LocalDateTime.now().plusMinutes(5));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
 
-                forgotPasswordOtpRepository.save(forgotOtp);
+        return new ProfileResponse(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getRole(),
+                user.getProvider());
+    }
 
-                notificationClient.sendForgotPasswordOtp(email, otp);
+    public List<ProfileResponse> getAllUsers() {
+        return userRepository.findAll()
+                .stream()
+                .map(user -> new ProfileResponse(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getRole(),
+                user.getProvider()
+        ))
+                .toList();
+    }
 
-                return "Password reset OTP sent successfully";
-        }
+    public List<ProfileResponse> getUsersByRole(Role role) {
+        return userRepository.findByRole(role)
+                .stream()
+                .map(user -> new ProfileResponse(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getRole(),
+                user.getProvider()
+        ))
+                .toList();
+    }
 
-        // ================= VERIFY FORGOT PASSWORD OTP =================
-        public String verifyForgotPasswordOtp(String email, String otp) {
+    public List<ProfileResponse> searchUsers(String keyword) {
 
-                ForgotPasswordOtp forgotOtp = forgotPasswordOtpRepository
-                                .findByEmail(email)
-                                .orElseThrow(() -> new RuntimeException("OTP request not found"));
-
-                // OTP CHECK
-                if (!forgotOtp.getOtp().equals(otp)) {
-                        throw new RuntimeException("Invalid OTP");
-                }
-
-                // EXPIRY CHECK
-                if (forgotOtp.getExpiryTime().isBefore(LocalDateTime.now())) {
-                        throw new RuntimeException("OTP expired");
-                }
-
-                return "OTP verified successfully";
-        }
-
-        // ================= RESET PASSWORD =================
-        public String resetPassword(ResetPasswordRequest request) {
-
-                ForgotPasswordOtp forgotOtp = forgotPasswordOtpRepository
-                                .findByEmail(request.getEmail())
-                                .orElseThrow(() -> new RuntimeException("OTP request not found"));
-
-                // OTP CHECK
-                if (!forgotOtp.getOtp().equals(request.getOtp())) {
-                        throw new RuntimeException("Invalid OTP");
-                }
-
-                // EXPIRY CHECK
-                if (forgotOtp.getExpiryTime().isBefore(LocalDateTime.now())) {
-                        throw new RuntimeException("OTP expired");
-                }
-
-                User user = userRepository.findByEmail(request.getEmail())
-                                .orElseThrow(() -> new RuntimeException("User not found"));
-
-                user.setPassword(
-                                passwordEncoder.encode(request.getNewPassword()));
-
-                userRepository.save(user);
-
-                // SEND PASSWORD RESET CONFIRMATION EMAIL
-                notificationClient.sendPasswordResetSuccessEmail(
-                                user.getEmail(),
-                                user.getName());
-
-                // DELETE OTP AFTER SUCCESSFUL RESET
-                forgotPasswordOtpRepository.delete(forgotOtp);
-
-                return "Password reset successful";
-        }
-
-        // ================= GOOGLE LOGIN =================
-        public LoginResponse googleLogin(String token) {
-
-                try {
-
-                        GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
-                                        new NetHttpTransport(),
-                                        GsonFactory.getDefaultInstance())
-                                        .setAudience(Collections.singletonList(googleClientId))
-                                        .build();
-
-                        GoogleIdToken idToken = verifier.verify(token);
-
-                        if (idToken == null) {
-                                throw new RuntimeException("Invalid Google token");
-                        }
-
-                        GoogleIdToken.Payload payload = idToken.getPayload();
-
-                        if (!Boolean.TRUE.equals(payload.getEmailVerified())) {
-                                throw new RuntimeException("Email not verified");
-                        }
-
-                        String email = payload.getEmail();
-                        String name = (String) payload.get("name");
-
-                        User user = userRepository.findByEmail(email).orElse(null);
-
-                        if (user == null) {
-
-                                user = new User();
-
-                                user.setEmail(email);
-                                user.setName(name);
-                                user.setPassword(
-                                                passwordEncoder.encode(UUID.randomUUID().toString()));
-                                user.setRole(Role.USER);
-                                user.setProvider(Provider.GOOGLE);
-
-                                user = userRepository.save(user);
-
-                        } else {
-
-                                if (user.getProvider() == Provider.LOCAL) {
-                                        throw new RuntimeException(
-                                                        "Use email/password login for this account");
-                                }
-                        }
-
-                        String jwt = jwtUtil.generateToken(user.getEmail());
-
-                        notificationClient.sendLoginSuccessEmail(
-                                        user.getEmail(),
-                                        user.getName());
-
-                        return new LoginResponse(
-                                        user.getId(),
-                                        user.getName(),
-                                        user.getEmail(),
-                                        user.getRole(),
-                                        user.getProvider(),
-                                        jwt);
-
-                } catch (IOException | RuntimeException | GeneralSecurityException e) {
-
-                        throw new RuntimeException(e.getMessage());
-                }
-        }
-
-        public ProfileResponse getProfile(User user) {
-
-                return new ProfileResponse(
-                                user.getId(),
-                                user.getName(),
-                                user.getEmail(),
-                                user.getRole(),
-                                user.getProvider());
-        }
-
-        public ProfileResponse updateProfile(
-                        User user,
-                        UpdateProfileRequest request) {
-
-                user.setName(request.getName());
-
-                User updatedUser = userRepository.save(user);
-
-                return new ProfileResponse(
-                                updatedUser.getId(),
-                                updatedUser.getName(),
-                                updatedUser.getEmail(),
-                                updatedUser.getRole(),
-                                updatedUser.getProvider());
-        }
-
-        public void changePassword(
-                        User user,
-                        ChangePasswordRequest request) {
-
-                // Verify current password
-                if (!passwordEncoder.matches(
-                                request.getCurrentPassword(),
-                                user.getPassword())) {
-
-                        throw new InvalidPasswordException("Current password is incorrect");
-                }
-
-                // Update password
-                user.setPassword(
-                                passwordEncoder.encode(request.getNewPassword()));
-
-                userRepository.save(user);
-        }
-
-        public void deleteAccount(User user) {
-
-                userRepository.delete(user);
-        }
-
-        public ProfileResponse getUserById(Long userId) {
-
-                User user = userRepository.findById(userId)
-                                .orElseThrow(() -> new UserNotFoundException("User not found"));
-
-                return new ProfileResponse(
-                                user.getId(),
-                                user.getName(),
-                                user.getEmail(),
-                                user.getRole(),
-                                user.getProvider());
-        }
+        return userRepository
+                .findByNameContainingIgnoreCaseOrEmailContainingIgnoreCase(
+                        keyword,
+                        keyword)
+                .stream()
+                .map(user -> new ProfileResponse(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getRole(),
+                user.getProvider()
+        ))
+                .toList();
+    }
 }

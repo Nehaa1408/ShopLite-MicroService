@@ -44,7 +44,7 @@ const Cart = () => {
               className="glass-panel rounded-xl p-6 flex flex-col md:flex-row gap-6 shadow"
             >
               <div className="w-full md:w-40 h-40 rounded-lg overflow-hidden">
-               
+
                 <img
                   src={
                     item.imageUrl?.startsWith("http")
@@ -81,7 +81,7 @@ const Cart = () => {
                   {/* QTY */}
                   <div className="flex items-center bg-surface-container-low rounded p-1">
                     <button
-                      onClick={() => decreaseQty(item.id, item.quantity)}
+                      onClick={() => decreaseQty(item.cartId, item.quantity)}
                       className="w-8 h-8 flex items-center justify-center"
                     >
                       -
@@ -91,7 +91,7 @@ const Cart = () => {
                     <span className="px-4 font-semibold">{item.quantity}</span>
 
                     <button
-                      onClick={() => increaseQty(item.id, item.quantity)}
+                      onClick={() => increaseQty(item.cartId, item.quantity)}
                       className="w-8 h-8 flex items-center justify-center"
                     >
                       +
@@ -100,7 +100,7 @@ const Cart = () => {
 
                   {/* REMOVE */}
                   <button
-                    onClick={() => removeFromCart(item.id)}
+                    onClick={() => removeFromCart(item.cartId)}
                     className="text-error text-sm"
                   >
                     Remove

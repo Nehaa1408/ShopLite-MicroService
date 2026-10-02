@@ -1,5 +1,7 @@
 package com.ecommerce.user_service.controller;
 
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -16,6 +18,7 @@ import com.ecommerce.user_service.dto.ChangePasswordRequest;
 import com.ecommerce.user_service.dto.ProfileResponse;
 import com.ecommerce.user_service.dto.ResetPasswordRequest;
 import com.ecommerce.user_service.dto.UpdateProfileRequest;
+import com.ecommerce.user_service.entity.Role;
 import com.ecommerce.user_service.entity.User;
 import com.ecommerce.user_service.service.UserService;
 
@@ -104,5 +107,24 @@ public class UserController {
 
         return ResponseEntity.ok(
                 userService.getUserById(userId));
+    }
+
+    @GetMapping("/admin")
+    public ResponseEntity<List<ProfileResponse>> getAllUsers() {
+        return ResponseEntity.ok(userService.getAllUsers());
+    }
+
+    @GetMapping("/admin/role/{role}")
+    public ResponseEntity<List<ProfileResponse>> getUsersByRole(
+            @PathVariable Role role) {
+
+        return ResponseEntity.ok(userService.getUsersByRole(role));
+    }
+
+    @GetMapping("/admin/search/{keyword}")
+    public ResponseEntity<List<ProfileResponse>> searchUsers(
+            @PathVariable String keyword) {
+
+        return ResponseEntity.ok(userService.searchUsers(keyword));
     }
 }

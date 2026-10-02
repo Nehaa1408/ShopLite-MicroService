@@ -9,7 +9,12 @@ import com.ecommerce.user_service.entity.Role;
 import com.ecommerce.user_service.entity.User;
 
 public interface UserRepository extends JpaRepository<User, Long> {
+
     Optional<User> findByEmail(String email);
 
-   List<User> findByRole(Role role);
+    List<User> findByRole(Role role);
+
+    List<User> findByNameContainingIgnoreCaseOrEmailContainingIgnoreCase(
+            String name,
+            String email);
 }

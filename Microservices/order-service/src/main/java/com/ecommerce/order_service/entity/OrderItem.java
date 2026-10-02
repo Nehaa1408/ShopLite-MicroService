@@ -48,5 +48,6 @@ public class OrderItem {
     @Column(nullable = false)
     private double subtotal;
 
+    @Column(name = "product_image", columnDefinition = "TEXT")
     private String productImage;
 }
