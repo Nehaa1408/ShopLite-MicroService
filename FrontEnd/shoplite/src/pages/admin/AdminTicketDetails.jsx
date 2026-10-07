@@ -75,7 +75,7 @@ const AdminTicketDetails = () => {
     useEffect(() => {
         const fetchTicket = async () => {
             try {
-                const res = await adminAxios.get(`/tickets/${id}`);
+                const res = await adminAxios.get(`/tickets/admin/${id}`);
                 setTicket(res.data);
             } catch (err) {
                 console.error("Ticket fetch error:", err);

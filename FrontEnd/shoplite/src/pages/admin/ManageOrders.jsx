@@ -65,7 +65,7 @@ const ManageOrders = () => {
           completed,
         });
 
-        const usersRes = await adminAxios.get("/users/delivery");
+        const usersRes = await adminAxios.get("/user/admin/role/DELIVERY");
         setUsers(usersRes.data);
 
       } catch (err) {

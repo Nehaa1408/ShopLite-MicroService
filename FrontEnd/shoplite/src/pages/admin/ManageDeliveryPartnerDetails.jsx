@@ -159,17 +159,17 @@ const ManageDeliveryPartnerDetails = () => {
 
                         <div
                             className={`px-3 py-1 rounded-full text-xs font-semibold
-    ${partner.approved
+    ${partner.approvalStatus === "APPROVED"
                                     ? "bg-emerald-50 text-emerald-600"
-                                    : partner.rejected
+                                    : partner.approvalStatus === "REJECTED"
                                         ? "bg-red-50 text-red-600"
                                         : "bg-orange-50 text-orange-600"
                                 }`}
                         >
                             {
-                                partner.approved
+                                partner.approvalStatus === "APPROVED"
                                     ? "Approved"
-                                    : partner.rejected
+                                    : partner.approvalStatus === "REJECTED"
                                         ? "Rejected"
                                         : "Pending Review"
                             }
@@ -213,7 +213,8 @@ const ManageDeliveryPartnerDetails = () => {
                                     {/* BUTTONS */}
                                     <div className="w-full mt-6">
 
-                                        {!partner.approved && !partner.rejected ? (
+                                        {partner.approvalStatus !== "APPROVED" &&
+                                            partner.approvalStatus !== "REJECTED" ? (
 
                                             <div className="flex flex-col gap-3">
 
@@ -251,7 +252,7 @@ const ManageDeliveryPartnerDetails = () => {
 
                                             </div>
 
-                                        ) : partner.approved ? (
+                                        ) : partner.approvalStatus === "APPROVED" ? (
 
                                             <div
                                                 className="

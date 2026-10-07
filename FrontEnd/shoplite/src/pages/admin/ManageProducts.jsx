@@ -23,6 +23,7 @@ const ManageProducts = () => {
       try {
         const res = await adminAxios.get("/products?page=0&size=100");
         setProducts(res.data.content);
+        console.log("PRODUCTS RESPONSE:", res.data.content);
 
       } catch (err) {
         console.error("Products fetch error:", err);
@@ -178,7 +179,7 @@ border border-white/40 overflow-hidden">
 
                     <td className="p-4">
                       <span className="px-3 py-1 bg-surface-container-high rounded-full text-xs">
-                        {p.category?.name || p.category || "No Category"}
+                        {p.categoryName || "No Category"}
                       </span>
                     </td>
 

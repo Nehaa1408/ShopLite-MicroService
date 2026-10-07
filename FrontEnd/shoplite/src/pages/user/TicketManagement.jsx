@@ -19,7 +19,7 @@ const TicketManagement = () => {
       const token = localStorage.getItem("token");
       if (!token) return;
 
-      const res = await api.get("/api/tickets", {
+      const res = await api.get("/api/tickets/my", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -54,7 +54,7 @@ const TicketManagement = () => {
 
     try {
       const token = localStorage.getItem("token");
-
+      console.log("USER ID:", localStorage.getItem("userId"));
 
       console.log("TOKEN:", token);
 
@@ -67,7 +67,10 @@ const TicketManagement = () => {
         "/api/tickets",
         {
           subject: form.subject,
-          message: form.description,
+          description: form.description,
+          category: form.category,
+          priority: "MEDIUM",
+          orderId: form.orderId ? Number(form.orderId) : null,
         },
         {
           headers: {
@@ -200,10 +203,13 @@ const TicketManagement = () => {
                 onChange={handleChange}
                 className="p-4 bg-gray-100 rounded-lg"
               >
-                <option>Order Issue</option>
-                <option>Payment Issue</option>
-                <option>Product Issue</option>
-                <option>Other Issue</option>
+                <option value="ORDER">Order Issue</option>
+                <option value="DELIVERY">Delivery Issue</option>
+                <option value="RETURN">Return Issue</option>
+                <option value="PAYMENT">Payment Issue</option>
+                <option value="PRODUCT">Product Issue</option>
+                <option value="ACCOUNT">Account Issue</option>
+                <option value="OTHER">Other</option>
               </select>
             </div>
 

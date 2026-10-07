@@ -29,9 +29,4 @@ public class ProductRequest {
     @NotNull(message = "Category ID is required")
     private Long categoryId;
 
-    @NotBlank(message = "Brand is required")
-    private String brand;
-
-    @NotBlank(message = "Type is required")
-    private String type;
 }

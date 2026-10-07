@@ -109,7 +109,7 @@ border border-white/40 overflow-hidden">
                 {filteredTickets.map((t, i) => (
                   <tr
                     key={i}
-                    onClick={() => navigate(`/admin/ticket/${t.id}`)}
+                    onClick={() => navigate(`/admin/ticket/${t.ticketId}`)}
                     className="border-t border-white/30 
 transition-all duration-300
 hover:bg-white/60 

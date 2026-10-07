@@ -16,6 +16,14 @@ public class OrderResponse {
 
     private Long deliveryPartnerId;
 
+    private String customerName;
+
+    private String customerEmail;
+
+    private String deliveryAgentName;
+
+    private String deliveryAgentEmail;
+
     private double totalAmount;
 
     private String status;

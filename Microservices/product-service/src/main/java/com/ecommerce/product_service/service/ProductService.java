@@ -44,8 +44,6 @@ public class ProductService {
         product.setPrice(request.getPrice());
         product.setQuantity(request.getQuantity());
         product.setImageUrl(request.getImageUrl());
-        product.setBrand(request.getBrand());
-        product.setType(request.getType());
         product.setCategory(category);
         product.setActive(true);
 
@@ -142,14 +140,6 @@ public class ProductService {
                     .orElseThrow(() -> new RuntimeException("Category not found"));
 
             existingProduct.setCategory(category);
-        }
-
-        if (request.getBrand() != null && !request.getBrand().isBlank()) {
-            existingProduct.setBrand(request.getBrand());
-        }
-
-        if (request.getType() != null && !request.getType().isBlank()) {
-            existingProduct.setType(request.getType());
         }
 
         Product updatedProduct = productRepository.save(existingProduct);

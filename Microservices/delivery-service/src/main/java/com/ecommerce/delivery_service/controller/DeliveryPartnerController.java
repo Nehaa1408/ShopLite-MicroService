@@ -1,7 +1,7 @@
 package com.ecommerce.delivery_service.controller;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,7 +17,7 @@ import com.ecommerce.delivery_service.service.DeliveryPartnerService;
 
 @RestController
 @RequestMapping("/api/delivery")
-@CrossOrigin(origins = "*")
+
 public class DeliveryPartnerController {
 
     private final DeliveryPartnerService deliveryPartnerService;
@@ -62,6 +62,14 @@ public class DeliveryPartnerController {
 
         return ResponseEntity.ok(partner);
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getDeliveryPartnerById(
+            @PathVariable Long id) {
+
+        return ResponseEntity.ok(
+                deliveryPartnerService.getById(id));
+    }
     // ================= ADMIN - GET PENDING PARTNERS =================
 
     @GetMapping("/admin/pending")
@@ -88,5 +96,13 @@ public class DeliveryPartnerController {
 
         return ResponseEntity.ok(
                 deliveryPartnerService.rejectPartner(id));
+    }
+    // ================= ADMIN - GET ALL DELIVERY PARTNERS =================
+
+    @GetMapping("/all")
+    public ResponseEntity<?> getAllDeliveryPartners() {
+
+        return ResponseEntity.ok(
+                deliveryPartnerService.getAllDeliveryPartners());
     }
 }

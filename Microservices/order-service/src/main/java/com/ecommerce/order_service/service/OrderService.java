@@ -43,587 +43,646 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class OrderService {
 
-    private final OrderRepository orderRepository;
+        private final OrderRepository orderRepository;
 
-    private final CartClient cartClient;
+        private final CartClient cartClient;
 
-    private final ProductClient productClient;
+        private final ProductClient productClient;
 
-    private final UserClient userClient;
+        private final UserClient userClient;
 
-    private final NotificationClient notificationClient;
+        private final NotificationClient notificationClient;
 
-    private final DeliveryOtpRepository deliveryOtpRepository;
+        private final DeliveryOtpRepository deliveryOtpRepository;
 
-    private final DeliveryFeedbackRepository deliveryFeedbackRepository;
+        private final DeliveryFeedbackRepository deliveryFeedbackRepository;
 
-    // PLACE ORDER
-    @Transactional
-    public OrderResponse placeOrder(
-            Long userId,
-            PlaceOrderRequest request) {
+        // PLACE ORDER
+        @Transactional
+        public OrderResponse placeOrder(
+                        Long userId,
+                        PlaceOrderRequest request) {
 
-        UserResponse user = userClient.getUserById(userId);
+                UserResponse user = userClient.getUserById(userId);
 
-        // 1. GET CART
-        List<CartItemResponse> cartItems = cartClient.getCart(userId);
+                // 1. GET CART
+                List<CartItemResponse> cartItems = cartClient.getCart(userId);
 
-        if (cartItems == null || cartItems.isEmpty()) {
-            throw new RuntimeException("Cart is empty");
+                if (cartItems == null || cartItems.isEmpty()) {
+                        throw new RuntimeException("Cart is empty");
+                }
+
+                // 2. CREATE ORDER
+                Order order = new Order();
+
+                order.setUserId(userId);
+
+                order.setStatus(OrderStatus.PENDING);
+
+                // 3. PAYMENT METHOD
+                PaymentMethod paymentMethod;
+
+                try {
+
+                        paymentMethod = PaymentMethod.valueOf(
+                                        request.getPaymentMethod().toUpperCase());
+
+                } catch (Exception e) {
+
+                        throw new RuntimeException(
+                                        "Invalid payment method");
+                }
+
+                order.setPaymentMethod(paymentMethod);
+
+                // 4. PAYMENT STATUS
+                if (paymentMethod == PaymentMethod.COD) {
+
+                        order.setPaymentStatus(
+                                        PaymentStatus.COD_PENDING);
+
+                } else {
+
+                        order.setPaymentStatus(
+                                        PaymentStatus.PENDING_VERIFICATION);
+                }
+
+                // 5. CREATE ORDER ITEMS
+                List<OrderItem> orderItems = new ArrayList<>();
+
+                double subtotal = 0.0;
+
+                for (CartItemResponse cartItem : cartItems) {
+
+                        // Get latest product information
+                        ProductResponse product = productClient.getProductById(
+                                        cartItem.getProductId());
+
+                        // PRODUCT VALIDATION
+                        if (product == null) {
+
+                                throw new RuntimeException(
+                                                "Product not found: "
+                                                                + cartItem.getProductId());
+                        }
+
+                        if (!product.isActive()) {
+
+                                throw new RuntimeException(
+                                                "Product is inactive: "
+                                                                + product.getName());
+                        }
+
+                        // STOCK VALIDATION
+                        if (product.getQuantity() < cartItem.getQuantity()) {
+
+                                throw new RuntimeException(
+                                                "Insufficient stock for product: "
+                                                                + product.getName());
+                        }
+
+                        // CREATE ORDER ITEM
+                        OrderItem orderItem = new OrderItem();
+
+                        orderItem.setOrder(order);
+
+                        orderItem.setProductId(product.getId());
+
+                        orderItem.setProductName(product.getName());
+
+                        orderItem.setProductImage(product.getImageUrl());
+
+                        orderItem.setPrice(product.getPrice());
+
+                        orderItem.setQuantity(cartItem.getQuantity());
+
+                        double itemSubtotal = product.getPrice()
+                                        * cartItem.getQuantity();
+
+                        orderItem.setSubtotal(itemSubtotal);
+
+                        subtotal += itemSubtotal;
+
+                        orderItems.add(orderItem);
+                }
+
+                // 6. CALCULATE TAX
+                double tax = subtotal * 0.04;
+
+                double finalTotal = subtotal + tax;
+
+                // 7. SET ORDER DETAILS
+                order.setItems(orderItems);
+
+                order.setTotalAmount(finalTotal);
+
+                // 8. SAVE ORDER
+                Order savedOrder = orderRepository.save(order);
+
+                OrderPlacedNotificationRequest notificationRequest = new OrderPlacedNotificationRequest();
+
+                notificationRequest.setEmail(user.getEmail());
+                notificationRequest.setName(user.getName());
+                notificationRequest.setOrderId(savedOrder.getId());
+                notificationRequest.setTotalAmount(savedOrder.getTotalAmount());
+                notificationRequest.setPaymentMethod(
+                                savedOrder.getPaymentMethod().name());
+                notificationRequest.setPaymentStatus(
+                                savedOrder.getPaymentStatus().name());
+
+                List<OrderItemNotification> notificationItems = new ArrayList<>();
+
+                for (OrderItem item : savedOrder.getItems()) {
+
+                        OrderItemNotification notificationItem = new OrderItemNotification();
+
+                        notificationItem.setProductName(item.getProductName());
+                        notificationItem.setQuantity(item.getQuantity());
+                        notificationItem.setPrice(item.getPrice());
+                        notificationItem.setSubtotal(item.getSubtotal());
+
+                        notificationItems.add(notificationItem);
+                }
+
+                notificationRequest.setItems(notificationItems);
+                notificationClient.sendOrderPlacedEmail(notificationRequest);
+
+                // 9. CLEAR CART
+                cartClient.clearCart(userId);
+
+                // 10. RETURN RESPONSE
+                return mapToResponse(savedOrder);
         }
 
-        // 2. CREATE ORDER
-        Order order = new Order();
+        // GET USER ORDERS
+        @Transactional(readOnly = true)
+        public List<OrderResponse> getUserOrders(Long userId) {
 
-        order.setUserId(userId);
+                List<Order> orders = orderRepository.findByUserIdOrderByOrderDateDesc(userId);
 
-        order.setStatus(OrderStatus.PENDING);
-
-        // 3. PAYMENT METHOD
-        PaymentMethod paymentMethod;
-
-        try {
-
-            paymentMethod = PaymentMethod.valueOf(
-                    request.getPaymentMethod().toUpperCase());
-
-        } catch (Exception e) {
-
-            throw new RuntimeException(
-                    "Invalid payment method");
+                return orders.stream()
+                                .map(this::mapToResponse)
+                                .toList();
         }
 
-        order.setPaymentMethod(paymentMethod);
+        // GET ORDER BY ID
+        @Transactional(readOnly = true)
+        public OrderResponse getOrderById(Long orderId, Long userId) {
 
-        // 4. PAYMENT STATUS
-        if (paymentMethod == PaymentMethod.COD) {
+                Order order = orderRepository
+                                .findByIdAndUserId(orderId, userId)
+                                .orElseThrow(() -> new RuntimeException("Order not found"));
 
-            order.setPaymentStatus(
-                    PaymentStatus.COD_PENDING);
-
-        } else {
-
-            order.setPaymentStatus(
-                    PaymentStatus.PENDING_VERIFICATION);
+                return mapToResponse(order);
         }
 
-        // 5. CREATE ORDER ITEMS
-        List<OrderItem> orderItems = new ArrayList<>();
+        // CANCEL ORDER
+        @Transactional
+        public OrderResponse cancelOrder(
+                        Long orderId,
+                        String reason,
+                        Long userId) {
 
-        double subtotal = 0.0;
+                Order order = orderRepository
+                                .findByIdAndUserId(orderId, userId)
+                                .orElseThrow(() -> new RuntimeException("Order not found"));
 
-        for (CartItemResponse cartItem : cartItems) {
+                // Cannot cancel after delivery has started
+                if (order.getStatus() == OrderStatus.OUT_FOR_DELIVERY
+                                || order.getStatus() == OrderStatus.DELIVERED) {
 
-            // Get latest product information
-            ProductResponse product = productClient.getProductById(
-                    cartItem.getProductId());
+                        throw new RuntimeException(
+                                        "Order can no longer be cancelled");
+                }
 
-            // PRODUCT VALIDATION
-            if (product == null) {
+                order.setStatus(OrderStatus.CANCELLED);
 
-                throw new RuntimeException(
-                        "Product not found: "
-                        + cartItem.getProductId());
-            }
+                order.setCancellationReason(reason);
 
-            if (!product.isActive()) {
+                order.setDeliveryPartnerId(null);
 
-                throw new RuntimeException(
-                        "Product is inactive: "
-                        + product.getName());
-            }
+                Order savedOrder = orderRepository.save(order);
 
-            // STOCK VALIDATION
-            if (product.getQuantity() < cartItem.getQuantity()) {
+                // SEND CANCELLATION NOTIFICATION
+                UserResponse deliveredUser = userClient.getUserById(savedOrder.getUserId());
 
-                throw new RuntimeException(
-                        "Insufficient stock for product: "
-                        + product.getName());
-            }
+                OrderStatusNotificationRequest notificationRequest = new OrderStatusNotificationRequest();
 
-            // CREATE ORDER ITEM
-            OrderItem orderItem = new OrderItem();
+                notificationRequest.setEmail(deliveredUser.getEmail());
+                notificationRequest.setName(deliveredUser.getName());
+                notificationRequest.setOrderId(savedOrder.getId());
+                notificationRequest.setOrderStatus(
+                                savedOrder.getStatus().name());
 
-            orderItem.setOrder(order);
+                notificationClient.sendOrderStatusNotification(
+                                notificationRequest);
 
-            orderItem.setProductId(product.getId());
-
-            orderItem.setProductName(product.getName());
-
-            orderItem.setProductImage(product.getImageUrl());
-
-            orderItem.setPrice(product.getPrice());
-
-            orderItem.setQuantity(cartItem.getQuantity());
-
-            double itemSubtotal = product.getPrice()
-                    * cartItem.getQuantity();
-
-            orderItem.setSubtotal(itemSubtotal);
-
-            subtotal += itemSubtotal;
-
-            orderItems.add(orderItem);
+                return mapToResponse(savedOrder);
         }
 
-        // 6. CALCULATE TAX
-        double tax = subtotal * 0.04;
+        // UPDATE ORDER STATUS
+        @Transactional
+        public OrderResponse updateOrderStatus(
+                        @NonNull Long orderId,
+                        String status) {
 
-        double finalTotal = subtotal + tax;
+                Order order = orderRepository.findById(orderId)
+                                .orElseThrow(() -> new RuntimeException("Order not found"));
 
-        // 7. SET ORDER DETAILS
-        order.setItems(orderItems);
+                OrderStatus orderStatus;
 
-        order.setTotalAmount(finalTotal);
+                try {
+                        orderStatus = OrderStatus.valueOf(
+                                        status.toUpperCase());
+                } catch (IllegalArgumentException e) {
+                        throw new RuntimeException(
+                                        "Invalid order status: " + status);
+                }
 
-        // 8. SAVE ORDER
-        Order savedOrder = orderRepository.save(order);
+                order.setStatus(orderStatus);
 
-        OrderPlacedNotificationRequest notificationRequest = new OrderPlacedNotificationRequest();
+                Order savedOrder = orderRepository.save(order);
 
-        notificationRequest.setEmail(user.getEmail());
-        notificationRequest.setName(user.getName());
-        notificationRequest.setOrderId(savedOrder.getId());
-        notificationRequest.setTotalAmount(savedOrder.getTotalAmount());
-        notificationRequest.setPaymentMethod(
-                savedOrder.getPaymentMethod().name());
-        notificationRequest.setPaymentStatus(
-                savedOrder.getPaymentStatus().name());
+                // SEND ORDER STATUS NOTIFICATION
+                UserResponse user = userClient.getUserById(savedOrder.getUserId());
 
-        List<OrderItemNotification> notificationItems = new ArrayList<>();
+                OrderStatusNotificationRequest notificationRequest = new OrderStatusNotificationRequest();
 
-        for (OrderItem item : savedOrder.getItems()) {
+                notificationRequest.setEmail(user.getEmail());
+                notificationRequest.setName(user.getName());
+                notificationRequest.setOrderId(savedOrder.getId());
+                notificationRequest.setOrderStatus(
+                                savedOrder.getStatus().name());
 
-            OrderItemNotification notificationItem = new OrderItemNotification();
+                notificationClient.sendOrderStatusNotification(
+                                notificationRequest);
 
-            notificationItem.setProductName(item.getProductName());
-            notificationItem.setQuantity(item.getQuantity());
-            notificationItem.setPrice(item.getPrice());
-            notificationItem.setSubtotal(item.getSubtotal());
+                return mapToResponse(savedOrder);
+        }
+        // ================= DELIVERY → SEND OTP =================
 
-            notificationItems.add(notificationItem);
+        @Transactional
+        public String sendDeliveryOtp(Long orderId, Long deliveryPartnerId) {
+
+                Order order = orderRepository.findById(orderId)
+                                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+                // SECURITY CHECK
+                if (order.getDeliveryPartnerId() == null
+                                || !order.getDeliveryPartnerId().equals(deliveryPartnerId)) {
+
+                        throw new RuntimeException("Unauthorized delivery action");
+                }
+
+                // GENERATE 6 DIGIT OTP
+                String otp = String.format(
+                                "%06d",
+                                new Random().nextInt(1_000_000));
+
+                // CREATE OTP
+                DeliveryOtp deliveryOtp = new DeliveryOtp();
+
+                deliveryOtp.setOrderId(orderId);
+                deliveryOtp.setOtp(otp);
+
+                // OTP VALID FOR 5 MINUTES
+                deliveryOtp.setExpiresAt(
+                                LocalDateTime.now().plusMinutes(5));
+
+                deliveryOtp.setVerified(false);
+
+                deliveryOtpRepository.save(deliveryOtp);
+                UserResponse user = userClient.getUserById(order.getUserId());
+
+                DeliveryOtpNotificationRequest notificationRequest = new DeliveryOtpNotificationRequest();
+
+                notificationRequest.setEmail(user.getEmail());
+                notificationRequest.setName(user.getName());
+                notificationRequest.setOrderId(order.getId());
+                notificationRequest.setOtp(otp);
+
+                notificationClient.sendDeliveryOtpNotification(
+                                notificationRequest);
+
+                // ORDER IS OUT FOR DELIVERY
+                order.setStatus(OrderStatus.OUT_FOR_DELIVERY);
+                orderRepository.save(order);
+
+                return "OTP generated successfully";
+        }
+        // UPDATE PAYMENT STATUS
+
+        @Transactional
+        public OrderResponse updatePaymentStatus(
+                        @NonNull Long orderId,
+                        String paymentStatus) {
+
+                Order order = orderRepository.findById(orderId)
+                                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+                PaymentStatus status;
+
+                try {
+                        status = PaymentStatus.valueOf(
+                                        paymentStatus.toUpperCase());
+                } catch (IllegalArgumentException e) {
+                        throw new RuntimeException(
+                                        "Invalid payment status: " + paymentStatus);
+                }
+
+                order.setPaymentStatus(status);
+
+                Order savedOrder = orderRepository.save(order);
+
+                // SEND PAYMENT NOTIFICATION
+                if (status == PaymentStatus.SUCCESS
+                                || status == PaymentStatus.FAILED) {
+
+                        UserResponse user = userClient.getUserById(savedOrder.getUserId());
+
+                        PaymentNotificationRequest notificationRequest = new PaymentNotificationRequest();
+
+                        notificationRequest.setEmail(user.getEmail());
+                        notificationRequest.setName(user.getName());
+                        notificationRequest.setOrderId(savedOrder.getId());
+                        notificationRequest.setAmount(savedOrder.getTotalAmount());
+                        notificationRequest.setPaymentMethod(
+                                        savedOrder.getPaymentMethod().name());
+                        notificationRequest.setPaymentStatus(
+                                        savedOrder.getPaymentStatus().name());
+
+                        notificationClient.sendPaymentNotification(
+                                        notificationRequest);
+                }
+
+                return mapToResponse(savedOrder);
         }
 
-        notificationRequest.setItems(notificationItems);
-        notificationClient.sendOrderPlacedEmail(notificationRequest);
+        // GET ALL ORDERS - ADMIN
+        @Transactional(readOnly = true)
+        public List<OrderResponse> getAllOrders() {
 
-        // 9. CLEAR CART
-        cartClient.clearCart(userId);
-
-        // 10. RETURN RESPONSE
-        return mapToResponse(savedOrder);
-    }
-
-    // GET USER ORDERS
-    @Transactional(readOnly = true)
-    public List<OrderResponse> getUserOrders(Long userId) {
-
-        List<Order> orders = orderRepository.findByUserIdOrderByOrderDateDesc(userId);
-
-        return orders.stream()
-                .map(this::mapToResponse)
-                .toList();
-    }
-
-    // GET ORDER BY ID
-    @Transactional(readOnly = true)
-    public OrderResponse getOrderById(Long orderId, Long userId) {
-
-        Order order = orderRepository
-                .findByIdAndUserId(orderId, userId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
-
-        return mapToResponse(order);
-    }
-
-    // CANCEL ORDER
-    @Transactional
-    public OrderResponse cancelOrder(
-            Long orderId,
-            String reason,
-            Long userId) {
-
-        Order order = orderRepository
-                .findByIdAndUserId(orderId, userId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
-
-        // Cannot cancel after delivery has started
-        if (order.getStatus() == OrderStatus.OUT_FOR_DELIVERY
-                || order.getStatus() == OrderStatus.DELIVERED) {
-
-            throw new RuntimeException(
-                    "Order can no longer be cancelled");
+                return orderRepository.findAll()
+                                .stream()
+                                .map(this::mapToResponse)
+                                .toList();
         }
 
-        order.setStatus(OrderStatus.CANCELLED);
+        // MAP ORDER → RESPONSE
+        private OrderResponse mapToResponse(Order order) {
 
-        order.setCancellationReason(reason);
+                List<OrderItemResponse> itemResponses = order.getItems()
+                                .stream()
+                                .map(item -> {
 
-        order.setDeliveryPartnerId(null);
+                                        OrderItemResponse response = new OrderItemResponse();
 
-        Order savedOrder = orderRepository.save(order);
+                                        response.setProductId(
+                                                        item.getProductId());
 
-        // SEND CANCELLATION NOTIFICATION
-        UserResponse deliveredUser = userClient.getUserById(savedOrder.getUserId());
+                                        response.setProductName(
+                                                        item.getProductName());
 
-        OrderStatusNotificationRequest notificationRequest = new OrderStatusNotificationRequest();
+                                        response.setPrice(
+                                                        item.getPrice());
 
-        notificationRequest.setEmail(deliveredUser.getEmail());
-        notificationRequest.setName(deliveredUser.getName());
-        notificationRequest.setOrderId(savedOrder.getId());
-        notificationRequest.setOrderStatus(
-                savedOrder.getStatus().name());
+                                        response.setQuantity(
+                                                        item.getQuantity());
 
-        notificationClient.sendOrderStatusNotification(
-                notificationRequest);
+                                        response.setSubtotal(
+                                                        item.getSubtotal());
 
-        return mapToResponse(savedOrder);
-    }
+                                        response.setImage(
+                                                        item.getProductImage());
 
-    // UPDATE ORDER STATUS
-    @Transactional
-    public OrderResponse updateOrderStatus(
-            @NonNull Long orderId,
-            String status) {
+                                        return response;
+                                })
+                                .toList();
 
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                OrderResponse response = new OrderResponse();
+                // CUSTOMER DETAILS
+                UserResponse customer = userClient.getUserById(order.getUserId());
 
-        OrderStatus orderStatus;
+                response.setCustomerName(customer.getName());
+                response.setCustomerEmail(customer.getEmail());
 
-        try {
-            orderStatus = OrderStatus.valueOf(
-                    status.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException(
-                    "Invalid order status: " + status);
+                // DELIVERY PARTNER DETAILS
+                if (order.getDeliveryPartnerId() != null) {
+
+                        UserResponse deliveryPartner = userClient.getUserById(
+                                        order.getDeliveryPartnerId());
+
+                        response.setDeliveryAgentName(
+                                        deliveryPartner.getName());
+
+                        response.setDeliveryAgentEmail(
+                                        deliveryPartner.getEmail());
+                }
+
+                response.setOrderId(order.getId());
+
+                response.setUserId(order.getUserId());
+
+                response.setDeliveryPartnerId(
+                                order.getDeliveryPartnerId());
+
+                response.setTotalAmount(
+                                order.getTotalAmount());
+
+                response.setStatus(
+                                order.getStatus().name());
+
+                response.setOrderDate(
+                                order.getOrderDate().toString());
+
+                response.setItems(itemResponses);
+
+                response.setCancelReason(
+                                order.getCancellationReason());
+
+                if (order.getDeliveredAt() != null) {
+
+                        response.setDeliveredAt(
+                                        order.getDeliveredAt().toString());
+                }
+
+                if (order.getPaymentMethod() != null) {
+                        response.setPaymentMethod(
+                                        order.getPaymentMethod().name());
+                }
+
+                if (order.getPaymentStatus() != null) {
+                        response.setPaymentStatus(
+                                        order.getPaymentStatus().name());
+                }
+
+                return response;
+        }
+        // ================= DELIVERY → VERIFY OTP =================
+
+        @Transactional
+        public OrderResponse verifyDeliveryOtp(
+                        Long orderId,
+                        String enteredOtp,
+                        Long deliveryPartnerId) {
+
+                Order order = orderRepository.findById(orderId)
+                                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+                // SECURITY CHECK
+                if (order.getDeliveryPartnerId() == null
+                                || !order.getDeliveryPartnerId().equals(deliveryPartnerId)) {
+
+                        throw new RuntimeException("Unauthorized delivery action");
+                }
+
+                // GET LATEST OTP
+                DeliveryOtp deliveryOtp = deliveryOtpRepository
+                                .findTopByOrderIdOrderByCreatedAtDesc(orderId)
+                                .orElseThrow(() -> new RuntimeException("OTP not found"));
+
+                // ALREADY USED
+                if (deliveryOtp.isVerified()) {
+                        throw new RuntimeException("OTP already used");
+                }
+
+                // EXPIRED
+                if (deliveryOtp.getExpiresAt()
+                                .isBefore(LocalDateTime.now())) {
+
+                        throw new RuntimeException("OTP expired");
+                }
+
+                // WRONG OTP
+                if (!deliveryOtp.getOtp().equals(enteredOtp)) {
+
+                        deliveryOtp.setAttempts(
+                                        deliveryOtp.getAttempts() + 1);
+
+                        deliveryOtpRepository.save(deliveryOtp);
+
+                        throw new RuntimeException("Invalid OTP");
+                }
+
+                // MARK OTP VERIFIED
+                deliveryOtp.setVerified(true);
+                deliveryOtpRepository.save(deliveryOtp);
+
+                // MARK ORDER DELIVERED
+                order.setStatus(OrderStatus.DELIVERED);
+                order.setDeliveredAt(LocalDateTime.now());
+
+                Order savedOrder = orderRepository.save(order);
+
+                // SEND DELIVERED NOTIFICATION
+                UserResponse user = userClient.getUserById(savedOrder.getUserId());
+
+                OrderStatusNotificationRequest notificationRequest = new OrderStatusNotificationRequest();
+
+                notificationRequest.setEmail(user.getEmail());
+                notificationRequest.setName(user.getName());
+                notificationRequest.setOrderId(savedOrder.getId());
+                notificationRequest.setOrderStatus(
+                                savedOrder.getStatus().name());
+
+                notificationClient.sendOrderStatusNotification(
+                                notificationRequest);
+
+                return mapToResponse(savedOrder);
+        }
+        // ================= DELIVERY FEEDBACK =================
+
+        @Transactional
+        public String addDeliveryFeedback(
+                        DeliveryFeedbackRequest request,
+                        Long userId) {
+
+                Order order = orderRepository
+                                .findByIdAndUserId(request.getOrderId(), userId)
+                                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+                // FEEDBACK ONLY AFTER DELIVERY
+                if (order.getStatus() != OrderStatus.DELIVERED) {
+                        throw new RuntimeException(
+                                        "Feedback can only be submitted for delivered orders");
+                }
+
+                // ONE FEEDBACK PER ORDER
+                if (deliveryFeedbackRepository
+                                .findByOrderId(order.getId())
+                                .isPresent()) {
+
+                        throw new RuntimeException(
+                                        "Feedback already submitted for this order");
+                }
+
+                // RATING VALIDATION
+                if (request.getRating() < 1 || request.getRating() > 5) {
+                        throw new RuntimeException(
+                                        "Rating must be between 1 and 5");
+                }
+
+                DeliveryFeedback feedback = new DeliveryFeedback();
+
+                feedback.setOrderId(order.getId());
+                feedback.setCustomerId(userId);
+                feedback.setDeliveryPartnerId(
+                                order.getDeliveryPartnerId());
+                feedback.setRating(request.getRating());
+                feedback.setFeedback(request.getFeedback());
+
+                deliveryFeedbackRepository.save(feedback);
+
+                return "Delivery feedback submitted successfully";
         }
 
-        order.setStatus(orderStatus);
+        public Map<String, Long> getAdminStats() {
 
-        Order savedOrder = orderRepository.save(order);
+                long orders = orderRepository.count();
 
-        // SEND ORDER STATUS NOTIFICATION
-        UserResponse user = userClient.getUserById(savedOrder.getUserId());
-
-        OrderStatusNotificationRequest notificationRequest = new OrderStatusNotificationRequest();
-
-        notificationRequest.setEmail(user.getEmail());
-        notificationRequest.setName(user.getName());
-        notificationRequest.setOrderId(savedOrder.getId());
-        notificationRequest.setOrderStatus(
-                savedOrder.getStatus().name());
-
-        notificationClient.sendOrderStatusNotification(
-                notificationRequest);
-
-        return mapToResponse(savedOrder);
-    }
-    // ================= DELIVERY → SEND OTP =================
-
-    @Transactional
-    public String sendDeliveryOtp(Long orderId, Long deliveryPartnerId) {
-
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
-
-        // SECURITY CHECK
-        if (order.getDeliveryPartnerId() == null
-                || !order.getDeliveryPartnerId().equals(deliveryPartnerId)) {
-
-            throw new RuntimeException("Unauthorized delivery action");
+                return Map.of(
+                                "orders", orders);
         }
 
-        // GENERATE 6 DIGIT OTP
-        String otp = String.format(
-                "%06d",
-                new Random().nextInt(1_000_000));
+        // =====================================================
+        // ADMIN - ASSIGN DELIVERY PARTNER
+        // =====================================================
 
-        // CREATE OTP
-        DeliveryOtp deliveryOtp = new DeliveryOtp();
+        @Transactional
+        public OrderResponse assignDeliveryPartner(
+                        Long orderId,
+                        Long deliveryId) {
 
-        deliveryOtp.setOrderId(orderId);
-        deliveryOtp.setOtp(otp);
+                Order order = orderRepository.findById(orderId)
+                                .orElseThrow(() -> new RuntimeException("Order not found"));
 
-        // OTP VALID FOR 5 MINUTES
-        deliveryOtp.setExpiresAt(
-                LocalDateTime.now().plusMinutes(5));
+                // Assign delivery partner
+                order.setDeliveryPartnerId(deliveryId);
 
-        deliveryOtp.setVerified(false);
+                // Save updated order
+                Order savedOrder = orderRepository.save(order);
 
-        deliveryOtpRepository.save(deliveryOtp);
-        UserResponse user = userClient.getUserById(order.getUserId());
-
-        DeliveryOtpNotificationRequest notificationRequest = new DeliveryOtpNotificationRequest();
-
-        notificationRequest.setEmail(user.getEmail());
-        notificationRequest.setName(user.getName());
-        notificationRequest.setOrderId(order.getId());
-        notificationRequest.setOtp(otp);
-
-        notificationClient.sendDeliveryOtpNotification(
-                notificationRequest);
-
-        // ORDER IS OUT FOR DELIVERY
-        order.setStatus(OrderStatus.OUT_FOR_DELIVERY);
-        orderRepository.save(order);
-
-        return "OTP generated successfully";
-    }
-    // UPDATE PAYMENT STATUS
-
-    @Transactional
-    public OrderResponse updatePaymentStatus(
-            @NonNull Long orderId,
-            String paymentStatus) {
-
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
-
-        PaymentStatus status;
-
-        try {
-            status = PaymentStatus.valueOf(
-                    paymentStatus.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException(
-                    "Invalid payment status: " + paymentStatus);
+                return mapToResponse(savedOrder);
         }
 
-        order.setPaymentStatus(status);
+        public List<Map<String, Object>> getTopProducts() {
 
-        Order savedOrder = orderRepository.save(order);
+                return orderRepository.findTopProducts()
+                                .stream()
+                                .limit(5)
+                                .map(row -> {
 
-        // SEND PAYMENT NOTIFICATION
-        if (status == PaymentStatus.SUCCESS
-                || status == PaymentStatus.FAILED) {
+                                        Long productId = ((Number) row[0]).longValue();
 
-            UserResponse user = userClient.getUserById(savedOrder.getUserId());
+                                        ProductResponse product = productClient.getProductById(productId);
 
-            PaymentNotificationRequest notificationRequest = new PaymentNotificationRequest();
-
-            notificationRequest.setEmail(user.getEmail());
-            notificationRequest.setName(user.getName());
-            notificationRequest.setOrderId(savedOrder.getId());
-            notificationRequest.setAmount(savedOrder.getTotalAmount());
-            notificationRequest.setPaymentMethod(
-                    savedOrder.getPaymentMethod().name());
-            notificationRequest.setPaymentStatus(
-                    savedOrder.getPaymentStatus().name());
-
-            notificationClient.sendPaymentNotification(
-                    notificationRequest);
+                                        return Map.of(
+                                                        "id", product.getId(),
+                                                        "name", product.getName(),
+                                                        "price", product.getPrice(),
+                                                        "imageUrl", product.getImageUrl(),
+                                                        "quantity", row[2]);
+                                })
+                                .toList();
         }
-
-        return mapToResponse(savedOrder);
-    }
-
-    // GET ALL ORDERS - ADMIN
-    @Transactional(readOnly = true)
-    public List<OrderResponse> getAllOrders() {
-
-        return orderRepository.findAll()
-                .stream()
-                .map(this::mapToResponse)
-                .toList();
-    }
-
-    // MAP ORDER → RESPONSE
-    private OrderResponse mapToResponse(Order order) {
-
-        List<OrderItemResponse> itemResponses = order.getItems()
-                .stream()
-                .map(item -> {
-
-                    OrderItemResponse response = new OrderItemResponse();
-
-                    response.setProductId(
-                            item.getProductId());
-
-                    response.setProductName(
-                            item.getProductName());
-
-                    response.setPrice(
-                            item.getPrice());
-
-                    response.setQuantity(
-                            item.getQuantity());
-
-                    response.setSubtotal(
-                            item.getSubtotal());
-
-                    response.setImage(
-                            item.getProductImage());
-
-                    return response;
-                })
-                .toList();
-
-        OrderResponse response = new OrderResponse();
-
-        response.setOrderId(order.getId());
-
-        response.setUserId(order.getUserId());
-
-        response.setDeliveryPartnerId(
-                order.getDeliveryPartnerId());
-
-        response.setTotalAmount(
-                order.getTotalAmount());
-
-        response.setStatus(
-                order.getStatus().name());
-
-        response.setOrderDate(
-                order.getOrderDate().toString());
-
-        response.setItems(itemResponses);
-
-        response.setCancelReason(
-                order.getCancellationReason());
-
-        if (order.getDeliveredAt() != null) {
-
-            response.setDeliveredAt(
-                    order.getDeliveredAt().toString());
-        }
-
-        if (order.getPaymentMethod() != null) {
-            response.setPaymentMethod(
-                    order.getPaymentMethod().name());
-        }
-
-        if (order.getPaymentStatus() != null) {
-            response.setPaymentStatus(
-                    order.getPaymentStatus().name());
-        }
-
-        return response;
-    }
-    // ================= DELIVERY → VERIFY OTP =================
-
-    @Transactional
-    public OrderResponse verifyDeliveryOtp(
-            Long orderId,
-            String enteredOtp,
-            Long deliveryPartnerId) {
-
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
-
-        // SECURITY CHECK
-        if (order.getDeliveryPartnerId() == null
-                || !order.getDeliveryPartnerId().equals(deliveryPartnerId)) {
-
-            throw new RuntimeException("Unauthorized delivery action");
-        }
-
-        // GET LATEST OTP
-        DeliveryOtp deliveryOtp = deliveryOtpRepository
-                .findTopByOrderIdOrderByCreatedAtDesc(orderId)
-                .orElseThrow(() -> new RuntimeException("OTP not found"));
-
-        // ALREADY USED
-        if (deliveryOtp.isVerified()) {
-            throw new RuntimeException("OTP already used");
-        }
-
-        // EXPIRED
-        if (deliveryOtp.getExpiresAt()
-                .isBefore(LocalDateTime.now())) {
-
-            throw new RuntimeException("OTP expired");
-        }
-
-        // WRONG OTP
-        if (!deliveryOtp.getOtp().equals(enteredOtp)) {
-
-            deliveryOtp.setAttempts(
-                    deliveryOtp.getAttempts() + 1);
-
-            deliveryOtpRepository.save(deliveryOtp);
-
-            throw new RuntimeException("Invalid OTP");
-        }
-
-        // MARK OTP VERIFIED
-        deliveryOtp.setVerified(true);
-        deliveryOtpRepository.save(deliveryOtp);
-
-        // MARK ORDER DELIVERED
-        order.setStatus(OrderStatus.DELIVERED);
-        order.setDeliveredAt(LocalDateTime.now());
-
-        Order savedOrder = orderRepository.save(order);
-
-        // SEND DELIVERED NOTIFICATION
-        UserResponse user = userClient.getUserById(savedOrder.getUserId());
-
-        OrderStatusNotificationRequest notificationRequest = new OrderStatusNotificationRequest();
-
-        notificationRequest.setEmail(user.getEmail());
-        notificationRequest.setName(user.getName());
-        notificationRequest.setOrderId(savedOrder.getId());
-        notificationRequest.setOrderStatus(
-                savedOrder.getStatus().name());
-
-        notificationClient.sendOrderStatusNotification(
-                notificationRequest);
-
-        return mapToResponse(savedOrder);
-    }
-    // ================= DELIVERY FEEDBACK =================
-
-    @Transactional
-    public String addDeliveryFeedback(
-            DeliveryFeedbackRequest request,
-            Long userId) {
-
-        Order order = orderRepository
-                .findByIdAndUserId(request.getOrderId(), userId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
-
-        // FEEDBACK ONLY AFTER DELIVERY
-        if (order.getStatus() != OrderStatus.DELIVERED) {
-            throw new RuntimeException(
-                    "Feedback can only be submitted for delivered orders");
-        }
-
-        // ONE FEEDBACK PER ORDER
-        if (deliveryFeedbackRepository
-                .findByOrderId(order.getId())
-                .isPresent()) {
-
-            throw new RuntimeException(
-                    "Feedback already submitted for this order");
-        }
-
-        // RATING VALIDATION
-        if (request.getRating() < 1 || request.getRating() > 5) {
-            throw new RuntimeException(
-                    "Rating must be between 1 and 5");
-        }
-
-        DeliveryFeedback feedback = new DeliveryFeedback();
-
-        feedback.setOrderId(order.getId());
-        feedback.setCustomerId(userId);
-        feedback.setDeliveryPartnerId(
-                order.getDeliveryPartnerId());
-        feedback.setRating(request.getRating());
-        feedback.setFeedback(request.getFeedback());
-
-        deliveryFeedbackRepository.save(feedback);
-
-        return "Delivery feedback submitted successfully";
-    }
-
-    public Map<String, Long> getAdminStats() {
-
-        long orders = orderRepository.count();
-
-        return Map.of(
-                "orders", orders
-        );
-    }
 }

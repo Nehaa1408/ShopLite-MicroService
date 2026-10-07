@@ -55,9 +55,7 @@ const AddProduct = () => {
         quantity: parseInt(form.quantity) || 0,
         imageUrl: form.imageUrl,
         description: form.description,
-        category: {
-          id: parseInt(form.category)
-        }
+        categoryId: parseInt(form.category)
       };
 
       if (editProduct) {

@@ -23,9 +23,9 @@ deliveryAxios.interceptors.request.use(
         // ADMIN DELIVERY MANAGEMENT APIs
         if (
             config.url?.includes("/delivery/all") ||
-            config.url?.includes("/delivery/approve") ||
-            config.url?.includes("/delivery/reject") ||
-            config.url?.includes("/delivery/pending") ||
+            config.url?.includes("/delivery/admin/approve") ||
+            config.url?.includes("/delivery/admin/reject") ||
+            config.url?.includes("/delivery/admin/pending") ||
             (
                 config.url?.startsWith("/delivery/") &&
                 !config.url?.includes("/profile")
@@ -74,30 +74,35 @@ deliveryAxios.interceptors.response.use(
 export const getAllDeliveryPartners = async () => {
     const res =
         await deliveryAxios.get("/delivery/all");
+
     return res.data;
 };
 
 export const getDeliveryPartnerById = async (id) => {
     const res =
         await deliveryAxios.get(`/delivery/${id}`);
+
     return res.data;
 };
 
 export const approveDeliveryPartner = async (id) => {
     const res =
-        await deliveryAxios.put(`/delivery/approve/${id}`);
+        await deliveryAxios.put(`/delivery/admin/approve/${id}`);
     return res.data;
 };
 
 export const rejectDeliveryPartner = async (id) => {
     const res =
-        await deliveryAxios.put(`/delivery/reject/${id}`);
+        await deliveryAxios.put(`/delivery/admin/reject/${id}`);
     return res.data;
 };
 
+// ================= PENDING DELIVERY PARTNERS =================
+
 export const getPendingDeliveryPartners = async () => {
     const res =
-        await deliveryAxios.get("/delivery/pending");
+        await deliveryAxios.get("/delivery/admin/pending");
+
     return res.data;
 };
 
@@ -106,6 +111,7 @@ export const getPendingDeliveryPartners = async () => {
 export const getDeliveryOrders = async () => {
     const res =
         await deliveryAxios.get("/orders/delivery");
+
     return res.data;
 };
 
@@ -114,6 +120,7 @@ export const sendDeliveryOtp = async (orderId) => {
         await deliveryAxios.post(
             `/orders/delivery/${orderId}/send-otp`
         );
+
     return res.data;
 };
 

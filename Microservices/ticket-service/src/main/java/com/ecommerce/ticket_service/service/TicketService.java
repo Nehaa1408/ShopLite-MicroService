@@ -10,41 +10,41 @@ import com.ecommerce.ticket_service.dto.UpdateTicketStatusRequest;
 
 public interface TicketService {
 
-    // =========================
-    // CUSTOMER OPERATIONS
-    // =========================
-    TicketResponse createTicket(
-            Long userId,
-            CreateTicketRequest request
-    );
+        // =========================
+        // CUSTOMER OPERATIONS
+        // =========================
+        TicketResponse createTicket(
+                        Long userId,
+                        CreateTicketRequest request);
 
-    List<TicketResponse> getMyTickets(Long userId);
+        List<TicketResponse> getMyTickets(Long userId);
 
-    TicketResponse getMyTicketById(
-            Long userId,
-            Long ticketId
-    );
+        TicketResponse getMyTicketById(
+                        Long userId,
+                        Long ticketId);
 
-    TicketResponse updateMyTicket(
-            Long userId,
-            Long ticketId,
-            UpdateTicketRequest request
-    );
+        TicketResponse updateMyTicket(
+                        Long userId,
+                        Long ticketId,
+                        UpdateTicketRequest request);
 
-    // =========================
-    // ADMIN OPERATIONS
-    // =========================
-    List<TicketResponse> getAllTickets();
+        // =========================
+        // ADMIN OPERATIONS
+        // =========================
+        // =========================
+        // ADMIN OPERATIONS
+        // =========================
+        TicketResponse getTicketById(Long ticketId);
 
-    long getTicketCount();
+        List<TicketResponse> getAllTickets();
 
-    TicketResponse updateTicketStatus(
-            Long ticketId,
-            UpdateTicketStatusRequest request
-    );
+        long getTicketCount();
 
-    TicketResponse addAdminResponse(
-            Long ticketId,
-            AdminResponseRequest request
-    );
+        TicketResponse updateTicketStatus(
+                        Long ticketId,
+                        UpdateTicketStatusRequest request);
+
+        TicketResponse addAdminResponse(
+                        Long ticketId,
+                        AdminResponseRequest request);
 }

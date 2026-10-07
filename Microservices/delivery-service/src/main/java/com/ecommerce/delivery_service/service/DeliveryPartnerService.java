@@ -199,4 +199,19 @@ public class DeliveryPartnerService {
 
                 return savedPartner;
         }
+        // ================= GET ALL DELIVERY PARTNERS =================
+
+        public java.util.List<DeliveryPartner> getAllDeliveryPartners() {
+
+                return deliveryPartnerRepository.findAll();
+        }
+        // ================= GET DELIVERY PARTNER BY ID =================
+
+        public DeliveryPartner getById(Long id) {
+
+                return deliveryPartnerRepository
+                                .findById(id)
+                                .orElseThrow(() -> new RuntimeException(
+                                                "Delivery partner not found"));
+        }
 }

@@ -1,6 +1,7 @@
 package com.ecommerce.order_service.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -123,6 +124,70 @@ public class OrderController {
 
                 return ResponseEntity.ok(
                                 orderService.getAllOrders());
+        }
+
+        // =====================================================
+        // ADMIN - STATS
+        // =====================================================
+
+        @GetMapping("/admin/stats")
+        public ResponseEntity<Map<String, Long>> getAdminStats() {
+
+                return ResponseEntity.ok(
+                                orderService.getAdminStats());
+        }
+
+        // =====================================================
+        // ADMIN - TOP PRODUCTS
+        // =====================================================
+
+        @GetMapping("/admin/top-products")
+        public ResponseEntity<List<Map<String, Object>>> getTopProducts() {
+
+                return ResponseEntity.ok(
+                                orderService.getTopProducts());
+        }
+
+        // =====================================================
+        // ADMIN - VERIFY PAYMENT
+        // =====================================================
+
+        @PutMapping("/admin/{orderId}/verify-payment")
+        public ResponseEntity<OrderResponse> verifyPayment(
+                        @PathVariable Long orderId) {
+
+                return ResponseEntity.ok(
+                                orderService.updatePaymentStatus(
+                                                orderId,
+                                                "SUCCESS"));
+        }
+        // =====================================================
+        // ADMIN - REJECT PAYMENT
+        // =====================================================
+
+        @PutMapping("/admin/{orderId}/reject-payment")
+        public ResponseEntity<OrderResponse> rejectPayment(
+                        @PathVariable Long orderId,
+                        @RequestParam String reason) {
+
+                return ResponseEntity.ok(
+                                orderService.updatePaymentStatus(
+                                                orderId,
+                                                "FAILED"));
+        }
+        // =====================================================
+        // ADMIN - ASSIGN DELIVERY PARTNER
+        // =====================================================
+
+        @PutMapping("/admin/{orderId}/assign/{deliveryId}")
+        public ResponseEntity<OrderResponse> assignDeliveryPartner(
+                        @PathVariable Long orderId,
+                        @PathVariable Long deliveryId) {
+
+                return ResponseEntity.ok(
+                                orderService.assignDeliveryPartner(
+                                                orderId,
+                                                deliveryId));
         }
         // ================= DELIVERY → SEND OTP =================
 

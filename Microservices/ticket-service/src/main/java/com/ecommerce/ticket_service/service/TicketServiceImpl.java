@@ -29,8 +29,7 @@ public class TicketServiceImpl implements TicketService {
     @Override
     public TicketResponse createTicket(
             Long userId,
-            CreateTicketRequest request
-    ) {
+            CreateTicketRequest request) {
 
         Ticket ticket = Ticket.builder()
                 .userId(userId)
@@ -61,8 +60,7 @@ public class TicketServiceImpl implements TicketService {
     @Transactional(readOnly = true)
     public TicketResponse getMyTicketById(
             Long userId,
-            Long ticketId
-    ) {
+            Long ticketId) {
 
         Ticket ticket = findTicket(ticketId);
 
@@ -75,8 +73,7 @@ public class TicketServiceImpl implements TicketService {
     public TicketResponse updateMyTicket(
             Long userId,
             Long ticketId,
-            UpdateTicketRequest request
-    ) {
+            UpdateTicketRequest request) {
 
         Ticket ticket = findTicket(ticketId);
 
@@ -93,6 +90,16 @@ public class TicketServiceImpl implements TicketService {
     // =========================
     // ADMIN OPERATIONS
     // =========================
+
+    @Override
+    @Transactional(readOnly = true)
+    public TicketResponse getTicketById(Long ticketId) {
+
+        Ticket ticket = findTicket(ticketId);
+
+        return mapToResponse(ticket);
+    }
+
     @Override
     @Transactional(readOnly = true)
     public List<TicketResponse> getAllTickets() {
@@ -114,8 +121,7 @@ public class TicketServiceImpl implements TicketService {
     @Override
     public TicketResponse updateTicketStatus(
             Long ticketId,
-            UpdateTicketStatusRequest request
-    ) {
+            UpdateTicketStatusRequest request) {
 
         Ticket ticket = findTicket(ticketId);
 
@@ -129,8 +135,7 @@ public class TicketServiceImpl implements TicketService {
     @Override
     public TicketResponse addAdminResponse(
             Long ticketId,
-            AdminResponseRequest request
-    ) {
+            AdminResponseRequest request) {
 
         Ticket ticket = findTicket(ticketId);
 
@@ -147,22 +152,17 @@ public class TicketServiceImpl implements TicketService {
     private Ticket findTicket(Long ticketId) {
 
         return ticketRepository.findById(ticketId)
-                .orElseThrow(()
-                        -> new RuntimeException(
-                        "Ticket not found with id: " + ticketId
-                )
-                );
+                .orElseThrow(() -> new RuntimeException(
+                        "Ticket not found with id: " + ticketId));
     }
 
     private void verifyTicketOwner(
             Ticket ticket,
-            Long userId
-    ) {
+            Long userId) {
 
         if (!ticket.getUserId().equals(userId)) {
             throw new RuntimeException(
-                    "You are not authorized to access this ticket"
-            );
+                    "You are not authorized to access this ticket");
         }
     }
 

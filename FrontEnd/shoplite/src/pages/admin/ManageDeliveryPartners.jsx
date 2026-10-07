@@ -142,7 +142,7 @@ const ManageDeliveryPartners = () => {
                             <p className="text-xl font-bold">
                                 {
                                     partners.filter(
-                                        (partner) => partner.approved
+                                        (partner) => partner.approvalStatus === "APPROVED"
                                     ).length
                                 }
                             </p>
@@ -164,7 +164,7 @@ const ManageDeliveryPartners = () => {
                             <p className="text-xl font-bold">
                                 {
                                     partners.filter(
-                                        (partner) => partner.rejected
+                                        (partner) => partner.approvalStatus === "REJECTED"
                                     ).length
                                 }
                             </p>
@@ -267,7 +267,7 @@ const ManageDeliveryPartners = () => {
                                         {/* STATUS */}
                                         <td className="p-4 text-center">
 
-                                            {partner.approved ? (
+                                            {partner.approvalStatus === "APPROVED" ? (
 
                                                 <span className="inline-flex items-center gap-2 
         px-3 py-1.5 rounded-full text-xs 
@@ -280,7 +280,7 @@ const ManageDeliveryPartners = () => {
 
                                                 </span>
 
-                                            ) : partner.rejected ? (
+                                            ) : partner.approvalStatus === "REJECTED" ? (
 
                                                 <span className="inline-flex items-center gap-2 
         px-3 py-1.5 rounded-full text-xs 
