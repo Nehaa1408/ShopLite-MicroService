@@ -16,7 +16,7 @@ const AdminProfile = () => {
         const fetchData = async () => {
             try {
                 const [profileRes, statsRes] = await Promise.all([
-                    adminAxios.get("/admin/profile"),
+                    adminAxios.get("/user/profile"),
                     adminAxios.get("/orders/admin/stats"),
                 ]);
 
@@ -58,19 +58,6 @@ const AdminProfile = () => {
         fetchStats();
     }, []);
 
-    useEffect(() => {
-        const fetchProfile = async () => {
-            try {
-                const res = await adminAxios.get("/admin/profile");
-                console.log("PROFILE:", res.data);
-                setAdmin(res.data);
-            } catch (err) {
-                console.error("Profile fetch error:", err);
-            }
-        };
-
-        fetchProfile();
-    }, []);
 
     if (loading) {
         return <div className="p-10 text-center">Loading...</div>;

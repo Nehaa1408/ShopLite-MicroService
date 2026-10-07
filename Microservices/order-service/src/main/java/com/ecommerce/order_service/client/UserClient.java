@@ -11,4 +11,7 @@ public interface UserClient {
 
     @GetMapping("/api/user/{userId}")
     UserResponse getUserById(@PathVariable Long userId);
+
+    @GetMapping("/api/user/admin/count")
+    Long getUserCount();
 }

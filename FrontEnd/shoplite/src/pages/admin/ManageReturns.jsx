@@ -83,7 +83,7 @@ const ManageReturns = () => {
 
                 const usersRes =
                     await adminAxios.get(
-                        "/users/delivery"
+                        "/user/admin/role/DELIVERY"
                     );
 
                 setUsers(usersRes.data);

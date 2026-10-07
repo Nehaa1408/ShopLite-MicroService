@@ -639,9 +639,13 @@ public class OrderService {
         public Map<String, Long> getAdminStats() {
 
                 long orders = orderRepository.count();
+                long products = productClient.getProductCount();
+                long users = userClient.getUserCount();
 
                 return Map.of(
-                                "orders", orders);
+                                "orders", orders,
+                                "products", products,
+                                "users", users);
         }
 
         // =====================================================

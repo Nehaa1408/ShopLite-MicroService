@@ -156,4 +156,9 @@ public class ProductService {
 
         productRepository.save(product);
     }
+
+    // GET TOTAL PRODUCT COUNT
+    public long getProductCount() {
+        return productRepository.count();
+    }
 }

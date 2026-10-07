@@ -127,4 +127,11 @@ public class UserController {
 
         return ResponseEntity.ok(userService.searchUsers(keyword));
     }
+
+    // GET TOTAL USER COUNT
+    @GetMapping("/admin/count")
+    public ResponseEntity<Long> getUserCount() {
+        return ResponseEntity.ok(
+                userService.getUserCount());
+    }
 }

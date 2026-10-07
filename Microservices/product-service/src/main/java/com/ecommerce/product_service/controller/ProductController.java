@@ -90,4 +90,11 @@ public class ProductController {
 
         return ResponseEntity.ok("Product deleted successfully.");
     }
+
+    // GET TOTAL PRODUCT COUNT
+    @GetMapping("/count")
+    public ResponseEntity<Long> getProductCount() {
+        return ResponseEntity.ok(
+                productService.getProductCount());
+    }
 }

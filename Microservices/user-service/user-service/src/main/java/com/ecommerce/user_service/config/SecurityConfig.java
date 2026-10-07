@@ -40,6 +40,7 @@ public class SecurityConfig {
                         "/api/user/*",
                         "/api/user/admin/role/**",
                         "/api/user/admin/search/**",
+                        "/api/user/admin/count",
                         "/swagger-ui/**",
                         "/v3/api-docs/**",
                         "/swagger-ui.html")
