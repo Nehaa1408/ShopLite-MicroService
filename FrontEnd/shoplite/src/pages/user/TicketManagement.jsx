@@ -253,12 +253,12 @@ const TicketManagement = () => {
 
                 return (
                   <div
-                    key={ticket.id}
-                    onClick={() => navigate(`/tickets/${ticket.id}`)}
+                    key={ticket.ticketId}
+                    onClick={() => navigate(`/tickets/${ticket.ticketId}`)}
                     className="bg-white p-6 rounded-2xl shadow cursor-pointer hover:-translate-y-1 hover:shadow-lg transition"
                   >
                     <div className="flex justify-between mb-2">
-                      <span className="text-xs">{ticket.id}</span>
+                      <span className="text-xs">{ticket.ticketId}</span>
 
                       <span
                         className={`text-xs font-bold px-2 py-1 rounded ${status === "RESOLVED"

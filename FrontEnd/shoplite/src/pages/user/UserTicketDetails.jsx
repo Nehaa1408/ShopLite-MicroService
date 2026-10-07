@@ -48,7 +48,9 @@ const UserTicketDetails = () => {
                 {
                     params: { content: input },
                     headers: {
-                        Authorization: `Bearer ${token}`
+                        Authorization: `Bearer ${token}`,
+                        "X-User-Id": localStorage.getItem("userId"),
+                        "X-User-Role": "USER"
                     }
                 }
             );
@@ -74,7 +76,7 @@ const UserTicketDetails = () => {
             <h1 className="text-2xl font-bold mb-6">Support Chat</h1>
 
             <div className="space-y-4 max-h-[400px] overflow-y-auto">
-                {Array.isArray(messages) && messages.map((msg) => (
+                {Array.isArray(messages) && messages.map((msg, index) => (
                     <div
                         key={msg.id || index}
                         className={`p-3 rounded-lg ${msg.sender === "USER"

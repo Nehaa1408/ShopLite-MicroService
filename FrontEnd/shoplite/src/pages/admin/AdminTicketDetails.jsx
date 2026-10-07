@@ -33,7 +33,11 @@ const AdminTicketDetails = () => {
                 `/tickets/${id}/messages`,
                 null,
                 {
-                    params: { content: reply }
+                    params: { content: reply },
+                    headers: {
+                        "X-User-Id": "0",
+                        "X-User-Role": "ADMIN"
+                    }
                 }
             );
 
@@ -216,7 +220,7 @@ const AdminTicketDetails = () => {
 
                                         try {
                                             res = await adminAxios.put(
-                                                `/tickets/${ticket.id}`,
+                                                `/tickets/admin/${ticket.ticketId}/status`,
                                                 { status: "CLOSED" }
                                             );
                                         } catch (err) {
