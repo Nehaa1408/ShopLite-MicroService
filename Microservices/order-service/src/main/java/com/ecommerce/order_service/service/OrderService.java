@@ -648,6 +648,23 @@ public class OrderService {
                                 "users", users);
         }
 
+        // GET ORDERS ASSIGNED TO DELIVERY PARTNER
+        @Transactional(readOnly = true)
+        public List<OrderResponse> getDeliveryOrders(Long deliveryPartnerId) {
+
+                List<OrderStatus> statuses = List.of(
+                                OrderStatus.PACKED,
+                                OrderStatus.OUT_FOR_DELIVERY);
+
+                return orderRepository
+                                .findByDeliveryPartnerIdAndStatusIn(
+                                                deliveryPartnerId,
+                                                statuses)
+                                .stream()
+                                .map(this::mapToResponse)
+                                .toList();
+        }
+
         // =====================================================
         // ADMIN - ASSIGN DELIVERY PARTNER
         // =====================================================
@@ -662,6 +679,11 @@ public class OrderService {
 
                 // Assign delivery partner
                 order.setDeliveryPartnerId(deliveryId);
+
+                // Update status when a delivery partner is assigned
+                if (order.getStatus() == OrderStatus.PENDING) {
+                        order.setStatus(OrderStatus.PACKED);
+                }
 
                 // Save updated order
                 Order savedOrder = orderRepository.save(order);
@@ -688,5 +710,39 @@ public class OrderService {
                                                         "quantity", row[2]);
                                 })
                                 .toList();
+        }
+        // ================= DELIVERY → CONFIRM COD PAYMENT =================
+
+        @Transactional
+        public OrderResponse confirmCodPayment(
+                        Long orderId,
+                        Long deliveryPartnerId) {
+
+                Order order = orderRepository.findById(orderId)
+                                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+                // Verify that this order belongs to the logged-in delivery partner
+                if (order.getDeliveryPartnerId() == null
+                                || !order.getDeliveryPartnerId().equals(deliveryPartnerId)) {
+                        throw new RuntimeException("Unauthorized delivery action");
+                }
+
+                // COD confirmation is allowed only for COD orders
+                if (order.getPaymentMethod() != PaymentMethod.COD) {
+                        throw new RuntimeException("This is not a COD order");
+                }
+
+              
+
+                // Prevent duplicate confirmation
+                if (order.getPaymentStatus() == PaymentStatus.SUCCESS) {
+                        throw new RuntimeException("COD payment is already confirmed");
+                }
+
+                order.setPaymentStatus(PaymentStatus.SUCCESS);
+
+                Order savedOrder = orderRepository.save(order);
+
+                return mapToResponse(savedOrder);
         }
 }

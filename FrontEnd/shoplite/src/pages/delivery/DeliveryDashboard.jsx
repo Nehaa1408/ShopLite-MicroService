@@ -43,6 +43,11 @@ const DeliveryDashboard = () => {
 
             const deliveryOrders =
                 await getDeliveryOrders();
+            const data = await getDeliveryOrders();
+
+            console.log("DELIVERY ORDERS RESPONSE:", data);
+
+            setOrders(data);
 
             const returnOrders =
                 await getAssignedReturnPickups();
@@ -67,16 +72,19 @@ const DeliveryDashboard = () => {
                     : []
                 )
 
-                    // REMOVE COMPLETED PICKUPS
+                    // REMOVE COMPLETED, REJECTED AND REFUNDED RETURN PICKUPS
                     .filter(order =>
-                        order.status !== "PICKUP_COMPLETED"
+                        ![
+                            "PICKUP_COMPLETED",
+                            "RETURN_REJECTED",
+                            "REFUND_PROCESSED"
+                        ].includes(order.status)
                     )
 
                     .map(order => ({
                         ...order,
                         flowType: "RETURN_PICKUP"
                     }));
-
             setOrders([
                 ...formattedDeliveries,
                 ...formattedReturns

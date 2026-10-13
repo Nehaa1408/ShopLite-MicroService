@@ -10,7 +10,12 @@ const OrderCard = ({
 
   const items = order.items || [];
 
-  const { total } = calculateOrderTotal(items);
+  const { total: calculatedTotal } = calculateOrderTotal(items);
+
+  const total =
+    items.length > 0
+      ? calculatedTotal
+      : Number(order.totalAmount ?? 0);
 
   const isReturnPickup =
     order.flowType === "RETURN_PICKUP";
@@ -28,6 +33,9 @@ const OrderCard = ({
 
   const paymentDone =
     order.paymentStatus === "SUCCESS";
+
+  const canReachDestination =
+    isCod ? paymentDone : true;
 
   // IMAGE PATH FIX
   const getImage = (img) => {
@@ -445,7 +453,7 @@ const OrderCard = ({
 
           {/* REACHED DESTINATION */}
           <button
-            disabled={isCod && codPending}
+            disabled={!canReachDestination}
             onClick={() =>
               onSendOtp(
                 order.flowType === "RETURN_PICKUP"

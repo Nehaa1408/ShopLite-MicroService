@@ -116,25 +116,17 @@ export const getDeliveryOrders = async () => {
 };
 
 export const sendDeliveryOtp = async (orderId) => {
-    const res =
-        await deliveryAxios.post(
-            `/orders/delivery/${orderId}/send-otp`
-        );
-
+    const res = await deliveryAxios.post(
+        `/orders/${orderId}/delivery-otp`
+    );
     return res.data;
 };
 
-export const verifyDeliveryOtp = async (
-    orderId,
-    otp
-) => {
-
-    const res =
-        await deliveryAxios.post(
-            `/orders/delivery/${orderId}/verify-otp`,
-            { otp }
-        );
-
+export const verifyDeliveryOtp = async (orderId, otp) => {
+    const res = await deliveryAxios.post(
+        `/orders/${orderId}/delivery-otp/verify`,
+        { otp }
+    );
     return res.data;
 };
 

@@ -226,4 +226,24 @@ public class OrderController {
                                                 request,
                                                 userId));
         }
+
+        // ================= DELIVERY → GET ASSIGNED ORDERS =================
+
+        @GetMapping("/delivery")
+        public ResponseEntity<List<OrderResponse>> getDeliveryOrders(
+                        @RequestHeader("X-User-Id") Long deliveryPartnerId) {
+
+                return ResponseEntity.ok(
+                                orderService.getDeliveryOrders(deliveryPartnerId));
+        }
+        // ================= DELIVERY → CONFIRM COD PAYMENT =================
+
+        @PutMapping("/delivery/{orderId}/confirm-cod")
+        public ResponseEntity<OrderResponse> confirmCodPayment(
+                        @PathVariable Long orderId,
+                        @RequestHeader("X-User-Id") Long deliveryPartnerId) {
+
+                return ResponseEntity.ok(
+                                orderService.confirmCodPayment(orderId, deliveryPartnerId));
+        }
 }

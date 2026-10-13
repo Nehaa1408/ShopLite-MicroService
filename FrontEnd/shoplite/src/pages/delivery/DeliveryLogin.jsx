@@ -46,6 +46,7 @@ const DeliveryLogin = () => {
 
             sessionStorage.setItem("deliveryToken", res.data.token);
             sessionStorage.setItem("deliveryRole", res.data.role);
+            sessionStorage.setItem("deliveryUserId", res.data.id);
 
             navigate("/delivery/dashboard");
 

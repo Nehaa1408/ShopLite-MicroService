@@ -31,4 +31,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                 ORDER BY SUM(oi.quantity) DESC
             """)
     List<Object[]> findTopProducts();
+
+    List<Order> findByDeliveryPartnerIdAndStatusIn(
+            Long deliveryPartnerId,
+            List<OrderStatus> statuses);
 }
