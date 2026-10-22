@@ -22,16 +22,25 @@ import com.ecommerce.order_service.entity.ReturnStatus;
 import com.ecommerce.order_service.repository.OrderRepository;
 import com.ecommerce.order_service.repository.ReturnRequestRepository;
 
-import lombok.RequiredArgsConstructor;
-
 @Service
-@RequiredArgsConstructor
 public class ReturnServiceImpl implements ReturnService {
 
         private final ReturnRequestRepository returnRequestRepository;
         private final OrderRepository orderRepository;
         private final UserClient userClient;
         private final NotificationClient notificationClient;
+
+        public ReturnServiceImpl(
+                        ReturnRequestRepository returnRequestRepository,
+                        OrderRepository orderRepository,
+                        UserClient userClient,
+                        NotificationClient notificationClient) {
+                this.returnRequestRepository = returnRequestRepository;
+                this.orderRepository = orderRepository;
+                this.userClient = userClient;
+                this.notificationClient = notificationClient;
+        }
+
         // ================= CREATE RETURN REQUEST =================
 
         @Override

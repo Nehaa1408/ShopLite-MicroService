@@ -168,18 +168,18 @@ public class TicketServiceImpl implements TicketService {
 
     private TicketResponse mapToResponse(Ticket ticket) {
 
-        return TicketResponse.builder()
-                .ticketId(ticket.getTicketId())
-                .userId(ticket.getUserId())
-                .orderId(ticket.getOrderId())
-                .subject(ticket.getSubject())
-                .description(ticket.getDescription())
-                .category(ticket.getCategory())
-                .priority(ticket.getPriority())
-                .status(ticket.getStatus())
-                .adminResponse(ticket.getAdminResponse())
-                .createdAt(ticket.getCreatedAt())
-                .updatedAt(ticket.getUpdatedAt())
-                .build();
+        TicketResponse response = new TicketResponse();
+        response.setTicketId(ticket.getTicketId());
+        response.setUserId(ticket.getUserId());
+        response.setOrderId(ticket.getOrderId());
+        response.setSubject(ticket.getSubject());
+        response.setDescription(ticket.getDescription());
+        response.setCategory(ticket.getCategory());
+        response.setPriority(ticket.getPriority());
+        response.setStatus(ticket.getStatus());
+        response.setAdminResponse(ticket.getAdminResponse());
+        response.setCreatedAt(ticket.getCreatedAt());
+        response.setUpdatedAt(ticket.getUpdatedAt());
+        return response;
     }
 }

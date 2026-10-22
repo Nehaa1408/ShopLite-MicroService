@@ -17,14 +17,15 @@ import com.ecommerce.admin_service.dto.ProductRequest;
 import com.ecommerce.admin_service.dto.ProductResponse;
 import com.ecommerce.admin_service.service.AdminProductService;
 
-import lombok.RequiredArgsConstructor;
-
 @RestController
 @RequestMapping("/api/admin/products")
-@RequiredArgsConstructor
 public class AdminProductController {
 
     private final AdminProductService adminProductService;
+
+        public AdminProductController(AdminProductService adminProductService) {
+                this.adminProductService = adminProductService;
+        }
 
     @GetMapping
     public ResponseEntity<Page<ProductResponse>> getProducts(

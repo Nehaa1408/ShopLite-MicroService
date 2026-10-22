@@ -9,7 +9,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -19,7 +18,6 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 public class OrderItem {
 
     @Id
@@ -50,4 +48,16 @@ public class OrderItem {
 
     @Column(name = "product_image", columnDefinition = "TEXT")
     private String productImage;
+
+    public OrderItem(Long id, Order order, Long productId, String productName,
+                     double price, int quantity, double subtotal, String productImage) {
+        this.id = id;
+        this.order = order;
+        this.productId = productId;
+        this.productName = productName;
+        this.price = price;
+        this.quantity = quantity;
+        this.subtotal = subtotal;
+        this.productImage = productImage;
+    }
 }

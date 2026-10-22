@@ -14,14 +14,16 @@ import com.ecommerce.cart_service.dto.UpdateCartRequest;
 import com.ecommerce.cart_service.entity.Cart;
 import com.ecommerce.cart_service.repository.CartRepository;
 
-import lombok.RequiredArgsConstructor;
-
 @Service
-@RequiredArgsConstructor
 public class CartServiceImpl implements CartService {
 
     private final CartRepository cartRepository;
     private final ProductClient productClient;
+
+    public CartServiceImpl(CartRepository cartRepository, ProductClient productClient) {
+        this.cartRepository = cartRepository;
+        this.productClient = productClient;
+    }
 
     // ================= ADD TO CART =================
     @Override

@@ -12,7 +12,6 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -22,8 +21,21 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 public class Product {
+
+    public Product(Long id, String name, String description, double price, int quantity,
+                   String imageUrl, Category category, String brand, String type, boolean active) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.price = price;
+        this.quantity = quantity;
+        this.imageUrl = imageUrl;
+        this.category = category;
+        this.brand = brand;
+        this.type = type;
+        this.active = active;
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

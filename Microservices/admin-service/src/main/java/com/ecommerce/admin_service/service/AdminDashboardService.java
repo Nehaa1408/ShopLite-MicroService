@@ -13,13 +13,14 @@ import com.ecommerce.admin_service.dto.OrderItemResponse;
 import com.ecommerce.admin_service.dto.OrderResponse;
 import com.ecommerce.admin_service.dto.TopProductResponse;
 
-import lombok.RequiredArgsConstructor;
-
 @Service
-@RequiredArgsConstructor
 public class AdminDashboardService {
 
     private final OrderClient orderClient;
+
+        public AdminDashboardService(OrderClient orderClient) {
+                this.orderClient = orderClient;
+        }
 
     public DashboardStatsResponse getDashboardStats() {
 

@@ -7,7 +7,6 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 public class OrderResponse {
 
     private Long orderId;
@@ -39,4 +38,27 @@ public class OrderResponse {
     private String paymentMethod;
 
     private String paymentStatus;
+
+    public OrderResponse(Long orderId, Long userId, Long deliveryPartnerId,
+                         String customerName, String customerEmail,
+                         String deliveryAgentName, String deliveryAgentEmail,
+                         double totalAmount, String status, String orderDate,
+                         List<OrderItemResponse> items, String cancelReason,
+                         String deliveredAt, String paymentMethod, String paymentStatus) {
+        this.orderId = orderId;
+        this.userId = userId;
+        this.deliveryPartnerId = deliveryPartnerId;
+        this.customerName = customerName;
+        this.customerEmail = customerEmail;
+        this.deliveryAgentName = deliveryAgentName;
+        this.deliveryAgentEmail = deliveryAgentEmail;
+        this.totalAmount = totalAmount;
+        this.status = status;
+        this.orderDate = orderDate;
+        this.items = items;
+        this.cancelReason = cancelReason;
+        this.deliveredAt = deliveredAt;
+        this.paymentMethod = paymentMethod;
+        this.paymentStatus = paymentStatus;
+    }
 }

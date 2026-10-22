@@ -37,10 +37,7 @@ import com.ecommerce.order_service.repository.DeliveryFeedbackRepository;
 import com.ecommerce.order_service.repository.DeliveryOtpRepository;
 import com.ecommerce.order_service.repository.OrderRepository;
 
-import lombok.RequiredArgsConstructor;
-
 @Service
-@RequiredArgsConstructor
 public class OrderService {
 
         private final OrderRepository orderRepository;
@@ -56,6 +53,23 @@ public class OrderService {
         private final DeliveryOtpRepository deliveryOtpRepository;
 
         private final DeliveryFeedbackRepository deliveryFeedbackRepository;
+
+        public OrderService(
+                        OrderRepository orderRepository,
+                        CartClient cartClient,
+                        ProductClient productClient,
+                        UserClient userClient,
+                        NotificationClient notificationClient,
+                        DeliveryOtpRepository deliveryOtpRepository,
+                        DeliveryFeedbackRepository deliveryFeedbackRepository) {
+                this.orderRepository = orderRepository;
+                this.cartClient = cartClient;
+                this.productClient = productClient;
+                this.userClient = userClient;
+                this.notificationClient = notificationClient;
+                this.deliveryOtpRepository = deliveryOtpRepository;
+                this.deliveryFeedbackRepository = deliveryFeedbackRepository;
+        }
 
         // PLACE ORDER
         @Transactional
@@ -665,6 +679,19 @@ public class OrderService {
                                 .toList();
         }
 
+        // GET COMPLETED ORDERS FOR DELIVERY PARTNER
+        @Transactional(readOnly = true)
+        public List<OrderResponse> getCompletedOrders(Long deliveryPartnerId) {
+
+                return orderRepository
+                                .findByDeliveryPartnerIdAndStatus(
+                                                deliveryPartnerId,
+                                                OrderStatus.DELIVERED)
+                                .stream()
+                                .map(this::mapToResponse)
+                                .toList();
+        }
+
         // =====================================================
         // ADMIN - ASSIGN DELIVERY PARTNER
         // =====================================================
@@ -732,8 +759,6 @@ public class OrderService {
                         throw new RuntimeException("This is not a COD order");
                 }
 
-              
-
                 // Prevent duplicate confirmation
                 if (order.getPaymentStatus() == PaymentStatus.SUCCESS) {
                         throw new RuntimeException("COD payment is already confirmed");
@@ -745,4 +770,5 @@ public class OrderService {
 
                 return mapToResponse(savedOrder);
         }
+        
 }

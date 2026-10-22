@@ -11,14 +11,15 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ecommerce.admin_service.dto.UserResponse;
 import com.ecommerce.admin_service.service.AdminUserService;
 
-import lombok.RequiredArgsConstructor;
-
 @RestController
 @RequestMapping("/api/admin/users")
-@RequiredArgsConstructor
 public class AdminUserController {
 
     private final AdminUserService adminUserService;
+
+    public AdminUserController(AdminUserService adminUserService) {
+        this.adminUserService = adminUserService;
+    }
 
     @GetMapping
     public ResponseEntity<List<UserResponse>> getAllUsers() {

@@ -40,18 +40,23 @@ const CompletedPickups = () => {
     fetchOrders();
   }, []);
 
-  // IMAGE FIX
-  const getImage = (img) => {
 
+  const getImage = (img) => {
     if (!img) {
       return "/products/placeholder.webp";
     }
 
-    if (img.startsWith("http")) {
+    if (img.startsWith("http://") || img.startsWith("https://")) {
       return img;
     }
 
-    return `/products/${img.replace(/^\/+/, "")}`;
+    const filename = img.replace(/^\/+/, "");
+
+    if (filename.startsWith("products/")) {
+      return `/${filename}`;
+    }
+
+    return `/products/${filename}`;
   };
 
   return (
@@ -123,7 +128,7 @@ const CompletedPickups = () => {
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-7">
 
           {orders.map((order) => {
-            console.log(JSON.stringify(order, null, 2));
+
             const items =
               order.items && order.items.length > 0
                 ? order.items

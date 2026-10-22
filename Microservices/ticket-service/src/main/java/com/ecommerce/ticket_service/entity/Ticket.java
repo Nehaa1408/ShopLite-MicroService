@@ -16,20 +16,37 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
+
 import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
+
 import lombok.Setter;
 
 @Entity
 @Table(name = "tickets")
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
 @Builder
 public class Ticket {
+
+    public Ticket() {
+    }
+
+    public Ticket(Long ticketId, Long userId, Long orderId, String subject, String description,
+                  TicketCategory category, TicketPriority priority, TicketStatus status,
+                  String adminResponse, LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.ticketId = ticketId;
+        this.userId = userId;
+        this.orderId = orderId;
+        this.subject = subject;
+        this.description = description;
+        this.category = category;
+        this.priority = priority;
+        this.status = status;
+        this.adminResponse = adminResponse;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -3,7 +3,6 @@ package com.ecommerce.admin_service.dto;
 import com.ecommerce.admin_service.entity.Provider;
 import com.ecommerce.admin_service.entity.Role;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -11,7 +10,6 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 public class UserResponse {
 
     private Long id;
@@ -19,4 +17,12 @@ public class UserResponse {
     private String email;
     private Role role;
     private Provider provider;
+
+    public UserResponse(Long id, String name, String email, Role role, Provider provider) {
+        this.id = id;
+        this.name = name;
+        this.email = email;
+        this.role = role;
+        this.provider = provider;
+    }
 }

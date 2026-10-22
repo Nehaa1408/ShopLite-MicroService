@@ -6,7 +6,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -16,7 +15,6 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 public class DeliveryFeedback {
 
     @Id
@@ -37,4 +35,13 @@ public class DeliveryFeedback {
 
     @Column(length = 1000)
     private String feedback;
+
+    public DeliveryFeedback(Long id, Long orderId, Long customerId, Long deliveryPartnerId, int rating, String feedback) {
+        this.id = id;
+        this.orderId = orderId;
+        this.customerId = customerId;
+        this.deliveryPartnerId = deliveryPartnerId;
+        this.rating = rating;
+        this.feedback = feedback;
+    }
 }

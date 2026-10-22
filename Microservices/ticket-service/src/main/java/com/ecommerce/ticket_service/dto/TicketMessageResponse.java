@@ -11,7 +11,6 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 @Builder
 public class TicketMessageResponse {
 
@@ -26,4 +25,13 @@ public class TicketMessageResponse {
     private String content;
 
     private LocalDateTime createdAt;
+
+    public TicketMessageResponse(Long id, Long ticketId, Long senderId, String sender, String content, LocalDateTime createdAt) {
+        this.id = id;
+        this.ticketId = ticketId;
+        this.senderId = senderId;
+        this.sender = sender;
+        this.content = content;
+        this.createdAt = createdAt;
+    }
 }

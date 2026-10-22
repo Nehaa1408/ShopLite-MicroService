@@ -21,14 +21,15 @@ import com.ecommerce.order_service.dto.UpdatePaymentStatusRequest;
 import com.ecommerce.order_service.dto.VerifyDeliveryOtpRequest;
 import com.ecommerce.order_service.service.OrderService;
 
-import lombok.RequiredArgsConstructor;
-
 @RestController
 @RequestMapping("/api/orders")
-@RequiredArgsConstructor
 public class OrderController {
 
         private final OrderService orderService;
+
+        public OrderController(OrderService orderService) {
+                this.orderService = orderService;
+        }
 
         // =====================================================
         // PLACE ORDER
@@ -245,5 +246,13 @@ public class OrderController {
 
                 return ResponseEntity.ok(
                                 orderService.confirmCodPayment(orderId, deliveryPartnerId));
+        }
+
+        @GetMapping("/delivery/completed")
+        public ResponseEntity<List<OrderResponse>> getCompletedOrders(
+                        @RequestHeader("X-User-Id") Long deliveryPartnerId) {
+
+                return ResponseEntity.ok(
+                                orderService.getCompletedOrders(deliveryPartnerId));
         }
 }

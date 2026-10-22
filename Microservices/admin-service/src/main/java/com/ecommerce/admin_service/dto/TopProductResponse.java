@@ -1,6 +1,5 @@
 package com.ecommerce.admin_service.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -8,7 +7,6 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 public class TopProductResponse {
 
     private Long productId;
@@ -16,4 +14,12 @@ public class TopProductResponse {
     private int quantitySold;
     private double revenue;
     private String image;
+
+    public TopProductResponse(Long productId, String productName, int quantitySold, double revenue, String image) {
+        this.productId = productId;
+        this.productName = productName;
+        this.quantitySold = quantitySold;
+        this.revenue = revenue;
+        this.image = image;
+    }
 }

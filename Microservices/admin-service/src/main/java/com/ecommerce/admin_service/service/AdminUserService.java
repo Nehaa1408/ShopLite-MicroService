@@ -7,13 +7,14 @@ import org.springframework.stereotype.Service;
 import com.ecommerce.admin_service.client.UserClient;
 import com.ecommerce.admin_service.dto.UserResponse;
 
-import lombok.RequiredArgsConstructor;
-
 @Service
-@RequiredArgsConstructor
 public class AdminUserService {
 
     private final UserClient userClient;
+
+    public AdminUserService(UserClient userClient) {
+        this.userClient = userClient;
+    }
 
     public List<UserResponse> getAllUsers() {
         return userClient.getAllUsers();

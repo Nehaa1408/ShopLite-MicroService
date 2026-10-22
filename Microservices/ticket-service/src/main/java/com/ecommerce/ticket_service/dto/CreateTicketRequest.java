@@ -6,15 +6,7 @@ import com.ecommerce.ticket_service.enums.TicketPriority;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
 public class CreateTicketRequest {
 
     @NotBlank(message = "Subject is required")
@@ -31,4 +23,56 @@ public class CreateTicketRequest {
     private TicketPriority priority;
 
     private Long orderId;
+
+    public CreateTicketRequest() {
+    }
+
+    public CreateTicketRequest(String subject, String description, TicketCategory category,
+                              TicketPriority priority, Long orderId) {
+        this.subject = subject;
+        this.description = description;
+        this.category = category;
+        this.priority = priority;
+        this.orderId = orderId;
+    }
+
+    public String getSubject() {
+        return subject;
+    }
+
+    public void setSubject(String subject) {
+        this.subject = subject;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public TicketCategory getCategory() {
+        return category;
+    }
+
+    public void setCategory(TicketCategory category) {
+        this.category = category;
+    }
+
+    public TicketPriority getPriority() {
+        return priority;
+    }
+
+    public void setPriority(TicketPriority priority) {
+        this.priority = priority;
+    }
+
+    public Long getOrderId() {
+        return orderId;
+    }
+
+    public void setOrderId(Long orderId) {
+        this.orderId = orderId;
+    }
 }

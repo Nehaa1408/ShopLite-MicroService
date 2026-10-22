@@ -21,7 +21,6 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 public class ReturnRequest {
 
     @Id
@@ -63,6 +62,23 @@ public class ReturnRequest {
 
     // OTP EXPIRY
     private LocalDateTime pickupOtpExpiry;
+
+    public ReturnRequest(Long id, Long orderId, Long userId, Long pickupPartnerId,
+                         String returnReason, ReturnStatus status, LocalDateTime requestedDate,
+                         String selectedItems, double refundAmount, String pickupOtp,
+                         LocalDateTime pickupOtpExpiry) {
+        this.id = id;
+        this.orderId = orderId;
+        this.userId = userId;
+        this.pickupPartnerId = pickupPartnerId;
+        this.returnReason = returnReason;
+        this.status = status;
+        this.requestedDate = requestedDate;
+        this.selectedItems = selectedItems;
+        this.refundAmount = refundAmount;
+        this.pickupOtp = pickupOtp;
+        this.pickupOtpExpiry = pickupOtpExpiry;
+    }
 
     @PrePersist
     protected void onCreate() {

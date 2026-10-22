@@ -17,14 +17,15 @@ import com.ecommerce.order_service.dto.CreateReturnRequestDTO;
 import com.ecommerce.order_service.dto.ReturnRequestResponse;
 import com.ecommerce.order_service.service.ReturnService;
 
-import lombok.RequiredArgsConstructor;
-
 @RestController
 @RequestMapping("/api/returns")
-@RequiredArgsConstructor
 public class ReturnController {
 
     private final ReturnService returnService;
+
+        public ReturnController(ReturnService returnService) {
+                this.returnService = returnService;
+        }
 
     // ================= CUSTOMER =================
 

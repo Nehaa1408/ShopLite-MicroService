@@ -10,9 +10,17 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 @Builder
 public class TicketMessage {
+
+    public TicketMessage(Long id, Long ticketId, Long senderId, String sender, String content, LocalDateTime createdAt) {
+        this.id = id;
+        this.ticketId = ticketId;
+        this.senderId = senderId;
+        this.sender = sender;
+        this.content = content;
+        this.createdAt = createdAt;
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -1,6 +1,5 @@
 package com.ecommerce.order_service.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -8,7 +7,6 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 public class CartItemResponse {
 
     private Long id;
@@ -20,4 +18,12 @@ public class CartItemResponse {
     private double price;
 
     private double subtotal;
+
+    public CartItemResponse(Long id, Long productId, int quantity, double price, double subtotal) {
+        this.id = id;
+        this.productId = productId;
+        this.quantity = quantity;
+        this.price = price;
+        this.subtotal = subtotal;
+    }
 }

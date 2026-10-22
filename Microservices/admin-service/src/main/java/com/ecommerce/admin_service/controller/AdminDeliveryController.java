@@ -8,14 +8,15 @@ import org.springframework.web.bind.annotation.*;
 import com.ecommerce.admin_service.dto.DeliveryPartnerResponse;
 import com.ecommerce.admin_service.service.AdminDeliveryService;
 
-import lombok.RequiredArgsConstructor;
-
 @RestController
 @RequestMapping("/api/admin/delivery")
-@RequiredArgsConstructor
 public class AdminDeliveryController {
 
     private final AdminDeliveryService adminDeliveryService;
+
+        public AdminDeliveryController(AdminDeliveryService adminDeliveryService) {
+                this.adminDeliveryService = adminDeliveryService;
+        }
 
     // =========================
     // GET PENDING DELIVERY PARTNERS

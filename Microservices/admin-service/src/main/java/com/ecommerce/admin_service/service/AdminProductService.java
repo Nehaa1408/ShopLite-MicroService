@@ -7,13 +7,14 @@ import com.ecommerce.admin_service.client.ProductClient;
 import com.ecommerce.admin_service.dto.ProductRequest;
 import com.ecommerce.admin_service.dto.ProductResponse;
 
-import lombok.RequiredArgsConstructor;
-
 @Service
-@RequiredArgsConstructor
 public class AdminProductService {
 
     private final ProductClient productClient;
+
+    public AdminProductService(ProductClient productClient) {
+        this.productClient = productClient;
+    }
 
     public Page<ProductResponse> getProducts(int page, int size) {
 

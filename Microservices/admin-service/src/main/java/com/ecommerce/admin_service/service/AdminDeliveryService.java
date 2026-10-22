@@ -7,13 +7,14 @@ import org.springframework.stereotype.Service;
 import com.ecommerce.admin_service.client.DeliveryClient;
 import com.ecommerce.admin_service.dto.DeliveryPartnerResponse;
 
-import lombok.RequiredArgsConstructor;
-
 @Service
-@RequiredArgsConstructor
 public class AdminDeliveryService {
 
     private final DeliveryClient deliveryClient;
+
+    public AdminDeliveryService(DeliveryClient deliveryClient) {
+        this.deliveryClient = deliveryClient;
+    }
 
     public List<DeliveryPartnerResponse> getPendingPartners() {
         return deliveryClient.getPendingPartners();

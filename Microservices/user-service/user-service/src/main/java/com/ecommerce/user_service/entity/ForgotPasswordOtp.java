@@ -6,7 +6,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -15,7 +14,6 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 public class ForgotPasswordOtp {
 
     @Id
@@ -27,4 +25,11 @@ public class ForgotPasswordOtp {
     private String otp;
 
     private LocalDateTime expiryTime;
+
+    public ForgotPasswordOtp(Long id, String email, String otp, LocalDateTime expiryTime) {
+        this.id = id;
+        this.email = email;
+        this.otp = otp;
+        this.expiryTime = expiryTime;
+    }
 }

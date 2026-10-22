@@ -16,15 +16,18 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 
 @Component
-@RequiredArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
 
     private final UserRepository userRepository;
+
+    public JwtFilter(JwtUtil jwtUtil, UserRepository userRepository) {
+        this.jwtUtil = jwtUtil;
+        this.userRepository = userRepository;
+    }
 
     @Override
     protected void doFilterInternal(

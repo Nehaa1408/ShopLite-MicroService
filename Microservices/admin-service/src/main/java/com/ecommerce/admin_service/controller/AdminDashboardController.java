@@ -12,14 +12,15 @@ import com.ecommerce.admin_service.dto.OrderResponse;
 import com.ecommerce.admin_service.dto.TopProductResponse;
 import com.ecommerce.admin_service.service.AdminDashboardService;
 
-import lombok.RequiredArgsConstructor;
-
 @RestController
 @RequestMapping("/api/admin/dashboard")
-@RequiredArgsConstructor
 public class AdminDashboardController {
 
     private final AdminDashboardService adminDashboardService;
+
+    public AdminDashboardController(AdminDashboardService adminDashboardService) {
+        this.adminDashboardService = adminDashboardService;
+    }
 
     @GetMapping("/stats")
     public ResponseEntity<DashboardStatsResponse> getDashboardStats() {

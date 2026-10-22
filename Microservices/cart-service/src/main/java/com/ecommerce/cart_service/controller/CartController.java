@@ -19,15 +19,16 @@ import com.ecommerce.cart_service.dto.UpdateCartRequest;
 import com.ecommerce.cart_service.service.CartService;
 
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/cart")
-@RequiredArgsConstructor
-
 public class CartController {
 
     private final CartService cartService;
+
+    public CartController(CartService cartService) {
+        this.cartService = cartService;
+    }
 
     // ================= ADD ITEM =================
     @PostMapping
