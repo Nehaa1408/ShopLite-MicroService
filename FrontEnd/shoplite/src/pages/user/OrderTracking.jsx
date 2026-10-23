@@ -48,38 +48,18 @@ const OrderTracking = () => {
   const [statusIndex, setStatusIndex] = useState(0);
 
   useEffect(() => {
-
-    // ORDER JUST PLACED
     if (order.status === "PLACED") {
-
       setStatusIndex(0);
-
-      const timer = setTimeout(() => {
-        setStatusIndex(1);
-      }, 4000);
-
-      return () => clearTimeout(timer);
-    }
-
-    // PACKED
-    if (order.status === "PACKED") {
+    } else if (order.status === "PACKED") {
+      setStatusIndex(1);
+    } else if (order.status === "OUT_FOR_DELIVERY") {
       setStatusIndex(2);
-    }
-
-    // OUT FOR DELIVERY
-    if (order.status === "OUT_FOR_DELIVERY") {
-      setStatusIndex(2);
-    }
-
-    // DELIVERED
-    if (order.status === "DELIVERED") {
+    } else if (order.status === "DELIVERED") {
       setStatusIndex(3);
     }
-
   }, [order.status]);
 
-  console.log("STATUS:", order.status);
-  console.log("STATUS INDEX:", statusIndex);
+
 
   useEffect(() => {
 

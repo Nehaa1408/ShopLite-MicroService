@@ -193,19 +193,19 @@ export const sendReturnPickupOtp = async (
 };
 
 // VERIFY RETURN PICKUP OTP
-export const verifyReturnPickupOtp = async (
-    returnId,
-    otp
-) => {
-
-    const res =
-        await deliveryAxios.post(
-            `/returns/${returnId}/verify-pickup-otp`,
-            { otp }
-        );
+export const verifyReturnPickupOtp = async (returnId, otp) => {
+    const res = await deliveryAxios.post(
+        `/returns/${returnId}/verify-pickup-otp`,
+        null,
+        {
+            params: { otp }
+        }
+    );
 
     return res.data;
 };
+
+
 
 // COMPLETED RETURN PICKUPS
 export const getCompletedReturnPickups = async () => {

@@ -12,6 +12,7 @@ import com.ecommerce.order_service.client.UserClient;
 import com.ecommerce.order_service.dto.CreateReturnRequestDTO;
 import com.ecommerce.order_service.dto.OrderItemResponse;
 import com.ecommerce.order_service.dto.ReturnNotificationRequest;
+import com.ecommerce.order_service.dto.ReturnPickupOtpNotificationRequest;
 import com.ecommerce.order_service.dto.ReturnRequestResponse;
 import com.ecommerce.order_service.dto.UserResponse;
 import com.ecommerce.order_service.entity.Order;
@@ -348,9 +349,7 @@ public class ReturnServiceImpl implements ReturnService {
 
         @Override
         @Transactional
-        public String sendPickupOtp(
-                        Long returnId,
-                        Long userId) {
+        public String sendPickupOtp(Long returnId, Long userId) {
 
                 ReturnRequest returnRequest = returnRequestRepository.findById(returnId)
                                 .orElseThrow(() -> new RuntimeException(
@@ -358,11 +357,9 @@ public class ReturnServiceImpl implements ReturnService {
 
                 // SECURITY CHECK
                 if (returnRequest.getPickupPartnerId() == null
-                                || !returnRequest.getPickupPartnerId()
-                                                .equals(userId)) {
+                                || !returnRequest.getPickupPartnerId().equals(userId)) {
 
-                        throw new RuntimeException(
-                                        "Unauthorized pickup action");
+                        throw new RuntimeException("Unauthorized pickup action");
                 }
 
                 // OTP ONLY AFTER PARTNER ASSIGNMENT
@@ -372,7 +369,19 @@ public class ReturnServiceImpl implements ReturnService {
                                         "Pickup OTP cannot be generated for current status");
                 }
 
-                // GENERATE 6 DIGIT OTP
+                // GET CUSTOMER DETAILS
+                UserResponse customer = userClient.getUserById(
+                                returnRequest.getUserId());
+
+                if (customer == null
+                                || customer.getEmail() == null
+                                || customer.getEmail().isBlank()) {
+
+                        throw new RuntimeException(
+                                        "Customer email not available");
+                }
+
+                // GENERATE 6-DIGIT OTP
                 String otp = String.format(
                                 "%06d",
                                 new Random().nextInt(1_000_000));
@@ -385,7 +394,18 @@ public class ReturnServiceImpl implements ReturnService {
 
                 returnRequestRepository.save(returnRequest);
 
-                return "Pickup OTP generated successfully";
+                // SEND OTP EMAIL
+                ReturnPickupOtpNotificationRequest notification = new ReturnPickupOtpNotificationRequest();
+
+                notification.setEmail(customer.getEmail());
+                notification.setName(customer.getName());
+                notification.setReturnId(returnRequest.getId());
+                notification.setOrderId(returnRequest.getOrderId());
+                notification.setOtp(otp);
+
+                notificationClient.sendReturnPickupOtpNotification(notification);
+
+                return "Pickup OTP generated and email sent successfully";
         }
 
         // ================= VERIFY PICKUP OTP =================

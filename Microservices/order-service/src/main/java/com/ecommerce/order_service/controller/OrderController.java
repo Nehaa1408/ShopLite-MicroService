@@ -86,6 +86,21 @@ public class OrderController {
                                                 userId));
         }
 
+        // CANCEL INDIVIDUAL ORDER ITEM
+        @PutMapping("/{orderId}/items/{itemId}/cancel")
+        public OrderResponse cancelOrderItem(
+                        @PathVariable Long orderId,
+                        @PathVariable Long itemId,
+                        @RequestParam String reason,
+                        @RequestParam Long userId) {
+
+                return orderService.cancelOrderItem(
+                                orderId,
+                                itemId,
+                                reason,
+                                userId);
+        }
+
         // =====================================================
         // ADMIN - UPDATE ORDER STATUS
         // =====================================================

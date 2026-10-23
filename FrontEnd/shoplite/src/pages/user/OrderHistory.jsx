@@ -263,9 +263,8 @@ const OrderHistory = () => {
     try {
 
       const token = localStorage.getItem("token");
-
       await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/delivery-feedback/add`,
+        `${import.meta.env.VITE_API_URL}/api/orders/delivery-feedback`,
         {
           orderId,
           rating: ratings[orderId],
@@ -277,6 +276,8 @@ const OrderHistory = () => {
           },
         }
       );
+
+
 
       // REFRESH ORDERS
       const res = await axios.get(
@@ -632,6 +633,38 @@ const OrderHistory = () => {
                         >
                           {order.status}
                         </span>
+                        {/* RETURN STATUS */}
+                        {(() => {
+                          const orderReturns = returns
+                            .filter(
+                              (r) => String(r.orderId) === String(order.orderId)
+                            )
+                            .sort(
+                              (a, b) =>
+                                new Date(b.returnRequestedDate) -
+                                new Date(a.returnRequestedDate)
+                            );
+
+                          const latestReturn = orderReturns[0];
+
+                          return latestReturn ? (
+                            <span
+                              key={latestReturn.returnId}
+                              className={`px-3 py-1 rounded-full text-xs font-semibold ${latestReturn.status === "REFUND_PROCESSED"
+                                  ? "bg-green-100 text-green-700"
+                                  : latestReturn.status === "RETURN_REJECTED"
+                                    ? "bg-red-100 text-red-700"
+                                    : "bg-orange-100 text-orange-700"
+                                }`}
+                            >
+                              {latestReturn.status
+                                ?.replace(/_/g, " ")
+                                .toLowerCase()
+                                .replace(/\b\w/g, (char) => char.toUpperCase())}
+                            </span>
+                          ) : null;
+                        })()}
+
                       </div>
 
                       <div className="space-y-1">
@@ -731,182 +764,184 @@ const OrderHistory = () => {
                   </div>
 
                   {/* DELIVERY FEEDBACK */}
-                  {order.status?.toLowerCase() === "delivered" && (
+                  {
+                    order.status?.toLowerCase() === "delivered" && (
 
-                    <>
-                      {/* THANK YOU STATE */}
-                      {submittedFeedbacks[order.orderId] ? (
+                      <>
+                        {/* THANK YOU STATE */}
+                        {submittedFeedbacks[order.orderId] ? (
 
-                        <div className="mt-8">
+                          <div className="mt-8">
 
-                          <div className="relative overflow-hidden rounded-[32px] border border-green-200/50 bg-gradient-to-br from-green-50 via-emerald-50 to-white p-8 shadow-[0_20px_60px_rgba(16,185,129,0.15)]">
+                            <div className="relative overflow-hidden rounded-[32px] border border-green-200/50 bg-gradient-to-br from-green-50 via-emerald-50 to-white p-8 shadow-[0_20px_60px_rgba(16,185,129,0.15)]">
 
-                            <div className="absolute top-0 right-0 w-40 h-40 bg-green-200/30 blur-3xl rounded-full"></div>
+                              <div className="absolute top-0 right-0 w-40 h-40 bg-green-200/30 blur-3xl rounded-full"></div>
 
-                            <div className="relative z-10 text-center">
+                              <div className="relative z-10 text-center">
 
-                              <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-r from-green-400 to-emerald-500 flex items-center justify-center text-4xl shadow-lg mb-5">
-                                ❤️
-                              </div>
-
-                              <h2 className="text-3xl font-black text-gray-800 mb-3">
-                                Thank You for Your Feedback
-                              </h2>
-
-                              <p className="text-gray-600 text-lg leading-relaxed max-w-xl mx-auto">
-                                Your feedback helps us improve the ShopLite delivery experience
-                                and motivates our delivery partners to provide exceptional service.
-                              </p>
-
-                            </div>
-                          </div>
-                        </div>
-
-                      ) : order.deliveryRating && order.deliveryFeedback ? (
-
-                        /* EXISTING FEEDBACK */
-                        <div className="mt-8">
-
-                          <div className="relative overflow-hidden rounded-[32px] border border-yellow-200/40 bg-gradient-to-br from-yellow-50 via-white to-orange-50 p-8 shadow-[0_20px_60px_rgba(251,191,36,0.12)]">
-
-                            <div className="absolute -top-10 -right-10 w-40 h-40 bg-yellow-200/30 rounded-full blur-3xl"></div>
-
-                            <div className="relative z-10">
-
-                              <div className="flex items-center justify-between flex-wrap gap-4 mb-5">
-
-                                <div>
-                                  <h3 className="text-2xl font-black text-gray-800">
-                                    Delivery Feedback
-                                  </h3>
-
-                                  <p className="text-gray-500 mt-1">
-                                    Your submitted delivery experience
-                                  </p>
+                                <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-r from-green-400 to-emerald-500 flex items-center justify-center text-4xl shadow-lg mb-5">
+                                  ❤️
                                 </div>
 
-                                <div className="flex gap-1 text-3xl">
-                                  {[1, 2, 3, 4, 5].map((star) => (
-                                    <span
-                                      key={star}
-                                      className={
-                                        star <= Number(order.deliveryRating)
-                                          ? "text-yellow-400"
-                                          : "text-gray-200"
-                                      }
-                                    >
-                                      ★
-                                    </span>
-                                  ))}
-                                </div>
-
-                              </div>
-
-                              <div className="bg-white/70 backdrop-blur-md border border-white/50 rounded-3xl p-5 text-gray-700 leading-relaxed shadow-sm">
-                                “{order.deliveryFeedback}”
-                              </div>
-
-                            </div>
-                          </div>
-                        </div>
-
-                      ) : order.returnEligible ? (
-
-                        /* FEEDBACK FORM */
-                        <div className="mt-8">
-
-                          <div className="relative overflow-hidden rounded-[32px] border border-white/30 bg-white/60 backdrop-blur-2xl p-8 shadow-[0_20px_80px_rgba(99,102,241,0.12)]">
-
-                            {/* BACKGROUND BLOBS */}
-                            <div className="absolute -top-10 right-0 w-52 h-52 bg-indigo-300/20 rounded-full blur-3xl"></div>
-                            <div className="absolute bottom-0 left-0 w-40 h-40 bg-purple-300/20 rounded-full blur-3xl"></div>
-
-                            <div className="relative z-10">
-
-                              {/* HEADER */}
-                              <div className="mb-8">
-
-                                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-100 text-indigo-700 text-sm font-semibold mb-5">
-                                  ✨ Delivery Experience
-                                </div>
-
-                                <h2 className="text-3xl font-black text-gray-800 mb-2">
-                                  Rate Your Delivery
+                                <h2 className="text-3xl font-black text-gray-800 mb-3">
+                                  Thank You for Your Feedback
                                 </h2>
 
-                                <p className="text-gray-500 text-lg">
-                                  Share your experience with the ShopLite delivery service
+                                <p className="text-gray-600 text-lg leading-relaxed max-w-xl mx-auto">
+                                  Your feedback helps us improve the ShopLite delivery experience
+                                  and motivates our delivery partners to provide exceptional service.
                                 </p>
 
                               </div>
-
-                              {/* STARS */}
-                              <div className="flex gap-3 mb-8">
-
-                                {[1, 2, 3, 4, 5].map((star) => (
-
-                                  <button
-                                    key={star}
-                                    onClick={() =>
-                                      setRatings({
-                                        ...ratings,
-                                        [order.orderId]: star,
-                                      })
-                                    }
-                                    className={`w-16 h-16 rounded-2xl flex items-center justify-center text-4xl transition-all duration-300 transform hover:scale-110 ${ratings[order.orderId] >= star
-                                      ? "bg-gradient-to-br from-yellow-300 to-orange-400 text-white shadow-[0_10px_30px_rgba(251,191,36,0.4)]"
-                                      : "bg-white/70 text-gray-300 border border-gray-200 hover:border-yellow-300"
-                                      }`}
-                                  >
-                                    ★
-                                  </button>
-
-                                ))}
-
-                              </div>
-
-                              {/* FEEDBACK BOX */}
-                              <div className="mb-6">
-
-                                <textarea
-                                  placeholder="Tell us about your delivery experience..."
-                                  value={feedbacks[order.orderId] || ""}
-                                  onChange={(e) =>
-                                    setFeedbacks({
-                                      ...feedbacks,
-                                      [order.orderId]: e.target.value,
-                                    })
-                                  }
-                                  rows={5}
-                                  className="w-full rounded-3xl border border-white/40 bg-white/70 backdrop-blur-md p-6 text-gray-700 placeholder-gray-400 outline-none focus:ring-4 focus:ring-indigo-200 resize-none shadow-inner"
-                                />
-
-                              </div>
-
-                              {/* SUBMIT BUTTON */}
-                              <button
-                                onClick={() => submitFeedback(order.orderId)}
-                                className="group relative overflow-hidden px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 text-white font-semibold text-sm shadow-[0_10px_25px_rgba(99,102,241,0.28)] transition-all duration-300 hover:scale-[1.02]"
-                              >
-
-                                <span className="relative z-10 flex items-center gap-2">
-                                  Submit Feedback
-                                  <span className="transition-transform duration-300 group-hover:translate-x-1">
-                                    →
-                                  </span>
-                                </span>
-
-                                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition"></div>
-
-                              </button>
-
                             </div>
                           </div>
-                        </div>
 
-                      ) : null}
-                    </>
-                  )}
+                        ) : order.deliveryRating && order.deliveryFeedback ? (
+
+                          /* EXISTING FEEDBACK */
+                          <div className="mt-8">
+
+                            <div className="relative overflow-hidden rounded-[32px] border border-yellow-200/40 bg-gradient-to-br from-yellow-50 via-white to-orange-50 p-8 shadow-[0_20px_60px_rgba(251,191,36,0.12)]">
+
+                              <div className="absolute -top-10 -right-10 w-40 h-40 bg-yellow-200/30 rounded-full blur-3xl"></div>
+
+                              <div className="relative z-10">
+
+                                <div className="flex items-center justify-between flex-wrap gap-4 mb-5">
+
+                                  <div>
+                                    <h3 className="text-2xl font-black text-gray-800">
+                                      Delivery Feedback
+                                    </h3>
+
+                                    <p className="text-gray-500 mt-1">
+                                      Your submitted delivery experience
+                                    </p>
+                                  </div>
+
+                                  <div className="flex gap-1 text-3xl">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                      <span
+                                        key={star}
+                                        className={
+                                          star <= Number(order.deliveryRating)
+                                            ? "text-yellow-400"
+                                            : "text-gray-200"
+                                        }
+                                      >
+                                        ★
+                                      </span>
+                                    ))}
+                                  </div>
+
+                                </div>
+
+                                <div className="bg-white/70 backdrop-blur-md border border-white/50 rounded-3xl p-5 text-gray-700 leading-relaxed shadow-sm">
+                                  “{order.deliveryFeedback}”
+                                </div>
+
+                              </div>
+                            </div>
+                          </div>
+
+                        ) : order.returnEligible ? (
+
+                          /* FEEDBACK FORM */
+                          <div className="mt-8">
+
+                            <div className="relative overflow-hidden rounded-[32px] border border-white/30 bg-white/60 backdrop-blur-2xl p-8 shadow-[0_20px_80px_rgba(99,102,241,0.12)]">
+
+                              {/* BACKGROUND BLOBS */}
+                              <div className="absolute -top-10 right-0 w-52 h-52 bg-indigo-300/20 rounded-full blur-3xl"></div>
+                              <div className="absolute bottom-0 left-0 w-40 h-40 bg-purple-300/20 rounded-full blur-3xl"></div>
+
+                              <div className="relative z-10">
+
+                                {/* HEADER */}
+                                <div className="mb-8">
+
+                                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-100 text-indigo-700 text-sm font-semibold mb-5">
+                                    ✨ Delivery Experience
+                                  </div>
+
+                                  <h2 className="text-3xl font-black text-gray-800 mb-2">
+                                    Rate Your Delivery
+                                  </h2>
+
+                                  <p className="text-gray-500 text-lg">
+                                    Share your experience with the ShopLite delivery service
+                                  </p>
+
+                                </div>
+
+                                {/* STARS */}
+                                <div className="flex gap-3 mb-8">
+
+                                  {[1, 2, 3, 4, 5].map((star) => (
+
+                                    <button
+                                      key={star}
+                                      onClick={() =>
+                                        setRatings({
+                                          ...ratings,
+                                          [order.orderId]: star,
+                                        })
+                                      }
+                                      className={`w-16 h-16 rounded-2xl flex items-center justify-center text-4xl transition-all duration-300 transform hover:scale-110 ${ratings[order.orderId] >= star
+                                        ? "bg-gradient-to-br from-yellow-300 to-orange-400 text-white shadow-[0_10px_30px_rgba(251,191,36,0.4)]"
+                                        : "bg-white/70 text-gray-300 border border-gray-200 hover:border-yellow-300"
+                                        }`}
+                                    >
+                                      ★
+                                    </button>
+
+                                  ))}
+
+                                </div>
+
+                                {/* FEEDBACK BOX */}
+                                <div className="mb-6">
+
+                                  <textarea
+                                    placeholder="Tell us about your delivery experience..."
+                                    value={feedbacks[order.orderId] || ""}
+                                    onChange={(e) =>
+                                      setFeedbacks({
+                                        ...feedbacks,
+                                        [order.orderId]: e.target.value,
+                                      })
+                                    }
+                                    rows={5}
+                                    className="w-full rounded-3xl border border-white/40 bg-white/70 backdrop-blur-md p-6 text-gray-700 placeholder-gray-400 outline-none focus:ring-4 focus:ring-indigo-200 resize-none shadow-inner"
+                                  />
+
+                                </div>
+
+                                {/* SUBMIT BUTTON */}
+                                <button
+                                  onClick={() => submitFeedback(order.orderId)}
+                                  className="group relative overflow-hidden px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 text-white font-semibold text-sm shadow-[0_10px_25px_rgba(99,102,241,0.28)] transition-all duration-300 hover:scale-[1.02]"
+                                >
+
+                                  <span className="relative z-10 flex items-center gap-2">
+                                    Submit Feedback
+                                    <span className="transition-transform duration-300 group-hover:translate-x-1">
+                                      →
+                                    </span>
+                                  </span>
+
+                                  <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition"></div>
+
+                                </button>
+
+                              </div>
+                            </div>
+                          </div>
+
+                        ) : null}
+                      </>
+                    )
+                  }
 
                   {/* BUTTONS */}
 
@@ -1028,355 +1063,364 @@ const OrderHistory = () => {
       </main >
 
       {/* RETURN REQUEST MODAL */}
-      {showReturnModal && (
+      {
+        showReturnModal && (
 
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center px-4">
-          <div className="w-full max-w-5xl bg-white rounded-[32px] p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
+          <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center px-4">
+            <div className="w-full max-w-5xl bg-white rounded-[32px] p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
 
-            {/* SELECT RETURN ITEMS */}
-            <div className="mb-6">
+              {/* SELECT RETURN ITEMS */}
+              <div className="mb-6">
 
-              <h2 className="text-2xl font-black text-gray-800 mb-2">
-                Select Items to Return
-              </h2>
+                <h2 className="text-2xl font-black text-gray-800 mb-2">
+                  Select Items to Return
+                </h2>
 
-              <p className="text-sm text-gray-500 mb-5">
-                Choose the products you want to return from this order.
-              </p>
+                <p className="text-sm text-gray-500 mb-5">
+                  Choose the products you want to return from this order.
+                </p>
 
-              <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4">
 
-                {selectedReturnOrder?.items?.map((item, index) => {
+                  {selectedReturnOrder?.items?.map((item, index) => {
 
-                  const itemKey =
-                    `${returnOrderId}-${item.productName}`;
+                    const itemKey =
+                      `${returnOrderId}-${item.productName}`;
 
-                  const isSelected =
-                    selectedReturnItems.includes(itemKey);
+                    const isSelected =
+                      selectedReturnItems.includes(itemKey);
 
-                  const isReturned =
-                    returns
-                      .filter(
-                        (r) =>
-                          r.orderId === returnOrderId
-                      )
-                      .flatMap((r) =>
-                        r.selectedItems
-                          ?.split(",")
-                          .map((i) => i.trim()) || []
-                      )
-                      .includes(item.productName);
-                  return (
+                    const isReturned =
+                      returns
+                        .filter(
+                          (r) =>
+                            r.orderId === returnOrderId
+                        )
+                        .flatMap((r) =>
+                          r.selectedItems
+                            ?.split(",")
+                            .map((i) => i.trim()) || []
+                        )
+                        .includes(item.productName);
+                    return (
 
-                    <div
-                      key={index}
-                      onClick={() => {
+                      <div
+                        key={index}
+                        onClick={() => {
 
-                        if (isReturned) return;
+                          if (isReturned) return;
 
-                        if (isSelected) {
+                          if (isSelected) {
 
-                          setSelectedReturnItems(
-                            selectedReturnItems.filter(
-                              (i) => i !== itemKey
-                            )
-                          );
+                            setSelectedReturnItems(
+                              selectedReturnItems.filter(
+                                (i) => i !== itemKey
+                              )
+                            );
 
-                        } else {
+                          } else {
 
-                          setSelectedReturnItems([
-                            ...selectedReturnItems,
-                            itemKey
-                          ]);
-                        }
-                      }}
-                      className={`relative p-4 rounded-3xl border transition-all duration-300
+                            setSelectedReturnItems([
+                              ...selectedReturnItems,
+                              itemKey
+                            ]);
+                          }
+                        }}
+                        className={`relative p-4 rounded-3xl border transition-all duration-300
 
   ${isReturned
-                          ? "opacity-60 bg-gray-100 border-gray-200 cursor-not-allowed"
-                          : "cursor-pointer"
-                        }
+                            ? "opacity-60 bg-gray-100 border-gray-200 cursor-not-allowed"
+                            : "cursor-pointer"
+                          }
 
   ${isSelected
-                          ? "border-orange-400 bg-orange-50"
-                          : "border-gray-200 hover:border-orange-200"
-                        }`}
-                    >
-
-                      {/* CHECKBOX */}
-                      <div
-                        className={`w-6 h-6 rounded-lg border flex items-center justify-center
-
-    ${isSelected
-                            ? "bg-orange-500 border-orange-500 text-white"
-                            : "border-gray-300"
+                            ? "border-orange-400 bg-orange-50"
+                            : "border-gray-200 hover:border-orange-200"
                           }`}
                       >
-                        {isSelected && "✓"}
-                      </div>
 
-                      {/* IMAGE */}
-                      <img
-                        src={
-                          item.image?.startsWith("http")
-                            ? item.image
-                            : `/products/${item.image}`
-                        }
-                        alt=""
-                        className="w-24 h-24 mx-auto rounded-2xl object-cover border border-gray-100 shadow-sm"
-                      />
+                        {/* CHECKBOX */}
+                        <div
+                          className={`w-6 h-6 rounded-lg border flex items-center justify-center
 
-                      {/* INFO */}
-                      <div className="text-center mt-4">
-                        <div className="flex flex-col items-center">
+    ${isSelected
+                              ? "bg-orange-500 border-orange-500 text-white"
+                              : "border-gray-300"
+                            }`}
+                        >
+                          {isSelected && "✓"}
+                        </div>
 
-                          <h3 className="font-bold text-gray-800">
-                            {item.productName}
-                          </h3>
+                        {/* IMAGE */}
+                        <img
+                          src={
+                            item.image?.startsWith("http")
+                              ? item.image
+                              : `/products/${item.image}`
+                          }
+                          alt=""
+                          className="w-24 h-24 mx-auto rounded-2xl object-cover border border-gray-100 shadow-sm"
+                        />
 
-                          {isReturned && (
+                        {/* INFO */}
+                        <div className="text-center mt-4">
+                          <div className="flex flex-col items-center">
 
-                            <span className="px-2 py-1 rounded-full bg-gray-200 text-gray-600 text-[10px] font-bold tracking-wide">
-                              RETURN REQUESTED
+                            <h3 className="font-bold text-gray-800">
+                              {item.productName}
+                            </h3>
+
+                            {isReturned && (
+
+                              <span className="px-2 py-1 rounded-full bg-gray-200 text-gray-600 text-[10px] font-bold tracking-wide">
+                                RETURN REQUESTED
+                              </span>
+
+                            )}
+
+                          </div>
+
+                          <div className="flex items-center justify-center gap-2 mt-2 text-sm">
+
+                            <span className="text-sm text-gray-500">
+                              Qty: {item.quantity}
                             </span>
 
-                          )}
+                            <span className="w-1 h-1 rounded-full bg-gray-300"></span>
+
+                            <span className="text-sm font-semibold text-indigo-600">
+                              ${item.price}
+                            </span>
+
+                          </div>
 
                         </div>
-
-                        <div className="flex items-center justify-center gap-2 mt-2 text-sm">
-
-                          <span className="text-sm text-gray-500">
-                            Qty: {item.quantity}
-                          </span>
-
-                          <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-
-                          <span className="text-sm font-semibold text-indigo-600">
-                            ${item.price}
-                          </span>
-
-                        </div>
-
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+
+                </div>
+
+              </div>
+
+              {/* SUBTITLE */}
+              <p className="text-sm text-gray-500 mb-6">
+                Please select a reason for your return request.
+              </p>
+
+              {/* REASONS */}
+              <div className="space-y-3 mb-6">
+
+                {[
+                  "Damaged product",
+                  "Wrong item received",
+                  "Size issue",
+                  "Product not as expected",
+                  "Missing accessories",
+                  "Other"
+                ].map((reason) => (
+
+                  <label
+                    key={reason}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-2xl border cursor-pointer transition-all duration-300
+            ${returnReason === reason
+                        ? "border-orange-400 bg-orange-50"
+                        : "border-gray-200"
+                      }`}
+                  >
+
+                    <input
+                      type="radio"
+                      name="returnReason"
+                      value={reason}
+                      checked={returnReason === reason}
+                      onChange={(e) =>
+                        setReturnReason(e.target.value)
+                      }
+                    />
+
+                    <span className="text-sm font-medium text-gray-700">
+                      {reason}
+                    </span>
+
+                  </label>
+                ))}
+
+              </div>
+
+              {/* OTHER REASON */}
+              {returnReason === "Other" && (
+
+                <textarea
+                  value={otherReturnReason}
+                  onChange={(e) =>
+                    setOtherReturnReason(e.target.value)
+                  }
+                  placeholder="Enter return reason..."
+                  className="w-full h-28 resize-none rounded-2xl border border-gray-200 p-4 text-sm outline-none focus:ring-2 focus:ring-orange-200 mb-6"
+                />
+
+              )}
+
+              {/* BUTTONS */}
+              <div className="flex gap-3">
+
+                {/* CLOSE */}
+                <button
+                  onClick={() => {
+
+                    setShowReturnModal(false);
+
+                    setReturnReason("");
+
+                    setOtherReturnReason("");
+
+                    setSelectedReturnItems([]);
+
+                    setSelectedReturnOrder(null);
+                  }}
+                  className="flex-1 py-3 rounded-2xl border border-gray-200 text-gray-600 font-semibold hover:bg-gray-50"
+                >
+                  Close
+                </button>
+
+                {/* SUBMIT */}
+
+                <button
+                  onClick={submitReturnRequest}
+                  disabled={
+                    !returnReason ||
+                    (returnReason === "Other" && !otherReturnReason.trim()) ||
+                    selectedReturnItems.length === 0
+                  }
+                  className={`flex-1 py-3 rounded-2xl text-white font-semibold transition-all
+    ${returnReason &&
+                      (returnReason !== "Other" || otherReturnReason.trim()) &&
+                      selectedReturnItems.length > 0
+                      ? "bg-gradient-to-br from-orange-500 to-red-500 hover:scale-[1.02] shadow-lg hover:shadow-orange-300/40"
+                      : "bg-gray-300 cursor-not-allowed"
+                    }`}
+                >
+                  Submit Return
+                </button>
+
 
               </div>
 
             </div>
 
-            {/* SUBTITLE */}
-            <p className="text-sm text-gray-500 mb-6">
-              Please select a reason for your return request.
-            </p>
-
-            {/* REASONS */}
-            <div className="space-y-3 mb-6">
-
-              {[
-                "Damaged product",
-                "Wrong item received",
-                "Size issue",
-                "Product not as expected",
-                "Missing accessories",
-                "Other"
-              ].map((reason) => (
-
-                <label
-                  key={reason}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-2xl border cursor-pointer transition-all duration-300
-            ${returnReason === reason
-                      ? "border-orange-400 bg-orange-50"
-                      : "border-gray-200"
-                    }`}
-                >
-
-                  <input
-                    type="radio"
-                    name="returnReason"
-                    value={reason}
-                    checked={returnReason === reason}
-                    onChange={(e) =>
-                      setReturnReason(e.target.value)
-                    }
-                  />
-
-                  <span className="text-sm font-medium text-gray-700">
-                    {reason}
-                  </span>
-
-                </label>
-              ))}
-
-            </div>
-
-            {/* OTHER REASON */}
-            {returnReason === "Other" && (
-
-              <textarea
-                value={otherReturnReason}
-                onChange={(e) =>
-                  setOtherReturnReason(e.target.value)
-                }
-                placeholder="Enter return reason..."
-                className="w-full h-28 resize-none rounded-2xl border border-gray-200 p-4 text-sm outline-none focus:ring-2 focus:ring-orange-200 mb-6"
-              />
-
-            )}
-
-            {/* BUTTONS */}
-            <div className="flex gap-3">
-
-              {/* CLOSE */}
-              <button
-                onClick={() => {
-
-                  setShowReturnModal(false);
-
-                  setReturnReason("");
-
-                  setOtherReturnReason("");
-
-                  setSelectedReturnItems([]);
-
-                  setSelectedReturnOrder(null);
-                }}
-                className="flex-1 py-3 rounded-2xl border border-gray-200 text-gray-600 font-semibold hover:bg-gray-50"
-              >
-                Close
-              </button>
-
-              {/* SUBMIT */}
-              <button
-                onClick={submitReturnRequest}
-                disabled={
-                  !returnReason ||
-                  selectedReturnItems.length === 0
-                }
-                className={`flex-1 py-3 rounded-2xl text-white font-semibold transition-all
-  ${returnReason &&
-                    selectedReturnItems.length > 0
-                    ? "bg-gradient-to-br from-orange-500 to-red-500 hover:scale-[1.02] shadow-lg hover:shadow-orange-300/40"
-                    : "bg-gray-300 cursor-not-allowed"
-                  }`}
-              >
-                Submit Return
-              </button>
-            </div>
-
           </div>
-
-        </div>
-      )}
+        )
+      }
 
       {/* CANCEL ORDER MODAL */}
-      {showCancelModal && (
+      {
+        showCancelModal && (
 
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center px-4">
+          <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center px-4">
 
-          <div className="w-full max-w-lg bg-white rounded-[32px] p-7 shadow-2xl">
+            <div className="w-full max-w-lg bg-white rounded-[32px] p-7 shadow-2xl">
 
-            {/* TITLE */}
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">
-              Cancel Order
-            </h2>
+              {/* TITLE */}
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                Cancel Order
+              </h2>
 
-            <p className="text-sm text-gray-500 mb-6">
-              Please select a reason for cancellation.
-            </p>
+              <p className="text-sm text-gray-500 mb-6">
+                Please select a reason for cancellation.
+              </p>
 
-            {/* REASONS */}
-            <div className="space-y-3 mb-6">
+              {/* REASONS */}
+              <div className="space-y-3 mb-6">
 
-              {[
-                "Ordered by mistake",
-                "Found cheaper elsewhere",
-                "Wrong address",
-                "Need faster delivery",
-                "Payment issue",
-                "Other"
-              ].map((reason) => (
+                {[
+                  "Ordered by mistake",
+                  "Found cheaper elsewhere",
+                  "Wrong address",
+                  "Need faster delivery",
+                  "Payment issue",
+                  "Other"
+                ].map((reason) => (
 
-                <label
-                  key={reason}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-2xl border cursor-pointer transition-all duration-300
+                  <label
+                    key={reason}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-2xl border cursor-pointer transition-all duration-300
             ${cancelReason === reason
-                      ? "border-red-400 bg-red-50"
-                      : "border-gray-200"
+                        ? "border-red-400 bg-red-50"
+                        : "border-gray-200"
+                      }`}
+                  >
+
+                    <input
+                      type="radio"
+                      name="cancelReason"
+                      value={reason}
+                      checked={cancelReason === reason}
+                      onChange={(e) =>
+                        setCancelReason(e.target.value)
+                      }
+                    />
+
+                    <span className="text-sm font-medium text-gray-700">
+                      {reason}
+                    </span>
+
+                  </label>
+                ))}
+
+              </div>
+
+              {/* OTHER */}
+              {cancelReason === "Other" && (
+
+                <textarea
+                  value={otherCancelReason}
+                  onChange={(e) =>
+                    setOtherCancelReason(e.target.value)
+                  }
+                  placeholder="Enter cancellation reason..."
+                  className="w-full h-28 resize-none rounded-2xl border border-gray-200 p-4 text-sm outline-none focus:ring-2 focus:ring-red-200 mb-6"
+                />
+              )}
+
+              {/* BUTTONS */}
+              <div className="flex gap-3">
+
+                {/* CLOSE */}
+                <button
+                  onClick={() => {
+
+                    setShowCancelModal(false);
+
+                    setCancelReason("");
+
+                    setOtherCancelReason("");
+                  }}
+                  className="flex-1 py-3 rounded-2xl border border-gray-200 text-gray-600 font-semibold hover:bg-gray-50"
+                >
+                  Close
+                </button>
+
+                {/* SUBMIT */}
+                <button
+                  onClick={cancelOrder}
+                  disabled={!cancelReason}
+                  className={`flex-1 py-3 rounded-2xl text-white font-semibold transition-all
+          ${cancelReason
+                      ? "bg-gradient-to-br from-red-500 to-rose-500"
+                      : "bg-gray-300 cursor-not-allowed"
                     }`}
                 >
+                  Confirm Cancel
+                </button>
 
-                  <input
-                    type="radio"
-                    name="cancelReason"
-                    value={reason}
-                    checked={cancelReason === reason}
-                    onChange={(e) =>
-                      setCancelReason(e.target.value)
-                    }
-                  />
-
-                  <span className="text-sm font-medium text-gray-700">
-                    {reason}
-                  </span>
-
-                </label>
-              ))}
-
-            </div>
-
-            {/* OTHER */}
-            {cancelReason === "Other" && (
-
-              <textarea
-                value={otherCancelReason}
-                onChange={(e) =>
-                  setOtherCancelReason(e.target.value)
-                }
-                placeholder="Enter cancellation reason..."
-                className="w-full h-28 resize-none rounded-2xl border border-gray-200 p-4 text-sm outline-none focus:ring-2 focus:ring-red-200 mb-6"
-              />
-            )}
-
-            {/* BUTTONS */}
-            <div className="flex gap-3">
-
-              {/* CLOSE */}
-              <button
-                onClick={() => {
-
-                  setShowCancelModal(false);
-
-                  setCancelReason("");
-
-                  setOtherCancelReason("");
-                }}
-                className="flex-1 py-3 rounded-2xl border border-gray-200 text-gray-600 font-semibold hover:bg-gray-50"
-              >
-                Close
-              </button>
-
-              {/* SUBMIT */}
-              <button
-                onClick={cancelOrder}
-                disabled={!cancelReason}
-                className={`flex-1 py-3 rounded-2xl text-white font-semibold transition-all
-          ${cancelReason
-                    ? "bg-gradient-to-br from-red-500 to-rose-500"
-                    : "bg-gray-300 cursor-not-allowed"
-                  }`}
-              >
-                Confirm Cancel
-              </button>
+              </div>
 
             </div>
 
           </div>
-
-        </div>
-      )}
+        )
+      }
       {/* FOOTER */}
       < footer className="mt-20 py-10 border-t text-center text-text-muted" >
         © ShopLite Luxury E-commerce.

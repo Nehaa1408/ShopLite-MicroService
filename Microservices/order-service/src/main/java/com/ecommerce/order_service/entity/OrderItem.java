@@ -49,6 +49,8 @@ public class OrderItem {
     @Column(name = "product_image", columnDefinition = "TEXT")
     private String productImage;
 
+    @Column(nullable = false) private boolean cancelled = false; @Column(length = 1000) private String cancellationReason;
+
     public OrderItem(Long id, Order order, Long productId, String productName,
                      double price, int quantity, double subtotal, String productImage) {
         this.id = id;
@@ -59,5 +61,7 @@ public class OrderItem {
         this.quantity = quantity;
         this.subtotal = subtotal;
         this.productImage = productImage;
+        this.cancelled = false;
+        this.cancellationReason = null;
     }
 }

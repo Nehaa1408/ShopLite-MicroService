@@ -10,6 +10,7 @@ import com.ecommerce.order_service.dto.OrderPlacedNotificationRequest;
 import com.ecommerce.order_service.dto.OrderStatusNotificationRequest;
 import com.ecommerce.order_service.dto.PaymentNotificationRequest;
 import com.ecommerce.order_service.dto.ReturnNotificationRequest;
+import com.ecommerce.order_service.dto.ReturnPickupOtpNotificationRequest;
 
 @FeignClient(name = "notification-service")
 public interface NotificationClient {
@@ -40,4 +41,8 @@ public interface NotificationClient {
         @PostMapping("/api/notifications/return")
         void sendReturnNotification(
                         @RequestBody ReturnNotificationRequest request);
+
+        @PostMapping("/api/notifications/return-pickup-otp")
+        void sendReturnPickupOtpNotification(
+                        @RequestBody ReturnPickupOtpNotificationRequest request);
 }

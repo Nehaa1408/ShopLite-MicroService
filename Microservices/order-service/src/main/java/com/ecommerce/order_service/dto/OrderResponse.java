@@ -1,6 +1,8 @@
 package com.ecommerce.order_service.dto;
 
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.List;
 
@@ -39,12 +41,33 @@ public class OrderResponse {
 
     private String paymentStatus;
 
-    public OrderResponse(Long orderId, Long userId, Long deliveryPartnerId,
-                         String customerName, String customerEmail,
-                         String deliveryAgentName, String deliveryAgentEmail,
-                         double totalAmount, String status, String orderDate,
-                         List<OrderItemResponse> items, String cancelReason,
-                         String deliveredAt, String paymentMethod, String paymentStatus) {
+    private boolean returnEligible;
+
+    private String returnEligibleTill;
+
+    private Integer deliveryRating;
+
+    private String deliveryFeedback;
+
+    public OrderResponse(
+            Long orderId,
+            Long userId,
+            Long deliveryPartnerId,
+            String customerName,
+            String customerEmail,
+            String deliveryAgentName,
+            String deliveryAgentEmail,
+            double totalAmount,
+            String status,
+            String orderDate,
+            List<OrderItemResponse> items,
+            String cancelReason,
+            String deliveredAt,
+            String paymentMethod,
+            String paymentStatus,
+            Integer deliveryRating,
+            String deliveryFeedback) {
+
         this.orderId = orderId;
         this.userId = userId;
         this.deliveryPartnerId = deliveryPartnerId;
@@ -60,5 +83,7 @@ public class OrderResponse {
         this.deliveredAt = deliveredAt;
         this.paymentMethod = paymentMethod;
         this.paymentStatus = paymentStatus;
+        this.deliveryRating = deliveryRating;
+        this.deliveryFeedback = deliveryFeedback;
     }
 }

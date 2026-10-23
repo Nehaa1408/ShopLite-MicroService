@@ -21,12 +21,18 @@ public class OrderItemResponse {
 
     private String image;
 
-    public OrderItemResponse(Long productId, String productName, double price, int quantity, double subtotal, String image) {
+    private boolean cancelled;
+    private String cancellationReason;
+
+    public OrderItemResponse(Long productId, String productName, double price, int quantity, double subtotal,
+            String image) {
         this.productId = productId;
         this.productName = productName;
         this.price = price;
         this.quantity = quantity;
         this.subtotal = subtotal;
         this.image = image;
+        this.cancelled = false;
+        this.cancellationReason = null;
     }
 }

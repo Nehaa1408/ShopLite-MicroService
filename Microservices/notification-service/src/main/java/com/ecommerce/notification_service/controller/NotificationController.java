@@ -13,6 +13,7 @@ import com.ecommerce.notification_service.dto.OrderPlacedNotificationRequest;
 import com.ecommerce.notification_service.dto.OrderStatusNotificationRequest;
 import com.ecommerce.notification_service.dto.PaymentNotificationRequest;
 import com.ecommerce.notification_service.dto.ReturnNotificationRequest;
+import com.ecommerce.notification_service.dto.ReturnPickupOtpNotificationRequest;
 import com.ecommerce.notification_service.service.EmailService;
 
 @RestController
@@ -126,5 +127,16 @@ public class NotificationController {
 
         return ResponseEntity.ok(
                 "Return notification email sent successfully");
+    }
+    // ================= RETURN PICKUP OTP =================
+
+    @PostMapping("/return-pickup-otp")
+    public ResponseEntity<String> sendReturnPickupOtp(
+            @RequestBody ReturnPickupOtpNotificationRequest request) {
+
+        emailService.sendReturnPickupOtpEmail(request);
+
+        return ResponseEntity.ok(
+                "Return pickup OTP email sent successfully");
     }
 }

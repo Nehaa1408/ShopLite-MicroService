@@ -35,6 +35,7 @@ import com.ecommerce.order_service.entity.PaymentMethod;
 import com.ecommerce.order_service.entity.PaymentStatus;
 import com.ecommerce.order_service.repository.DeliveryFeedbackRepository;
 import com.ecommerce.order_service.repository.DeliveryOtpRepository;
+import com.ecommerce.order_service.repository.OrderItemRepository;
 import com.ecommerce.order_service.repository.OrderRepository;
 
 @Service
@@ -54,6 +55,8 @@ public class OrderService {
 
         private final DeliveryFeedbackRepository deliveryFeedbackRepository;
 
+        private final OrderItemRepository orderItemRepository;
+
         public OrderService(
                         OrderRepository orderRepository,
                         CartClient cartClient,
@@ -61,7 +64,9 @@ public class OrderService {
                         UserClient userClient,
                         NotificationClient notificationClient,
                         DeliveryOtpRepository deliveryOtpRepository,
-                        DeliveryFeedbackRepository deliveryFeedbackRepository) {
+                        DeliveryFeedbackRepository deliveryFeedbackRepository,
+                        OrderItemRepository orderItemRepository) {
+
                 this.orderRepository = orderRepository;
                 this.cartClient = cartClient;
                 this.productClient = productClient;
@@ -69,6 +74,7 @@ public class OrderService {
                 this.notificationClient = notificationClient;
                 this.deliveryOtpRepository = deliveryOtpRepository;
                 this.deliveryFeedbackRepository = deliveryFeedbackRepository;
+                this.orderItemRepository = orderItemRepository;
         }
 
         // PLACE ORDER
@@ -91,7 +97,7 @@ public class OrderService {
 
                 order.setUserId(userId);
 
-                order.setStatus(OrderStatus.PENDING);
+                order.setStatus(OrderStatus.PLACED);
 
                 // 3. PAYMENT METHOD
                 PaymentMethod paymentMethod;
@@ -294,6 +300,67 @@ public class OrderService {
                 return mapToResponse(savedOrder);
         }
 
+        // CANCEL INDIVIDUAL ORDER ITEM
+        @Transactional
+        public OrderResponse cancelOrderItem(
+                        Long orderId,
+                        Long itemId,
+                        String reason,
+                        Long userId) {
+
+                Order order = orderRepository
+                                .findByIdAndUserId(orderId, userId)
+                                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+                // Cancellation is not allowed after delivery starts
+                if (order.getStatus() == OrderStatus.OUT_FOR_DELIVERY
+                                || order.getStatus() == OrderStatus.DELIVERED
+                                || order.getStatus() == OrderStatus.CANCELLED) {
+
+                        throw new RuntimeException(
+                                        "Items can no longer be cancelled for this order");
+                }
+
+                OrderItem item = orderItemRepository
+                                .findByIdAndOrderId(itemId, orderId)
+                                .orElseThrow(() -> new RuntimeException(
+                                                "Order item not found"));
+
+                if (item.isCancelled()) {
+                        throw new RuntimeException("This item is already cancelled");
+                }
+
+                // Mark the selected item as cancelled
+                item.setCancelled(true);
+                item.setCancellationReason(reason);
+
+                // Calculate the total using only active items
+                double subtotal = order.getItems().stream()
+                                .filter(orderItem -> !orderItem.isCancelled())
+                                .mapToDouble(OrderItem::getSubtotal)
+                                .sum();
+
+                // Apply the existing 4% tax
+                double tax = subtotal * 0.04;
+                double finalTotal = subtotal + tax;
+
+                order.setTotalAmount(finalTotal);
+
+                // Cancel the whole order only when every item is cancelled
+                boolean allItemsCancelled = order.getItems().stream()
+                                .allMatch(OrderItem::isCancelled);
+
+                if (allItemsCancelled) {
+                        order.setStatus(OrderStatus.CANCELLED);
+                        order.setCancellationReason("All items cancelled");
+                        order.setDeliveryPartnerId(null);
+                }
+
+                Order savedOrder = orderRepository.save(order);
+
+                return mapToResponse(savedOrder);
+        }
+
         // UPDATE ORDER STATUS
         @Transactional
         public OrderResponse updateOrderStatus(
@@ -347,6 +414,11 @@ public class OrderService {
 
                         throw new RuntimeException("Unauthorized delivery action");
                 }
+                // CHECK ORDER STATUS
+                if (order.getStatus() != OrderStatus.OUT_FOR_DELIVERY) {
+                        throw new RuntimeException(
+                                        "OTP can only be generated for orders that are out for delivery");
+                }
 
                 // GENERATE 6 DIGIT OTP
                 String otp = String.format(
@@ -377,10 +449,6 @@ public class OrderService {
 
                 notificationClient.sendDeliveryOtpNotification(
                                 notificationRequest);
-
-                // ORDER IS OUT FOR DELIVERY
-                order.setStatus(OrderStatus.OUT_FOR_DELIVERY);
-                orderRepository.save(order);
 
                 return "OTP generated successfully";
         }
@@ -469,11 +537,24 @@ public class OrderService {
                                         response.setImage(
                                                         item.getProductImage());
 
+                                        response.setCancelled(
+                                                        item.isCancelled());
+
+                                        response.setCancellationReason(
+                                                        item.getCancellationReason());
+
                                         return response;
                                 })
                                 .toList();
 
                 OrderResponse response = new OrderResponse();
+
+                // DELIVERY FEEDBACK DETAILS
+                deliveryFeedbackRepository.findByOrderId(order.getId()).ifPresent(feedback -> {
+                        response.setDeliveryRating(feedback.getRating());
+                        response.setDeliveryFeedback(feedback.getFeedback());
+                });
+
                 // CUSTOMER DETAILS
                 UserResponse customer = userClient.getUserById(order.getUserId());
 
@@ -518,6 +599,15 @@ public class OrderService {
 
                         response.setDeliveredAt(
                                         order.getDeliveredAt().toString());
+
+                        LocalDateTime returnDeadline = order.getDeliveredAt().plusDays(7);
+
+                        response.setReturnEligibleTill(
+                                        returnDeadline.toString());
+
+                        response.setReturnEligible(
+                                        order.getStatus() == OrderStatus.DELIVERED
+                                                        && !LocalDateTime.now().isAfter(returnDeadline));
                 }
 
                 if (order.getPaymentMethod() != null) {
@@ -703,13 +793,12 @@ public class OrderService {
 
                 Order order = orderRepository.findById(orderId)
                                 .orElseThrow(() -> new RuntimeException("Order not found"));
-
                 // Assign delivery partner
                 order.setDeliveryPartnerId(deliveryId);
 
                 // Update status when a delivery partner is assigned
-                if (order.getStatus() == OrderStatus.PENDING) {
-                        order.setStatus(OrderStatus.PACKED);
+                if (order.getStatus() == OrderStatus.PACKED) {
+                        order.setStatus(OrderStatus.OUT_FOR_DELIVERY);
                 }
 
                 // Save updated order
@@ -770,5 +859,5 @@ public class OrderService {
 
                 return mapToResponse(savedOrder);
         }
-        
+
 }

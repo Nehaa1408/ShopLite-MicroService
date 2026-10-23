@@ -11,6 +11,7 @@ import com.ecommerce.notification_service.dto.OrderPlacedNotificationRequest;
 import com.ecommerce.notification_service.dto.OrderStatusNotificationRequest;
 import com.ecommerce.notification_service.dto.PaymentNotificationRequest;
 import com.ecommerce.notification_service.dto.ReturnNotificationRequest;
+import com.ecommerce.notification_service.dto.ReturnPickupOtpNotificationRequest;
 
 @Service
 public class EmailService {
@@ -490,6 +491,31 @@ public class EmailService {
                 mail.setTo(request.getEmail());
                 mail.setSubject(subject);
                 mail.setText(body);
+
+                mailSender.send(mail);
+        }
+        // ================= RETURN PICKUP OTP =================
+
+        public void sendReturnPickupOtpEmail(
+                        ReturnPickupOtpNotificationRequest request) {
+
+                SimpleMailMessage mail = new SimpleMailMessage();
+
+                mail.setTo(request.getEmail());
+
+                mail.setSubject(
+                                "ShopLite - Return Pickup OTP for Return #" + request.getReturnId());
+
+                mail.setText(
+                                "Hello " + request.getName() + ",\n\n"
+                                                + "Your OTP for the return pickup has been generated.\n\n"
+                                                + "Return ID: #" + request.getReturnId() + "\n"
+                                                + "Order ID: #" + request.getOrderId() + "\n"
+                                                + "Pickup OTP: " + request.getOtp() + "\n\n"
+                                                + "Please share this OTP with the pickup partner when they collect your product.\n"
+                                                + "This OTP is valid for 10 minutes.\n\n"
+                                                + "Regards,\n"
+                                                + "ShopLite Team");
 
                 mailSender.send(mail);
         }

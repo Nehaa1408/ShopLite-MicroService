@@ -132,21 +132,16 @@ const CompletedPickups = () => {
             const items =
               order.items && order.items.length > 0
                 ? order.items
-                : [
-                  {
-                    productName:
-                      order.selectedItems ||
-                      "Returned Product",
-
+                : (order.selectedItems || "")
+                  .split(",")
+                  .map((name) => name.trim())
+                  .filter(Boolean)
+                  .map((name) => ({
+                    productName: name,
                     quantity: 1,
-
-                    price:
-                      order.refundAmount || 0,
-
-                    image:
-                      "/products/placeholder.webp"
-                  }
-                ];
+                    price: 0,
+                    image: null
+                  }));
 
 
 
