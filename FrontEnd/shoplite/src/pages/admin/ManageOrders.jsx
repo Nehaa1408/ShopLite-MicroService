@@ -744,7 +744,7 @@ hover:-translate-y-[2px]">
                                 setProcessingPayment(true);
 
                                 await adminAxios.put(
-                                  `/orders/admin/${selectedOrder.orderId}/reject-payment?reason=${rejectReason}`
+                                  `/orders/admin/${selectedOrder.orderId}/reject-payment?reason=${encodeURIComponent(rejectReason.trim())}`
                                 );
 
                                 const res = await adminAxios.get("/orders/admin");

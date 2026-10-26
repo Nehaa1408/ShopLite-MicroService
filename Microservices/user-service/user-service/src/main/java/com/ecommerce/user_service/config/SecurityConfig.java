@@ -29,24 +29,25 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                .requestMatchers(
-                        "/test",
-                        "/api/auth/**",
-                        "/api/user/forgot-password",
-                        "/api/user/verify-forgot-password-otp",
-                        "/api/user/reset-password",
-                        "/api/user/*",
-                        "/api/user/admin/role/**",
-                        "/api/user/admin/search/**",
-                        "/api/user/admin/count",
-                        "/swagger-ui/**",
-                        "/v3/api-docs/**",
-                        "/swagger-ui.html")
-                .permitAll()
-                .anyRequest()
-                .authenticated())
+                        .requestMatchers(
+                                "/test",
+                                "/api/auth/**",
+                                "/api/user/forgot-password",
+                                "/api/user/verify-forgot-password-otp",
+                                "/api/user/reset-password",
+                                "/api/user/*",
+                                "/api/user/admin/role/**",
+                                "/api/user/admin/search/**",
+                                "/api/user/admin/count",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/swagger-ui.html",
+                                "/actuator/health")
+                        .permitAll()
+                        .anyRequest()
+                        .authenticated())
                 .addFilterBefore(
                         jwtFilter,
                         UsernamePasswordAuthenticationFilter.class);

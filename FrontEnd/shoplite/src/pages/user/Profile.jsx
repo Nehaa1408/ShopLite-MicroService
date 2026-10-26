@@ -52,28 +52,48 @@ const Profile = () => {
     user.role === "DELIVERY";
 
   const handleBecomePartner = async () => {
-
     try {
-
       const token = localStorage.getItem("token");
+      const storedUser = localStorage.getItem("user");
 
-      await axios.post(
+      if (!token || !storedUser) {
+        navigate("/login");
+        return;
+      }
+
+      const user = JSON.parse(storedUser);
+      const userId = user.id;
+
+      if (userId == null) {
+        console.error("User ID missing from login response:", user);
+        alert("Unable to identify your account. Please log in again.");
+        return;
+      }
+
+      const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/api/delivery/apply`,
-        {},
+        null,
         {
+          params: { userId },
           headers: {
             Authorization: `Bearer ${token}`
           }
         }
       );
 
+      console.log("Delivery application:", response.data);
+
       navigate("/delivery/verification");
 
     } catch (error) {
+      console.error("Status:", error.response?.status);
+      console.error("Backend error:", error.response?.data);
+      console.error("Request URL:", error.config?.url);
 
-      console.error(error);
-
-      alert("Unable to start delivery application");
+      alert(
+        error.response?.data?.message ||
+        "Unable to start delivery application."
+      );
     }
   };
 

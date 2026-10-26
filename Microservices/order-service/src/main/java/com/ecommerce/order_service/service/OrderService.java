@@ -452,8 +452,8 @@ public class OrderService {
 
                 return "OTP generated successfully";
         }
-        // UPDATE PAYMENT STATUS
 
+        // UPDATE PAYMENT STATUS
         @Transactional
         public OrderResponse updatePaymentStatus(
                         @NonNull Long orderId,
@@ -472,15 +472,28 @@ public class OrderService {
                                         "Invalid payment status: " + paymentStatus);
                 }
 
+                // Update payment status
                 order.setPaymentStatus(status);
+
+                // Cancel the order when payment fails
+                if (status == PaymentStatus.FAILED) {
+                        order.setStatus(OrderStatus.CANCELLED);
+                        order.setDeliveryPartnerId(null);
+
+                        if (order.getCancellationReason() == null
+                                        || order.getCancellationReason().isBlank()) {
+                                order.setCancellationReason("Payment rejected by admin");
+                        }
+                }
 
                 Order savedOrder = orderRepository.save(order);
 
-                // SEND PAYMENT NOTIFICATION
+                // Send payment notification
                 if (status == PaymentStatus.SUCCESS
                                 || status == PaymentStatus.FAILED) {
 
-                        UserResponse user = userClient.getUserById(savedOrder.getUserId());
+                        UserResponse user = userClient.getUserById(
+                                        savedOrder.getUserId());
 
                         PaymentNotificationRequest notificationRequest = new PaymentNotificationRequest();
 
@@ -496,6 +509,56 @@ public class OrderService {
                         notificationClient.sendPaymentNotification(
                                         notificationRequest);
                 }
+
+                return mapToResponse(savedOrder);
+        }
+
+        // ADMIN - REJECT PAYMENT AND CANCEL ORDER
+        @Transactional
+        public OrderResponse rejectPayment(
+                        @NonNull Long orderId,
+                        String reason) {
+
+                Order order = orderRepository.findById(orderId)
+                                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+                if (order.getPaymentStatus() != PaymentStatus.PENDING_VERIFICATION) {
+                        throw new RuntimeException(
+                                        "Only payments pending verification can be rejected");
+                }
+
+                if (reason == null || reason.isBlank()) {
+                        throw new RuntimeException(
+                                        "Payment rejection reason is required");
+                }
+
+                // Update payment and order statuses together
+                order.setPaymentStatus(PaymentStatus.FAILED);
+                order.setStatus(OrderStatus.CANCELLED);
+                order.setCancellationReason(reason.trim());
+
+                // Ensure a rejected order cannot remain assigned for delivery
+                order.setDeliveryPartnerId(null);
+
+                Order savedOrder = orderRepository.save(order);
+
+                // Notify the customer about the failed payment
+                UserResponse user = userClient.getUserById(
+                                savedOrder.getUserId());
+
+                PaymentNotificationRequest notificationRequest = new PaymentNotificationRequest();
+
+                notificationRequest.setEmail(user.getEmail());
+                notificationRequest.setName(user.getName());
+                notificationRequest.setOrderId(savedOrder.getId());
+                notificationRequest.setAmount(savedOrder.getTotalAmount());
+                notificationRequest.setPaymentMethod(
+                                savedOrder.getPaymentMethod().name());
+                notificationRequest.setPaymentStatus(
+                                savedOrder.getPaymentStatus().name());
+
+                notificationClient.sendPaymentNotification(
+                                notificationRequest);
 
                 return mapToResponse(savedOrder);
         }

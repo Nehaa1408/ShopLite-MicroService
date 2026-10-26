@@ -1,0 +1,138 @@
+services:
+  eureka-server:
+    image: shoplite-eureka-server
+    container_name: shoplite-eureka-server
+    ports:
+      - "8761:8761"
+    networks:
+      - shoplite-network
+    restart: unless-stopped
+
+  user-service:
+    image: shoplite-user-service
+    container_name: shoplite-user-service
+    ports:
+      - "8081:8081"
+    env_file:
+      - .env.docker
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    networks:
+      - shoplite-network
+    restart: unless-stopped
+
+  product-service:
+    image: shoplite-product-service
+    container_name: shoplite-product-service
+    ports:
+      - "8082:8082"
+    env_file:
+      - .env.docker
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    networks:
+      - shoplite-network
+    restart: unless-stopped
+
+  cart-service:
+    image: shoplite-cart-service
+    container_name: shoplite-cart-service
+    ports:
+      - "8083:8083"
+    env_file:
+      - .env.docker
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    networks:
+      - shoplite-network
+    restart: unless-stopped
+
+  order-service:
+    image: shoplite-order-service
+    container_name: shoplite-order-service
+    ports:
+      - "8084:8084"
+    env_file:
+      - .env.docker
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    networks:
+      - shoplite-network
+    restart: unless-stopped
+
+  delivery-service:
+    image: shoplite-delivery-service
+    container_name: shoplite-delivery-service
+    ports:
+      - "8085:8085"
+    env_file:
+      - .env.docker
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    networks:
+      - shoplite-network
+    restart: unless-stopped
+
+  notification-service:
+    image: shoplite-notification-service
+    container_name: shoplite-notification-service
+    ports:
+      - "8086:8086"
+    env_file:
+      - .env.docker
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    networks:
+      - shoplite-network
+    restart: unless-stopped
+
+  ticket-service:
+    image: shoplite-ticket-service
+    container_name: shoplite-ticket-service
+    ports:
+      - "8087:8087"
+    env_file:
+      - .env.docker
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    networks:
+      - shoplite-network
+    restart: unless-stopped
+
+  admin-service:
+    image: shoplite-admin-service
+    container_name: shoplite-admin-service
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env.docker
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    networks:
+      - shoplite-network
+    restart: unless-stopped
+
+  api-gateway:
+    image: shoplite-api-gateway:latest
+    container_name: shoplite-api-gateway
+    ports:
+      - "9090:9090"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    networks:
+      - shoplite-network
+    restart: unless-stopped
+
+  frontend:
+    image: shoplite-frontend:latest
+    container_name: shoplite-frontend-compose
+    ports:
+      - "5173:80"
+    restart: unless-stopped
+    networks:
+      - shoplite-network
+
+networks:
+  shoplite-network:
+    external: true
+    name: shoplite-network

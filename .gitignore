@@ -1,0 +1,42 @@
+# Environment variables and secrets
+
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Frontend environment files
+
+FrontEnd/**/.env
+FrontEnd/**/.env.*
+
+# Java / Maven build files
+
+**/target/
+
+# Node.js dependencies and build output
+
+**/node_modules/
+FrontEnd/**/dist/
+
+# IDE files
+
+.idea/
+*.iml
+.vscode/
+**/.vscode/
+
+# Operating system files
+
+.DS_Store
+Thumbs.db
+
+# Logs
+
+*.log
+logs/
+
+# Temporary files
+
+*.tmp
+*.temp

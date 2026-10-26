@@ -1,6 +1,11 @@
 # Ignore application properties
 src/main/resources/application.properties
 
+# Environment variables and secrets
+.env
+.env.*
+!.env.docker
+
 # Maven
 target/
 

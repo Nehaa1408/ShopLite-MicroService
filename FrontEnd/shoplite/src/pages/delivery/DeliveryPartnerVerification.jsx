@@ -29,12 +29,28 @@ const DeliveryPartnerVerification = () => {
     };
 
     const handleSubmit = async (e) => {
-
         e.preventDefault();
 
         try {
-
             setLoading(true);
+
+            const deliveryUserId =
+                sessionStorage.getItem("deliveryUserId");
+
+            const storedUser =
+                localStorage.getItem("user");
+
+            const user = storedUser
+                ? JSON.parse(storedUser)
+                : null;
+
+            const userId =
+                deliveryUserId || user?.id;
+
+            if (!userId) {
+                alert("Unable to identify your account. Please log in again.");
+                return;
+            }
 
             const payload = {
                 phone: formData.phone,
@@ -42,22 +58,18 @@ const DeliveryPartnerVerification = () => {
                 vehicleNumber: formData.vehicleNumber,
                 licenseNumber: formData.licenseNumber,
                 aadhaarNumber: formData.aadhaarNumber,
-
                 profileImage: formData.profileImage,
-
-                drivingLicenseImage:
-                    formData.drivingLicenseImage,
-
-                aadhaarImage:
-                    formData.aadhaarImage,
-
-                vehicleRcImage:
-                    formData.vehicleRcImage
+                drivingLicenseImage: formData.drivingLicenseImage,
+                aadhaarImage: formData.aadhaarImage,
+                vehicleRcImage: formData.vehicleRcImage
             };
 
             await deliveryAxios.put(
                 "/delivery/profile/update",
-                payload
+                payload,
+                {
+                    params: { userId }
+                }
             );
 
             setSuccessMessage(
@@ -65,26 +77,18 @@ const DeliveryPartnerVerification = () => {
             );
 
         } catch (error) {
-
             console.error(
-                "Verification failed",
-                error
+                "Verification failed:",
+                error.response?.status,
+                error.response?.data || error.message
             );
 
-            console.log(
-                "ERROR RESPONSE:",
-                error.response
+            alert(
+                error.response?.data?.message ||
+                "Verification failed. Please check your details."
             );
-
-            console.log(
-                "ERROR DATA:",
-                error.response?.data
-            );
-
-            alert("Verification failed");
 
         } finally {
-
             setLoading(false);
         }
     };
@@ -212,7 +216,7 @@ animate-pulse
                 <div className="text-center mb-12">
 
                     <h1 className="text-5xl font-extrabold mb-4">
-                    Join ShopLite Logistics Network
+                        Join ShopLite Logistics Network
                     </h1>
 
                     <p className="text-[#544249] max-w-2xl mx-auto">
@@ -330,7 +334,9 @@ animate-pulse
                                         onChange={handleChange}
                                         className="w-full px-4 py-3 rounded-lg bg-white/60 backdrop-blur-md"
                                     >
-                                        <option>Select vehicle</option>
+                                        <option value="" disabled>
+                                            Select vehicle
+                                        </option>
                                         <option>Electric Bike</option>
                                         <option>Scooter</option>
                                         <option>Car</option>

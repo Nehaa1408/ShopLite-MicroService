@@ -177,19 +177,17 @@ public class OrderController {
                                                 orderId,
                                                 "SUCCESS"));
         }
-        // =====================================================
-        // ADMIN - REJECT PAYMENT
-        // =====================================================
 
+        // ADMIN - REJECT PAYMENT
         @PutMapping("/admin/{orderId}/reject-payment")
         public ResponseEntity<OrderResponse> rejectPayment(
                         @PathVariable Long orderId,
                         @RequestParam String reason) {
 
                 return ResponseEntity.ok(
-                                orderService.updatePaymentStatus(
+                                orderService.rejectPayment(
                                                 orderId,
-                                                "FAILED"));
+                                                reason));
         }
         // =====================================================
         // ADMIN - ASSIGN DELIVERY PARTNER
