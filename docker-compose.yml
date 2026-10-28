@@ -34,6 +34,18 @@ services:
       - shoplite-network
     restart: unless-stopped
 
+  product-service-replica:
+    image: shoplite-product-service
+    container_name: shoplite-product-service-replica
+    env_file:
+      - .env.docker
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+    networks:
+      - shoplite-network
+    restart: unless-stopped
+
   cart-service:
     image: shoplite-cart-service
     container_name: shoplite-cart-service
