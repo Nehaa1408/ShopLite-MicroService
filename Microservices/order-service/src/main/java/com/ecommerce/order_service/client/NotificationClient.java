@@ -22,9 +22,7 @@ public interface NotificationClient {
                         @RequestParam("orderId") Long orderId,
                         @RequestParam("amount") Double amount);
 
-        @PostMapping("/api/notifications/order-placed")
-        void sendOrderPlacedEmail(
-                        @RequestBody OrderPlacedNotificationRequest request);
+        
 
         @PostMapping("/api/notifications/payment")
         void sendPaymentNotification(

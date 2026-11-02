@@ -37,6 +37,7 @@ import com.ecommerce.order_service.repository.DeliveryFeedbackRepository;
 import com.ecommerce.order_service.repository.DeliveryOtpRepository;
 import com.ecommerce.order_service.repository.OrderItemRepository;
 import com.ecommerce.order_service.repository.OrderRepository;
+import org.springframework.context.ApplicationEventPublisher;
 
 @Service
 public class OrderService {
@@ -51,6 +52,8 @@ public class OrderService {
 
         private final NotificationClient notificationClient;
 
+        private final ApplicationEventPublisher eventPublisher;
+
         private final DeliveryOtpRepository deliveryOtpRepository;
 
         private final DeliveryFeedbackRepository deliveryFeedbackRepository;
@@ -63,6 +66,7 @@ public class OrderService {
                         ProductClient productClient,
                         UserClient userClient,
                         NotificationClient notificationClient,
+                        ApplicationEventPublisher eventPublisher,
                         DeliveryOtpRepository deliveryOtpRepository,
                         DeliveryFeedbackRepository deliveryFeedbackRepository,
                         OrderItemRepository orderItemRepository) {
@@ -72,6 +76,7 @@ public class OrderService {
                 this.productClient = productClient;
                 this.userClient = userClient;
                 this.notificationClient = notificationClient;
+                this.eventPublisher = eventPublisher;
                 this.deliveryOtpRepository = deliveryOtpRepository;
                 this.deliveryFeedbackRepository = deliveryFeedbackRepository;
                 this.orderItemRepository = orderItemRepository;
@@ -225,7 +230,7 @@ public class OrderService {
                 }
 
                 notificationRequest.setItems(notificationItems);
-                notificationClient.sendOrderPlacedEmail(notificationRequest);
+                eventPublisher.publishEvent(notificationRequest);
 
                 // 9. CLEAR CART
                 cartClient.clearCart(userId);
