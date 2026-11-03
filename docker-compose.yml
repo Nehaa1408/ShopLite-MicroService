@@ -10,6 +10,17 @@ services:
       - shoplite-network
     restart: unless-stopped
 
+  monitoring-server:
+    image: shoplite-monitoring-server:latest
+    container_name: shoplite-monitoring-server
+    ports:
+      - "8090:8090"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    networks:
+      - shoplite-network
+    restart: unless-stopped
+
   user-service:
     image: shoplite-user-service
     container_name: shoplite-user-service
