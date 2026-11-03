@@ -1,9 +1,11 @@
 package com.ecommerce.user_service.security;
 
-import java.nio.charset.StandardCharsets;
-import java.security.Key;
+import java.util.Base64;
 import java.util.Date;
 
+import javax.crypto.SecretKey;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import io.jsonwebtoken.Jwts;
@@ -13,13 +15,12 @@ import io.jsonwebtoken.security.Keys;
 @Component
 public class JwtUtil {
 
-    // FIXED SECRET KEY
-    private static final String SECRET
-            = "shoplite-super-secure-jwt-secret-key-2026";
+    private final SecretKey secretKey;
 
-    private final Key SECRET_KEY
-            = Keys.hmacShaKeyFor(
-                    SECRET.getBytes(StandardCharsets.UTF_8));
+    public JwtUtil(@Value("${jwt.secret}") String jwtSecret) {
+        this.secretKey = Keys.hmacShaKeyFor(
+                Base64.getDecoder().decode(jwtSecret));
+    }
 
     // ================= GENERATE TOKEN =================
     public String generateToken(Long userId, String email) {
@@ -31,10 +32,10 @@ public class JwtUtil {
                 .setExpiration(
                         new Date(
                                 System.currentTimeMillis()
-                                + 1000 * 60 * 60 * 24 // 24 hours
+                                + 1000 * 60 * 60 * 24
                         ))
                 .signWith(
-                        SECRET_KEY,
+                        secretKey,
                         SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -43,7 +44,7 @@ public class JwtUtil {
     public String extractEmail(String token) {
 
         return Jwts.parserBuilder()
-                .setSigningKey(SECRET_KEY)
+                .setSigningKey(secretKey)
                 .build()
                 .parseClaimsJws(token)
                 .getBody()

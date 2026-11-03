@@ -1,7 +1,10 @@
 package com.ecommerce.api_gateway.security;
 
-import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
+import javax.crypto.SecretKey;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -22,8 +25,13 @@ import reactor.core.publisher.Mono;
 @Component
 public class JwtFilter implements GlobalFilter, Ordered {
 
-    private static final String SECRET
-            = "shoplite-super-secure-jwt-secret-key-2026";
+    @Value("${jwt.secret}")
+    private String jwtSecret;
+
+    private SecretKey getSigningKey() {
+        return Keys.hmacShaKeyFor(
+                Base64.getDecoder().decode(jwtSecret));
+    }
 
     @Override
     public Mono<Void> filter(
@@ -44,9 +52,7 @@ public class JwtFilter implements GlobalFilter, Ordered {
             String token = authHeader.substring(7);
 
             Claims claims = Jwts.parserBuilder()
-                    .setSigningKey(
-                            Keys.hmacShaKeyFor(
-                                    SECRET.getBytes(StandardCharsets.UTF_8)))
+                    .setSigningKey(getSigningKey())
                     .build()
                     .parseClaimsJws(token)
                     .getBody();
@@ -68,10 +74,10 @@ public class JwtFilter implements GlobalFilter, Ordered {
 
             return chain.filter(modifiedExchange);
 
-        } catch (ExpiredJwtException | MalformedJwtException | UnsupportedJwtException | SignatureException | WeakKeyException | IllegalArgumentException e) {
+        } catch (ExpiredJwtException | MalformedJwtException | UnsupportedJwtException |
+                 SignatureException | WeakKeyException | IllegalArgumentException e) {
 
-            System.out.println(
-                    "JWT FILTER ERROR: " + e.getMessage());
+            System.out.println("JWT FILTER ERROR: " + e.getMessage());
 
             return chain.filter(exchange);
         }
