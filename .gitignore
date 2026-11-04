@@ -40,3 +40,14 @@ logs/
 
 *.tmp
 *.temp
+
+# Uploaded user files
+/uploads/**/*
+
+# Eclipse / Java compiled output
+**/bin/
+**/*.class
+
+# Extracted Spring Boot application files
+**/BOOT-INF/
+**/jar-check/
