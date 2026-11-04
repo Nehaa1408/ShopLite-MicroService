@@ -191,6 +191,26 @@ services:
       - shoplite-network
     restart: unless-stopped
 
+  jenkins:
+    build:
+      context: .
+      dockerfile: Jenkins/Dockerfile
+    image: shoplite-jenkins:lts-jdk21
+    container_name: shoplite-jenkins
+    ports:
+      - "8088:8080"
+    group_add:
+      - "0"
+    volumes:
+      - jenkins-data:/var/jenkins_home
+      - /run/host-services/docker.proxy.sock:/var/run/docker.sock
+    restart: unless-stopped
+
+volumes:
+  jenkins-data:
+    external: true
+    name: shoplite-jenkins-data
+
 networks:
   shoplite-network:
     external: true
