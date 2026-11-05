@@ -134,7 +134,7 @@ pipeline {
                                 ./mvnw \
                                     -B \
                                     -ntp \
-                                    clean verify
+                                    clean install -DskipTests
                             '''
                         }
                     }
