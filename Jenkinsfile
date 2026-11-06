@@ -322,7 +322,7 @@ pipeline {
                 cp "$DOCKER_ENV_FILE" .env.docker
                 trap 'rm -f .env.docker' EXIT
 
-                docker compose up -d \
+               docker compose -p microserviceproject up -d \
                     --no-deps \
                     --force-recreate \
                     --wait \
