@@ -309,42 +309,32 @@ pipeline {
         // --------------------------------------------------
 
         stage('Deploy Updated Services') {
-            steps {
-                sh '''
-                    set -eu
+    steps {
+        withCredentials([
+            file(
+                credentialsId: 'shoplite-docker-env',
+                variable: 'DOCKER_ENV_FILE'
+            )
+        ]) {
+            sh '''
+                set -eu
 
-                    echo "Deploying updated User and Notification Services..."
+                cp "$DOCKER_ENV_FILE" .env.docker
+                trap 'rm -f .env.docker' EXIT
 
-                    docker compose up -d \
-                        --no-deps \
-                        --force-recreate \
-                        --wait \
-                        --wait-timeout 120 \
-                        user-service \
-                        notification-service
+                docker compose up -d \
+                    --no-deps \
+                    --force-recreate \
+                    --wait \
+                    --wait-timeout 120 \
+                    user-service \
+                    notification-service
 
-                    echo "Verifying deployed containers..."
-
-                    for container in shoplite-user-service shoplite-notification-service
-                    do
-                        status=$(docker inspect \
-                            --format='{{.State.Status}}' "$container")
-
-                        echo "$container status: $status"
-
-                        if [ "$status" != "running" ]; then
-                            echo "Deployment failed for $container"
-                            docker logs --tail 100 "$container"
-                            exit 1
-                        fi
-                    done
-
-                    echo "Both services are running successfully."
-
-                    docker compose ps user-service notification-service
-                '''
-            }
+                docker compose ps user-service notification-service
+            '''
         }
+    }
+}
     }
         
 
