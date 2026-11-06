@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import axios from "axios";
@@ -14,10 +14,27 @@ const UserLogin = () => {
   const [newPassword, setNewPassword] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [otpTimer, setOtpTimer] = useState(100);
+
   const { mergeGuestCartAfterLogin } = useCart();
+
   const [activeTab, setActiveTab] = useState("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  // ================= OTP COUNTDOWN =================
+
+  useEffect(() => {
+    if (!otpSent || otpTimer <= 0) return;
+
+    const interval = setInterval(() => {
+      setOtpTimer((prev) => Math.max(prev - 1, 0));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [otpSent, otpTimer]);
+
+  // ================= LOGIN =================
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -34,6 +51,7 @@ const UserLogin = () => {
       localStorage.setItem("token", res.data.token);
 
       await mergeGuestCartAfterLogin();
+
       localStorage.setItem(
         "user",
         JSON.stringify(res.data)
@@ -63,20 +81,21 @@ const UserLogin = () => {
       }
     }
   };
+
+  // ================= SEND FORGOT PASSWORD OTP =================
+
   const handleSendForgotOtp = async () => {
 
     if (!forgotEmail) {
-
       toast.error("Enter your email");
       return;
     }
 
     try {
-
       setLoading(true);
 
       const res = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/auth/forgot-password/send-otp`,
+        `${import.meta.env.VITE_API_URL}/api/auth/forgot-password`,
         {
           email: forgotEmail,
         }
@@ -85,40 +104,44 @@ const UserLogin = () => {
       toast.success(res.data);
 
       setOtpSent(true);
+      setOtpTimer(100);
+
+      setForgotOtp("");
+      setNewPassword("");
 
     } catch (err) {
-
       console.error(err);
 
       if (err.response?.data?.message) {
-
         toast.error(err.response.data.message);
-
       } else {
-
         toast.error("Failed to send OTP");
       }
 
     } finally {
-
       setLoading(false);
     }
   };
 
+  // ================= RESET PASSWORD =================
+
   const handleResetPassword = async () => {
 
-    if (!forgotOtp || !newPassword) {
+    if (otpTimer === 0) {
+      toast.error("OTP expired. Please request a new OTP.");
+      return;
+    }
 
+    if (!forgotOtp || !newPassword) {
       toast.error("Fill all fields");
       return;
     }
 
     try {
-
       setLoading(true);
 
       const res = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/auth/forgot-password/reset`,
+        `${import.meta.env.VITE_API_URL}/api/auth/reset-password`,
         {
           email: forgotEmail,
           otp: forgotOtp,
@@ -131,26 +154,22 @@ const UserLogin = () => {
       setShowForgotModal(false);
 
       setOtpSent(false);
+      setOtpTimer(100);
 
       setForgotEmail("");
       setForgotOtp("");
       setNewPassword("");
 
     } catch (err) {
-
       console.error(err);
 
       if (err.response?.data?.message) {
-
         toast.error(err.response.data.message);
-
       } else {
-
         toast.error("Password reset failed");
       }
 
     } finally {
-
       setLoading(false);
     }
   };
@@ -385,7 +404,7 @@ const UserLogin = () => {
             onSuccess={async (credentialResponse) => {
               try {
                 const res = await axios.post(
-                 `${import.meta.env.VITE_API_URL}/api/auth/google`,
+                  `${import.meta.env.VITE_API_URL}/api/auth/google`,
                   {
                     token: credentialResponse.credential,
                   }
@@ -437,12 +456,17 @@ const UserLogin = () => {
                 onClick={() => {
                   setShowForgotModal(false);
                   setOtpSent(false);
+                  setOtpTimer(100);
+                  setForgotEmail("");
+                  setForgotOtp("");
+                  setNewPassword("");
                 }}
                 className="absolute top-4 right-4 text-gray-400 hover:text-red-500"
               >
                 ✕
               </button>
 
+              {/* TITLE */}
               <h2 className="text-2xl font-bold text-center text-gray-800 mb-2">
                 Forgot Password
               </h2>
@@ -461,87 +485,90 @@ const UserLogin = () => {
                 <input
                   type="email"
                   value={forgotEmail}
-                  onChange={(e) =>
-                    setForgotEmail(e.target.value)
-                  }
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  disabled={otpSent}
                   placeholder="Enter your email"
-                  className="w-full mt-2 px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-pink-100 outline-none"
+                  className="w-full mt-2 px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-pink-100 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
 
               </div>
 
-              {
-                otpSent && (
-                  <>
-                    {/* OTP */}
-                    <div className="mb-4">
+              {/* OTP AND PASSWORD */}
+              {otpSent && (
+                <>
 
-                      <label className="text-sm text-gray-500">
-                        OTP
-                      </label>
+                  {/* OTP */}
+                  <div className="mb-4">
 
-                      <input
-                        type="text"
-                        value={forgotOtp}
-                        onChange={(e) =>
-                          setForgotOtp(e.target.value)
-                        }
-                        placeholder="Enter OTP"
-                        className="w-full mt-2 px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-pink-100 outline-none"
-                      />
+                    <label className="text-sm text-gray-500">
+                      OTP
+                    </label>
+
+                    <input
+                      type="text"
+                      value={forgotOtp}
+                      onChange={(e) => setForgotOtp(e.target.value)}
+                      placeholder="Enter 6-digit OTP"
+                      maxLength={6}
+                      className="w-full mt-2 px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-pink-100 outline-none"
+                    />
+
+                    {/* COUNTDOWN */}
+                    <div className="flex justify-between items-center mt-2">
+
+                      <p className={`text-xs ${otpTimer === 0 ? "text-red-500" : "text-gray-500"
+                        }`}>
+                        {otpTimer > 0
+                          ? `OTP expires in ${Math.floor(otpTimer / 60)}:${String(otpTimer % 60).padStart(2, "0")}`
+                          : "OTP expired. Please request a new OTP."}
+                      </p>
+
+                      {otpTimer === 0 && (
+                        <button
+                          type="button"
+                          onClick={handleSendForgotOtp}
+                          disabled={loading}
+                          className="text-sm font-semibold text-indigo-600 hover:text-indigo-800 disabled:text-gray-400"
+                        >
+                          Resend OTP
+                        </button>
+                      )}
 
                     </div>
 
-                    {/* NEW PASSWORD */}
-                    <div className="mb-4">
+                  </div>
 
-                      <label className="text-sm text-gray-500">
-                        New Password
-                      </label>
+                  {/* NEW PASSWORD */}
+                  <div className="mb-4">
 
-                      <input
-                        type="password"
-                        value={newPassword}
-                        onChange={(e) =>
-                          setNewPassword(e.target.value)
-                        }
-                        placeholder="Enter new password"
-                        className="w-full mt-2 px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-pink-100 outline-none"
-                      />
+                    <label className="text-sm text-gray-500">
+                      New Password
+                    </label>
 
-                    </div>
-                  </>
-                )
-              }
+                    <input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Enter new password"
+                      className="w-full mt-2 px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-pink-100 outline-none"
+                    />
 
-              {/* BUTTON */}
+                  </div>
+
+                </>
+              )}
+
+              {/* MAIN BUTTON */}
               <button
-                onClick={
-                  otpSent
-                    ? handleResetPassword
-                    : handleSendForgotOtp
-                }
-                disabled={loading}
-                className="
-            w-full
-            py-3
-            rounded-xl
-            text-white
-            font-semibold
-            bg-gradient-to-r
-            from-indigo-600
-            to-pink-500
-            hover:scale-[1.02]
-            transition
-          "
+                onClick={otpSent ? handleResetPassword : handleSendForgotOtp}
+                disabled={loading || (otpSent && otpTimer === 0)}
+                className=" w-full py-3 rounded-xl text-white font-semibold bg-gradient-to-r from-indigo-600  to-pink-500 hover:scale-[1.02] transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 "
               >
-                {
-                  loading
-                    ? "Please wait..."
-                    : otpSent
-                      ? "Reset Password"
-                      : "Send OTP"
-                }
+                {loading
+                  ? "Please wait..."
+                  : otpSent
+                    ? "Reset Password"
+                    : "Send OTP"}
               </button>
 
             </div>

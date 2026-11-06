@@ -24,7 +24,6 @@ pipeline {
     }
 
     stages {
-
         // --------------------------------------------------
         // 1. CHECKOUT
         // --------------------------------------------------
@@ -34,7 +33,7 @@ pipeline {
                 checkout scm
 
                 script {
-                    echo "Building ShopLite"
+                    echo 'Building ShopLite'
                     echo "Branch: ${env.BRANCH_NAME ?: 'SCM configured branch'}"
                     echo "Commit: ${env.GIT_COMMIT ?: 'Not available'}"
                 }
@@ -76,7 +75,6 @@ pipeline {
         stage('Backend Build and Test') {
             steps {
                 script {
-
                     def services = [
                         [
                             name: 'Eureka Server',
@@ -121,11 +119,9 @@ pipeline {
                     ]
 
                     for (service in services) {
-
                         echo "Building and testing ${service.name}"
 
                         dir(service.path) {
-
                             sh '''
                                 set -eu
 
@@ -177,7 +173,6 @@ pipeline {
         stage('Backend Docker Images') {
             steps {
                 script {
-
                     def dockerServices = [
                         [
                             name: 'Eureka Server',
@@ -232,7 +227,6 @@ pipeline {
                     ]
 
                     for (service in dockerServices) {
-
                         echo "Building Docker image for ${service.name}"
 
                         sh """
@@ -252,7 +246,6 @@ pipeline {
 
         stage('Frontend Docker Build') {
             steps {
-
                 script {
                     if (!params.VITE_API_URL?.trim()) {
                         error('VITE_API_URL cannot be empty.')
@@ -260,7 +253,6 @@ pipeline {
                 }
 
                 dir('FrontEnd/shoplite') {
-
                     sh '''
                         set -eu
 
@@ -311,14 +303,56 @@ pipeline {
                 '''
             }
         }
+
+        // --------------------------------------------------
+        // 8. DEPLOY UPDATED SERVICES
+        // --------------------------------------------------
+
+        stage('Deploy Updated Services') {
+            steps {
+                sh '''
+                    set -eu
+
+                    echo "Deploying updated User and Notification Services..."
+
+                    docker compose up -d \
+                        --no-deps \
+                        --force-recreate \
+                        --wait \
+                        --wait-timeout 120 \
+                        user-service \
+                        notification-service
+
+                    echo "Verifying deployed containers..."
+
+                    for container in shoplite-user-service shoplite-notification-service
+                    do
+                        status=$(docker inspect \
+                            --format='{{.State.Status}}' "$container")
+
+                        echo "$container status: $status"
+
+                        if [ "$status" != "running" ]; then
+                            echo "Deployment failed for $container"
+                            docker logs --tail 100 "$container"
+                            exit 1
+                        fi
+                    done
+
+                    echo "Both services are running successfully."
+
+                    docker compose ps user-service notification-service
+                '''
+            }
+        }
     }
+        
 
     // ------------------------------------------------------
     // POST BUILD ACTIONS
     // ------------------------------------------------------
 
     post {
-
         success {
             echo '''
             ==========================================

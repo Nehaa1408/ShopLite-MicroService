@@ -182,6 +182,20 @@ services:
       - shoplite-network
     restart: unless-stopped
 
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: shoplite-kafka-ui
+    ports:
+      - "8089:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: ShopLite
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+    depends_on:
+      - kafka
+    networks:
+      - shoplite-network
+    restart: unless-stopped
+
   zipkin:
     image: openzipkin/zipkin:latest
     container_name: shoplite-zipkin

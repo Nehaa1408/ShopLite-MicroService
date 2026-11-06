@@ -113,7 +113,7 @@ public class UserService {
                 signupOtp.setOtp(otp);
 
                 signupOtp.setExpiryTime(
-                                LocalDateTime.now().plusMinutes(5));
+                                LocalDateTime.now().plusSeconds(100));
 
                 signupOtpRepository.save(signupOtp);
 
@@ -252,7 +252,7 @@ public class UserService {
 
                 forgotOtp.setEmail(email);
                 forgotOtp.setOtp(otp);
-                forgotOtp.setExpiryTime(LocalDateTime.now().plusMinutes(5));
+                forgotOtp.setExpiryTime(LocalDateTime.now().plusSeconds(100));
 
                 forgotPasswordOtpRepository.save(forgotOtp);
 

@@ -59,7 +59,7 @@ public class EmailService {
                                 "Hello " + customerName + ",\n\n"
                                                 + "Your ShopLite signup OTP is: "
                                                 + otp
-                                                + "\n\nThis OTP is valid for 5 minutes.\n\n"
+                                                + "\n\nThis OTP is valid for 100 seconds.\n\n"
                                                 + "If you did not request this signup, please ignore this email.\n\n"
                                                 + "Regards,\n"
                                                 + "ShopLite");
@@ -84,7 +84,7 @@ public class EmailService {
 
                                                 Your ShopLite password reset OTP is: """
                                                 + otp
-                                                + "\n\nThis OTP is valid for 5 minutes.\n\n"
+                                                + "\n\nThis OTP is valid for 100 seconds.\n\n"
                                                 + "If you did not request password reset, please ignore this email.\n\n"
                                                 + "Regards,\n"
                                                 + "ShopLite");
@@ -339,7 +339,7 @@ public class EmailService {
                                 "Hello " + request.getName() + ",\n\n"
                                                 + "Your delivery OTP for Order #" + request.getOrderId()
                                                 + " is: " + request.getOtp() + "\n\n"
-                                                + "This OTP is valid for 5 minutes.\n"
+                                                + "This OTP is valid for 100 seconds.\n"
                                                 + "Please share this OTP with the delivery partner when your order is delivered.\n\n"
                                                 + "Regards,\n"
                                                 + "ShopLite Team");
