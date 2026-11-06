@@ -69,25 +69,6 @@ const BrandDetails = () => {
     const brand = brandData[brandName] || brandData["aurel"];
     console.log(brandName);
 
-    useEffect(() => {
-        const fetchProducts = async () => {
-            try {
-                const res = await axios.get(
-                    `${import.meta.env.VITE_API_URL}/api/products?brand=${brandName.toUpperCase()}&size=10`
-                );
-
-                console.log("API FULL RESPONSE:", res.data);
-
-                setProducts(res.data.content || res.data);
-
-            } catch (err) {
-                console.error("Error fetching products:", err);
-            }
-        };
-
-        fetchProducts();
-    }, [brandName]);
-
     const handleAddToCart = (e, product) => {
         e.stopPropagation();
         console.log("PRODUCT:", product);
@@ -339,7 +320,7 @@ const BrandDetails = () => {
                                             </div>
 
                                             <span className="text-indigo-500 font-medium">
-                                                ${item.price}
+                                            ₹{item.price}
                                             </span>
                                         </div>
 
@@ -427,7 +408,7 @@ const BrandDetails = () => {
                                                 {item.name}
                                             </h5>
                                             <span className="text-indigo-500 text-sm">
-                                                ${item.price}
+                                                ₹{item.price}
                                             </span>
                                         </div>
 

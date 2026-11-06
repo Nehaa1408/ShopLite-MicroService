@@ -106,7 +106,7 @@ const AdminDashboard = () => {
   const stats = [
     {
       title: "Total Revenue",
-      value: "$128,430",
+      value: "₹128,430",
       icon: "payments",
       color: "indigo",
       growth: "+12.5%",
@@ -526,7 +526,7 @@ ${isActive("/admin/returns")
                       <div className="flex justify-between mt-2">
 
                         <span className="text-sm text-gray-500">
-                          ${p.price}
+                          ₹{p.price}
                         </span>
 
                         <span className="text-xs font-semibold text-indigo-600">
@@ -699,7 +699,7 @@ hover:shadow-[0_0_35px_rgba(99,102,241,0.25)]">
 
                         {/* AMOUNT */}
                         <td className="py-4 font-semibold text-gray-800">
-                          ${total.toFixed(2)}
+                          ₹{total.toFixed(2)}
                         </td>
 
                         {/* STATUS */}

@@ -56,14 +56,14 @@ const Home = () => {
   };
 
   const handleAddToCart = async (e, product) => {
-  e.stopPropagation();
+    e.stopPropagation();
 
-  try {
-    await addToCart(product);
-  } catch (err) {
-    console.error(err);
-  }
-};
+    try {
+      await addToCart(product);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   // Reset page when category changes
   React.useEffect(() => {
@@ -74,8 +74,17 @@ const Home = () => {
   React.useEffect(() => {
     const loadCategories = async () => {
       try {
-        const data = await fetchCategories();
-        setCategories(data);
+        const response = await fetchCategories();
+
+        const categoryData = Array.isArray(response)
+          ? response
+          : Array.isArray(response?.data)
+            ? response.data
+            : Array.isArray(response?.data?.data)
+              ? response.data.data
+              : [];
+
+        setCategories(categoryData);
       } catch (err) {
         console.error("Category fetch error:", err);
       }
@@ -243,7 +252,7 @@ bg-[#e9d5ff]/40 rounded-full blur-[140px] -z-10" />
 
         <Footer />
 
-        
+
       </div >
     </div >
   );

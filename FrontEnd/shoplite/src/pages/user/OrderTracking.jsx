@@ -239,7 +239,7 @@ const OrderTracking = () => {
                         </p>
 
                         <p className="text-xl font-black text-blue-600">
-                          ${(item.price * item.quantity).toFixed(2)}
+                          ₹{(item.price * item.quantity).toFixed(2)}
                         </p>
                       </div>
                     </div>
@@ -255,7 +255,7 @@ const OrderTracking = () => {
                   </span>
 
                   <span className="font-bold text-lg">
-                    ${subtotal.toFixed(2)}
+                    ₹{subtotal.toFixed(2)}
                   </span>
                 </div>
 
@@ -265,7 +265,7 @@ const OrderTracking = () => {
                   </span>
 
                   <span className="font-bold">
-                    ${tax.toFixed(2)}
+                    ₹{tax.toFixed(2)}
                   </span>
                 </div>
 
@@ -277,7 +277,7 @@ const OrderTracking = () => {
                     </p>
 
                     <p className="text-4xl font-black text-blue-600 mt-1">
-                      ${total.toFixed(2)}
+                      ₹{total.toFixed(2)}
                     </p>
                   </div>
                 </div>

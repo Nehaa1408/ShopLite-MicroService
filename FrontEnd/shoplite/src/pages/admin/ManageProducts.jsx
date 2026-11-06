@@ -183,7 +183,7 @@ border border-white/40 overflow-hidden">
                       </span>
                     </td>
 
-                    <td className="p-4 text-primary font-bold">${p.price}</td>
+                    <td className="p-4 text-primary font-bold">₹{p.price}</td>
 
                     <td className="p-4 text-right">
                       <span

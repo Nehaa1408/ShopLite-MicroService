@@ -49,7 +49,7 @@ const Hero = () => {
                                 Ethereal Series 01
                             </p>
                             <p className="text-lg font-bold text-purple-600">
-                                $400.00
+                                ₹400.00
                             </p>
                         </div>
 

@@ -72,7 +72,7 @@ const Cart = () => {
                   </div>
 
                   <span className="text-xl font-bold text-primary">
-                    ${item.price}
+                    ₹{item.price}
                   </span>
                 </div>
 
@@ -119,7 +119,7 @@ const Cart = () => {
             <div className="space-y-4 mb-6">
               <div className="flex justify-between">
                 <span>Subtotal</span>
-                <span>${subtotal.toFixed(2)}</span>
+                <span>₹{subtotal.toFixed(2)}</span>
               </div>
 
               <div className="flex justify-between">
@@ -129,14 +129,14 @@ const Cart = () => {
 
               <div className="flex justify-between">
                 <span>Tax</span>
-                <span>${tax.toFixed(2)}</span>
+                <span>₹{tax.toFixed(2)}</span>
               </div>
             </div>
 
             <div className="flex justify-between border-t pt-4 mb-6">
               <span className="font-bold">Total</span>
               <span className="text-2xl font-bold text-primary">
-                ${total.toFixed(2)}
+                ₹{total.toFixed(2)}
               </span>
             </div>
 

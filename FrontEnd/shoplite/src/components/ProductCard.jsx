@@ -62,7 +62,7 @@ const ProductCard = ({ product, onAddToCart, onView }) => {
                         </h3>
 
                         <span className="text-indigo-600 font-bold text-base md:text-lg">
-                            ${product.priceValue || product.price}
+                            ₹{product.priceValue || product.price}
                         </span>
                     </div>
                 </div>

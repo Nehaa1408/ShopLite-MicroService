@@ -161,7 +161,7 @@ bg-[#e9d5ff]/40 rounded-full blur-[140px] -z-10" />
                     </label>
                     <div className="relative">
                       <span className="absolute left-3 top-3 text-on-surface-variant">
-                        $
+                        ₹
                       </span>
                       <input
                         name="price"

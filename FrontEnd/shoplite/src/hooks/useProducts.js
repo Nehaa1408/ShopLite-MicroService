@@ -19,8 +19,12 @@ const useProducts = (category, currentPage, searchTerm) => {
                 console.log("API RESPONSE:", data);
 
 
-                const productList = data?.content || data || [];
-                const pages = data?.totalPages || 1;
+                const productList = Array.isArray(data)
+                    ? data
+                    : Array.isArray(data?.content)
+                        ? data.content
+                        : [];
+                const pages = data?.totalPages ?? 1;
 
                 setProducts(productList);
                 setTotalPages(pages);

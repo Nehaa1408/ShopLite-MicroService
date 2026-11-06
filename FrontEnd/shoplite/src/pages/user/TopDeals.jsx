@@ -155,8 +155,8 @@ const TopDeals = () => {
             </button>
 
             <div>
-              <p className="line-through text-gray-400">$499</p>
-              <p className="text-2xl font-bold">$299.40</p>
+              <p className="line-through text-gray-400">₹499</p>
+              <p className="text-2xl font-bold">₹299.40</p>
             </div>
           </div>
         </div>
@@ -212,10 +212,10 @@ const TopDeals = () => {
               <div className="mt-3 flex items-center justify-between">
                 <div>
                   <p className="line-through text-gray-400 text-sm">
-                    ${Math.round(item.price * 1.3)}
+                    ₹{Math.round(item.price * 1.3)}
                   </p>
                   <p className="font-bold text-lg">
-                    ${item.price}
+                    ₹{item.price}
                   </p>
                 </div>
 

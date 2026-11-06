@@ -144,8 +144,12 @@ const OrderConfirmation = () => {
                   </div>
 
                   <span className="font-bold">
-                    ${(item.price * item.quantity).toFixed(2)}
+                    ₹{(item.price * item.quantity).toFixed(2)}
                   </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Tax</span>
+                  <span>₹{tax.toFixed(2)}</span>
                 </div>
               </div>
             ))}
@@ -159,7 +163,7 @@ const OrderConfirmation = () => {
               <div className="space-y-4">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
-                  <span>${subtotal.toFixed(2)}</span>
+                  <span>₹{subtotal.toFixed(2)}</span>
                 </div>
 
                 <div className="flex justify-between">
@@ -171,7 +175,7 @@ const OrderConfirmation = () => {
               <div className="border-t mt-6 pt-6 flex justify-between">
                 <span className="font-bold">Total</span>
                 <span className="text-2xl font-bold text-primary">
-                  ${total.toFixed(2)}
+                  ₹{total.toFixed(2)}
                 </span>
               </div>
 

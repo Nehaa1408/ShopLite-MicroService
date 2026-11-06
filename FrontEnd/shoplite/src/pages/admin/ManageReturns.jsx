@@ -781,7 +781,7 @@ hover:-translate-y-[2px]">
                                                         <p
                                                             className={`text-sm font-medium
 
-    ${selectedReturn.status === "REFUND_PROCESSED"
+        ₹{selectedReturn.status === "REFUND_PROCESSED"
                                                                     ? "text-green-600"
                                                                     : selectedReturn.status === "RETURN_REJECTED"
                                                                         ? "text-red-500"
@@ -804,7 +804,7 @@ hover:-translate-y-[2px]">
                                             </div>
 
                                             <p className="font-bold text-indigo-600">
-                                                ${item.price}
+                                                ₹{item.price}
                                             </p>
 
                                         </div>
@@ -821,7 +821,7 @@ hover:-translate-y-[2px]">
                                     </p>
 
                                     <p className="text-3xl font-black text-indigo-600">
-                                        ${selectedReturn.refundAmount?.toFixed(2)}
+                                        ₹{selectedReturn.refundAmount?.toFixed(2)}
                                     </p>
 
                                 </div>

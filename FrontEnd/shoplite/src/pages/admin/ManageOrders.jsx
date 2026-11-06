@@ -408,7 +408,7 @@ hover:-translate-y-[2px]">
 
             font-bold"
                         >
-                          ${o.totalAmount?.toFixed(2)}
+                          ₹{o.totalAmount?.toFixed(2)}
                         </span>
 
                       </td>
@@ -1048,7 +1048,7 @@ hover:-translate-y-[2px]">
                         </div>
 
                         <p className="font-bold text-indigo-600">
-                          ${(item.price * item.quantity).toFixed(2)}
+                          ₹{(item.price * item.quantity).toFixed(2)}
                         </p>
 
                       </div>
@@ -1065,7 +1065,7 @@ hover:-translate-y-[2px]">
                     </p>
 
                     <p className="text-3xl font-black text-indigo-600">
-                      ${selectedOrder.totalAmount?.toFixed(2)}
+                      ₹{selectedOrder.totalAmount?.toFixed(2)}
                     </p>
 
                   </div>
