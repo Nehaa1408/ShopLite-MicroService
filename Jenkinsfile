@@ -307,50 +307,31 @@ pipeline {
             }
         }
 
-        // --------------------------------------------------
-        // 8. RECREATE FRONTEND CONTAINER
-        // --------------------------------------------------
+       // --------------------------------------------------
+// 8. DEPLOY FRONTEND USING DOCKER COMPOSE
+// --------------------------------------------------
 
-        stage('Recreate Frontend Container') {
-            steps {
-                sh '''
-                    set -eu
+stage('Deploy Frontend') {
+    steps {
+        sh '''
+            set -eu
 
-                    CONTAINER_NAME="shoplite-frontend"
+            echo "Checking Docker network..."
+            docker network inspect shoplite-network > /dev/null
 
-                    echo "Checking Docker network..."
+            echo "Checking Docker Compose..."
+            docker compose version
 
-                    docker network inspect shoplite-network > /dev/null
+            echo "Deploying frontend..."
+            docker compose -p microserviceproject up -d --no-deps frontend
 
-                    echo "Checking existing frontend containers on port 5173..."
+            echo "Verifying frontend..."
+            docker compose -p microserviceproject ps frontend
 
-                    EXISTING_CONTAINERS=$(docker ps -q --filter "publish=5173")
-
-                    if [ -n "$EXISTING_CONTAINERS" ]; then
-                        echo "Removing existing frontend container..."
-
-                        docker rm -f $EXISTING_CONTAINERS
-                    fi
-
-                    if docker container inspect "$CONTAINER_NAME" > /dev/null 2>&1; then
-                        echo "Removing existing container with the frontend name..."
-                        docker rm -f "$CONTAINER_NAME"
-                    fi
-
-                    echo "Creating updated frontend container..."
-
-                    docker run -d \
-                        --name "$CONTAINER_NAME" \
-                        --restart unless-stopped \
-                        --network shoplite-network \
-                        -p 5173:80 \
-                        shoplite-frontend:latest
-
-                    echo "Frontend container created successfully."
-                '''
-            }
-        }
-
+            echo "Frontend deployment completed."
+        '''
+    }
+}
         // --------------------------------------------------
         // 9. FRONTEND CONTAINER VERIFICATION
         // --------------------------------------------------
