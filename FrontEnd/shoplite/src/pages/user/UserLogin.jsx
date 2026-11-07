@@ -15,6 +15,8 @@ const UserLogin = () => {
   const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [otpTimer, setOtpTimer] = useState(100);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const { mergeGuestCartAfterLogin } = useCart();
 
@@ -85,9 +87,13 @@ const UserLogin = () => {
   // ================= SEND FORGOT PASSWORD OTP =================
 
   const handleSendForgotOtp = async () => {
-
-    if (!forgotEmail) {
+    if (!forgotEmail.trim()) {
       toast.error("Enter your email");
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(forgotEmail.trim())) {
+      toast.error("Enter a valid email address");
       return;
     }
 
@@ -97,7 +103,7 @@ const UserLogin = () => {
       const res = await axios.post(
         `${import.meta.env.VITE_API_URL}/api/auth/forgot-password`,
         {
-          email: forgotEmail,
+          email: forgotEmail.trim(),
         }
       );
 
@@ -106,8 +112,58 @@ const UserLogin = () => {
       setOtpSent(true);
       setOtpTimer(100);
 
+      setOtpVerified(false);
+      setConfirmPassword("");
+
       setForgotOtp("");
       setNewPassword("");
+
+    } catch (err) {
+      console.error("Forgot password OTP error:", err);
+
+      if (err.response?.data?.message) {
+        toast.error(err.response.data.message);
+      } else if (err.response?.data) {
+        toast.error(
+          typeof err.response.data === "string"
+            ? err.response.data
+            : "Failed to send OTP"
+        );
+      } else {
+        toast.error("Unable to connect to the server. Please try again.");
+      }
+
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ================= VERIFY FORGOT PASSWORD OTP =================
+
+  const handleVerifyForgotOtp = async () => {
+    if (!forgotOtp || forgotOtp.length !== 6) {
+      toast.error("Enter a valid 6-digit OTP");
+      return;
+    }
+
+    if (otpTimer === 0) {
+      toast.error("OTP expired. Please request a new OTP.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const res = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/auth/verify-forgot-password-otp`,
+        {
+          email: forgotEmail,
+          otp: forgotOtp,
+        }
+      );
+
+      toast.success(res.data);
+      setOtpVerified(true);
 
     } catch (err) {
       console.error(err);
@@ -115,7 +171,7 @@ const UserLogin = () => {
       if (err.response?.data?.message) {
         toast.error(err.response.data.message);
       } else {
-        toast.error("Failed to send OTP");
+        toast.error("OTP verification failed");
       }
 
     } finally {
@@ -132,8 +188,18 @@ const UserLogin = () => {
       return;
     }
 
-    if (!forgotOtp || !newPassword) {
-      toast.error("Fill all fields");
+    if (!newPassword || !confirmPassword) {
+      toast.error("Fill all password fields");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      toast.error("Password must contain at least 8 characters");
       return;
     }
 
@@ -154,11 +220,13 @@ const UserLogin = () => {
       setShowForgotModal(false);
 
       setOtpSent(false);
+      setOtpVerified(false);
       setOtpTimer(100);
 
       setForgotEmail("");
       setForgotOtp("");
       setNewPassword("");
+      setConfirmPassword("");
 
     } catch (err) {
       console.error(err);
@@ -446,7 +514,6 @@ const UserLogin = () => {
       {/* FORGOT PASSWORD MODAL */}
       {
         showForgotModal && (
-
           <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center px-4">
 
             <div className="w-full max-w-md bg-white rounded-2xl p-6 shadow-2xl relative">
@@ -456,10 +523,12 @@ const UserLogin = () => {
                 onClick={() => {
                   setShowForgotModal(false);
                   setOtpSent(false);
+                  setOtpVerified(false);
                   setOtpTimer(100);
                   setForgotEmail("");
                   setForgotOtp("");
                   setNewPassword("");
+                  setConfirmPassword("");
                 }}
                 className="absolute top-4 right-4 text-gray-400 hover:text-red-500"
               >
@@ -472,7 +541,11 @@ const UserLogin = () => {
               </h2>
 
               <p className="text-sm text-center text-gray-500 mb-6">
-                Reset your ShopLite account password
+                {!otpSent
+                  ? "Enter your email to receive a password reset OTP."
+                  : !otpVerified
+                    ? "Enter the OTP sent to your registered email."
+                    : "Create a new password for your ShopLite account."}
               </p>
 
               {/* EMAIL */}
@@ -493,11 +566,10 @@ const UserLogin = () => {
 
               </div>
 
-              {/* OTP AND PASSWORD */}
-              {otpSent && (
+              {/* STAGE 2: OTP VERIFICATION */}
+              {otpSent && !otpVerified && (
                 <>
 
-                  {/* OTP */}
                   <div className="mb-4">
 
                     <label className="text-sm text-gray-500">
@@ -507,7 +579,9 @@ const UserLogin = () => {
                     <input
                       type="text"
                       value={forgotOtp}
-                      onChange={(e) => setForgotOtp(e.target.value)}
+                      onChange={(e) =>
+                        setForgotOtp(e.target.value.replace(/\D/g, ""))
+                      }
                       placeholder="Enter 6-digit OTP"
                       maxLength={6}
                       className="w-full mt-2 px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-pink-100 outline-none"
@@ -516,10 +590,16 @@ const UserLogin = () => {
                     {/* COUNTDOWN */}
                     <div className="flex justify-between items-center mt-2">
 
-                      <p className={`text-xs ${otpTimer === 0 ? "text-red-500" : "text-gray-500"
-                        }`}>
+                      <p
+                        className={`text-xs ${otpTimer === 0
+                          ? "text-red-500"
+                          : "text-gray-500"
+                          }`}
+                      >
                         {otpTimer > 0
-                          ? `OTP expires in ${Math.floor(otpTimer / 60)}:${String(otpTimer % 60).padStart(2, "0")}`
+                          ? `OTP expires in ${Math.floor(otpTimer / 60)}:${String(
+                            otpTimer % 60
+                          ).padStart(2, "0")}`
                           : "OTP expired. Please request a new OTP."}
                       </p>
 
@@ -538,6 +618,13 @@ const UserLogin = () => {
 
                   </div>
 
+                </>
+              )}
+
+              {/* STAGE 3: PASSWORD RESET */}
+              {otpVerified && (
+                <>
+
                   {/* NEW PASSWORD */}
                   <div className="mb-4">
 
@@ -555,20 +642,46 @@ const UserLogin = () => {
 
                   </div>
 
+                  {/* CONFIRM PASSWORD */}
+                  <div className="mb-4">
+
+                    <label className="text-sm text-gray-500">
+                      Confirm Password
+                    </label>
+
+                    <input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Confirm your new password"
+                      className="w-full mt-2 px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-pink-100 outline-none"
+                    />
+
+                  </div>
+
                 </>
               )}
 
               {/* MAIN BUTTON */}
               <button
-                onClick={otpSent ? handleResetPassword : handleSendForgotOtp}
-                disabled={loading || (otpSent && otpTimer === 0)}
-                className=" w-full py-3 rounded-xl text-white font-semibold bg-gradient-to-r from-indigo-600  to-pink-500 hover:scale-[1.02] transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 "
+                type="button"
+                onClick={
+                  !otpSent
+                    ? handleSendForgotOtp
+                    : !otpVerified
+                      ? handleVerifyForgotOtp
+                      : handleResetPassword
+                }
+                disabled={loading}
+                className="w-full py-3 rounded-xl text-white font-semibold bg-gradient-to-r from-indigo-600 to-pink-500 hover:scale-[1.02] transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
                 {loading
                   ? "Please wait..."
-                  : otpSent
-                    ? "Reset Password"
-                    : "Send OTP"}
+                  : !otpSent
+                    ? "Send OTP"
+                    : !otpVerified
+                      ? "Verify OTP"
+                      : "Reset Password"}
               </button>
 
             </div>
@@ -576,7 +689,6 @@ const UserLogin = () => {
           </div>
         )
       }
-
       {/* FOOTER */}
       <div className="absolute bottom-0 left-0 w-full px-10 py-6 flex justify-between items-center text-sm text-gray-600">
 

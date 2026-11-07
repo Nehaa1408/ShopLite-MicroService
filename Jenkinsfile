@@ -1,3 +1,4 @@
+
 pipeline {
     agent any
 
@@ -24,6 +25,7 @@ pipeline {
     }
 
     stages {
+
         // --------------------------------------------------
         // 1. CHECKOUT
         // --------------------------------------------------
@@ -62,6 +64,7 @@ pipeline {
 
                     test -f docker-compose.yml
                     test -f FrontEnd/shoplite/package.json
+                    test -f FrontEnd/shoplite/Dockerfile
 
                     echo "Environment validation successful."
                 '''
@@ -69,10 +72,10 @@ pipeline {
         }
 
         // --------------------------------------------------
-        // 3. BACKEND BUILD AND TEST
+        // 3. BACKEND BUILD
         // --------------------------------------------------
 
-        stage('Backend Build and Test') {
+        stage('Backend Build') {
             steps {
                 script {
                     def services = [
@@ -119,7 +122,7 @@ pipeline {
                     ]
 
                     for (service in services) {
-                        echo "Building and testing ${service.name}"
+                        echo "Building ${service.name}"
 
                         dir(service.path) {
                             sh '''
@@ -148,7 +151,7 @@ pipeline {
         }
 
         // --------------------------------------------------
-        // 4. MONITORING SERVER
+        // 4. MONITORING SERVER BUILD
         // --------------------------------------------------
 
         stage('Monitoring Server Build') {
@@ -241,7 +244,7 @@ pipeline {
         }
 
         // --------------------------------------------------
-        // 6. FRONTEND DOCKER IMAGE
+        // 6. FRONTEND DOCKER IMAGE BUILD
         // --------------------------------------------------
 
         stage('Frontend Docker Build') {
@@ -267,7 +270,7 @@ pipeline {
         }
 
         // --------------------------------------------------
-        // 7. IMAGE VERIFICATION
+        // 7. DOCKER IMAGE VERIFICATION
         // --------------------------------------------------
 
         stage('Docker Image Verification') {
@@ -305,38 +308,83 @@ pipeline {
         }
 
         // --------------------------------------------------
-        // 8. DEPLOY UPDATED SERVICES
+        // 8. CREATE FRONTEND TEST CONTAINER
         // --------------------------------------------------
 
-        stage('Deploy Updated Services') {
-    steps {
-        withCredentials([
-            file(
-                credentialsId: 'shoplite-docker-env',
-                variable: 'DOCKER_ENV_FILE'
-            )
-        ]) {
-            sh '''
-                set -eu
+        stage('Create Frontend Test Container') {
+            steps {
+                sh '''
+                    set -eu
 
-                cp "$DOCKER_ENV_FILE" .env.docker
-                trap 'rm -f .env.docker' EXIT
+                    CONTAINER_NAME="shoplite-frontend-test"
 
-               docker compose -p microserviceproject up -d \
-                    --no-deps \
-                    --force-recreate \
-                    --wait \
-                    --wait-timeout 120 \
-                    user-service \
-                    notification-service
+                    echo "Checking Docker network..."
 
-                docker compose ps user-service notification-service
-            '''
+                    docker network inspect shoplite-network > /dev/null
+
+                    echo "Checking for an existing test container..."
+
+                    if docker container inspect "$CONTAINER_NAME" > /dev/null 2>&1; then
+                        echo "Removing previous test container..."
+                        docker rm -f "$CONTAINER_NAME"
+                    fi
+
+                    echo "Creating new frontend test container..."
+
+                    docker run -d \
+                        --name "$CONTAINER_NAME" \
+                        --restart unless-stopped \
+                        --network shoplite-network \
+                        -p 5174:80 \
+                        shoplite-frontend:latest
+
+                    echo "Frontend test container created."
+                '''
+            }
+        }
+
+        // --------------------------------------------------
+        // 9. FRONTEND CONTAINER VERIFICATION
+        // --------------------------------------------------
+
+        stage('Frontend Container Verification') {
+            steps {
+                sh '''
+                    set -eu
+
+                    CONTAINER_NAME="shoplite-frontend-test"
+
+                    echo "Checking frontend container status..."
+
+                    if [ "$(docker inspect -f '{{.State.Running}}' "$CONTAINER_NAME")" != "true" ]; then
+                        echo "Frontend container is not running."
+                        docker logs "$CONTAINER_NAME"
+                        exit 1
+                    fi
+
+                    echo "Frontend container is running."
+
+                    echo "Checking frontend HTTP response..."
+
+                    for i in $(seq 1 15); do
+                        if curl -fsS http://localhost:5174/ > /dev/null; then
+                            echo "Frontend is responding successfully."
+                            exit 0
+                        fi
+
+                        echo "Waiting for Nginx to become ready..."
+                        sleep 2
+                    done
+
+                    echo "Frontend health check failed."
+
+                    docker logs "$CONTAINER_NAME"
+
+                    exit 1
+                '''
+            }
         }
     }
-}
-    }
-        
 
     // ------------------------------------------------------
     // POST BUILD ACTIONS
@@ -348,8 +396,9 @@ pipeline {
             ==========================================
                   SHOPLITE CI PIPELINE SUCCESS
             ==========================================
-            All backend builds and tests completed.
+            All backend builds completed.
             All Docker images were created and verified.
+            Frontend test container created successfully.
             ==========================================
             '''
         }
