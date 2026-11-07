@@ -75,7 +75,7 @@ pipeline {
         // 3. BACKEND BUILD
         // --------------------------------------------------
 
-        stage('Backend Build') {
+        stage('Backend Build and Test') {
             steps {
                 script {
                     def services = [
@@ -151,7 +151,7 @@ pipeline {
         }
 
         // --------------------------------------------------
-        // 4. MONITORING SERVER BUILD
+        // 4. MONITORING SERVER
         // --------------------------------------------------
 
         stage('Monitoring Server Build') {
@@ -170,7 +170,7 @@ pipeline {
         }
 
         // --------------------------------------------------
-        // 5. BACKEND DOCKER IMAGE BUILD
+        // 5. BACKEND DOCKER IMAGES
         // --------------------------------------------------
 
         stage('Backend Docker Images') {
@@ -244,7 +244,7 @@ pipeline {
         }
 
         // --------------------------------------------------
-        // 6. FRONTEND DOCKER IMAGE BUILD
+        // 6. FRONTEND DOCKER IMAGE
         // --------------------------------------------------
 
         stage('Frontend Docker Build') {
@@ -270,7 +270,7 @@ pipeline {
         }
 
         // --------------------------------------------------
-        // 7. DOCKER IMAGE VERIFICATION
+        // 7. IMAGE VERIFICATION
         // --------------------------------------------------
 
         stage('Docker Image Verification') {
@@ -308,37 +308,45 @@ pipeline {
         }
 
         // --------------------------------------------------
-        // 8. CREATE FRONTEND TEST CONTAINER
+        // 8. RECREATE FRONTEND CONTAINER
         // --------------------------------------------------
 
-        stage('Create Frontend Test Container') {
+        stage('Recreate Frontend Container') {
             steps {
                 sh '''
                     set -eu
 
-                    CONTAINER_NAME="shoplite-frontend-test"
+                    CONTAINER_NAME="shoplite-frontend"
 
                     echo "Checking Docker network..."
 
                     docker network inspect shoplite-network > /dev/null
 
-                    echo "Checking for an existing test container..."
+                    echo "Checking existing frontend containers on port 5173..."
+
+                    EXISTING_CONTAINERS=$(docker ps -q --filter "publish=5173")
+
+                    if [ -n "$EXISTING_CONTAINERS" ]; then
+                        echo "Removing existing frontend container..."
+
+                        docker rm -f $EXISTING_CONTAINERS
+                    fi
 
                     if docker container inspect "$CONTAINER_NAME" > /dev/null 2>&1; then
-                        echo "Removing previous test container..."
+                        echo "Removing existing container with the frontend name..."
                         docker rm -f "$CONTAINER_NAME"
                     fi
 
-                    echo "Creating new frontend test container..."
+                    echo "Creating updated frontend container..."
 
                     docker run -d \
                         --name "$CONTAINER_NAME" \
                         --restart unless-stopped \
                         --network shoplite-network \
-                        -p 5174:80 \
+                        -p 5173:80 \
                         shoplite-frontend:latest
 
-                    echo "Frontend test container created."
+                    echo "Frontend container created successfully."
                 '''
             }
         }
@@ -352,7 +360,7 @@ pipeline {
                 sh '''
                     set -eu
 
-                    CONTAINER_NAME="shoplite-frontend-test"
+                    CONTAINER_NAME="shoplite-frontend"
 
                     echo "Checking frontend container status..."
 
@@ -364,15 +372,18 @@ pipeline {
 
                     echo "Frontend container is running."
 
-                    echo "Checking frontend HTTP response..."
+                    echo "Checking Nginx HTTP response..."
 
                     for i in $(seq 1 15); do
-                        if curl -fsS http://localhost:5174/ > /dev/null; then
-                            echo "Frontend is responding successfully."
+
+                        if docker exec "$CONTAINER_NAME" \
+                            wget -q -O /dev/null http://127.0.0.1/; then
+
+                            echo "Frontend HTTP health check successful."
                             exit 0
                         fi
 
-                        echo "Waiting for Nginx to become ready..."
+                        echo "Waiting for Nginx..."
                         sleep 2
                     done
 
@@ -386,9 +397,9 @@ pipeline {
         }
     }
 
-    // ------------------------------------------------------
+    // --------------------------------------------------
     // POST BUILD ACTIONS
-    // ------------------------------------------------------
+    // --------------------------------------------------
 
     post {
         success {
@@ -398,7 +409,7 @@ pipeline {
             ==========================================
             All backend builds completed.
             All Docker images were created and verified.
-            Frontend test container created successfully.
+            Frontend container recreated successfully.
             ==========================================
             '''
         }
