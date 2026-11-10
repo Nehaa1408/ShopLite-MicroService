@@ -335,49 +335,54 @@ stage('Deploy Frontend') {
         // --------------------------------------------------
         // 9. FRONTEND CONTAINER VERIFICATION
         // --------------------------------------------------
+stage('Frontend Container Verification') {
+    steps {
+        sh '''
+            set -eu
 
-        stage('Frontend Container Verification') {
-            steps {
-                sh '''
-                    set -eu
+            echo "Checking frontend container status..."
 
-                    CONTAINER_NAME="shoplite-frontend"
+            CONTAINER_ID=$(docker compose -p microserviceproject ps -q frontend)
 
-                    echo "Checking frontend container status..."
+            if [ -z "$CONTAINER_ID" ]; then
+                echo "Frontend container not found."
+                exit 1
+            fi
 
-                    if [ "$(docker inspect -f '{{.State.Running}}' "$CONTAINER_NAME")" != "true" ]; then
-                        echo "Frontend container is not running."
-                        docker logs "$CONTAINER_NAME"
-                        exit 1
-                    fi
+            echo "Frontend container found: $CONTAINER_ID"
 
-                    echo "Frontend container is running."
+            if [ "$(docker inspect -f '{{.State.Running}}' "$CONTAINER_ID")" != "true" ]; then
+                echo "Frontend container is not running."
+                docker logs "$CONTAINER_ID"
+                exit 1
+            fi
 
-                    echo "Checking Nginx HTTP response..."
+            echo "Frontend container is running."
 
-                    for i in $(seq 1 15); do
+            echo "Checking Nginx HTTP response..."
 
-                        if docker exec "$CONTAINER_NAME" \
-                            wget -q -O /dev/null http://127.0.0.1/; then
+            for i in $(seq 1 15); do
 
-                            echo "Frontend HTTP health check successful."
-                            exit 0
-                        fi
+                if docker exec "$CONTAINER_ID" \
+                    wget -q -O /dev/null http://127.0.0.1/; then
 
-                        echo "Waiting for Nginx..."
-                        sleep 2
-                    done
+                    echo "Frontend HTTP health check successful."
+                    exit 0
+                fi
 
-                    echo "Frontend health check failed."
+                echo "Waiting for Nginx..."
+                sleep 2
+            done
 
-                    docker logs "$CONTAINER_NAME"
+            echo "Frontend health check failed."
 
-                    exit 1
-                '''
-            }
-        }
+            docker logs "$CONTAINER_ID"
+
+            exit 1
+        '''
     }
-
+}
+    }
     // --------------------------------------------------
     // POST BUILD ACTIONS
     // --------------------------------------------------
