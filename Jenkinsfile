@@ -13,7 +13,7 @@ pipeline {
         string(
             name: 'VITE_API_URL',
             defaultValue: 'http://localhost:9090',
-            description: 'API Gateway URL used by the frontend'
+            description: 'API Gateway URL for frontend'
         )
     }
 
@@ -24,14 +24,24 @@ pipeline {
 
     stages {
 
+        // ==========================================
+        // 1. CHECKOUT
+        // ==========================================
+
         stage('Checkout') {
             steps {
                 checkout scm
 
-                echo 'Checked out the latest source code.'
-                sh 'git log -1 --oneline'
+                sh '''
+                    echo "Checking out latest source code..."
+                    git log -1 --oneline
+                '''
             }
         }
+
+        // ==========================================
+        // 2. ENVIRONMENT VERIFICATION
+        // ==========================================
 
         stage('Environment Verification') {
             steps {
@@ -47,50 +57,72 @@ pipeline {
                     echo "Checking Docker Compose..."
                     docker compose version
 
-                    echo "Checking required files..."
+                    echo "Checking project files..."
+
                     test -f docker-compose.yml
-                    test -f frontend/Dockerfile
+                    test -f FrontEnd/shoplite/Dockerfile
+
+                    test -f Microservices/eureka-server/eureka-server/pom.xml
+                    test -f Microservices/user-service/user-service/pom.xml
+
+                    test -f Microservices/admin-service/pom.xml
+                    test -f Microservices/api-gateway/pom.xml
+                    test -f Microservices/cart-service/pom.xml
+                    test -f Microservices/delivery-service/pom.xml
+                    test -f Microservices/monitoring-server/Dockerfile
+                    test -f Microservices/notification-service/pom.xml
+                    test -f Microservices/order-service/pom.xml
+                    test -f Microservices/product-service/pom.xml
+                    test -f Microservices/ticket-service/pom.xml
 
                     echo "Checking Docker network..."
                     docker network inspect shoplite-network
 
-                    echo "Checking BusyBox image..."
+                    echo "Checking BusyBox..."
                     docker image inspect busybox:1.36
 
-                    echo "Validating Docker Compose configuration..."
+                    echo "Validating Docker Compose..."
                     docker compose -p microserviceproject \
                         -f docker-compose.yml config --quiet
 
-                    echo "Environment verification completed."
+                    echo "Environment verification successful."
                 '''
             }
         }
 
+        // ==========================================
+        // 3. MAVEN CLEAN INSTALL
+        // ==========================================
+
         stage('Maven Clean Install') {
             steps {
                 script {
+
                     def services = [
-                        'eureka-server',
-                        'user-service',
-                        'product-service',
-                        'cart-service',
-                        'order-service',
-                        'delivery-service',
-                        'notification-service',
-                        'ticket-service',
-                        'admin-service',
-                        'api-gateway'
+                        'Microservices/eureka-server/eureka-server',
+                        'Microservices/user-service/user-service',
+                        'Microservices/admin-service',
+                        'Microservices/api-gateway',
+                        'Microservices/cart-service',
+                        'Microservices/delivery-service',
+                        'Microservices/notification-service',
+                        'Microservices/order-service',
+                        'Microservices/product-service',
+                        'Microservices/ticket-service'
                     ]
 
                     for (service in services) {
-                        echo "Building ${service} using Maven..."
+
+                        echo "========================================"
+                        echo "Building Maven project: ${service}"
+                        echo "========================================"
 
                         dir(service) {
+
                             sh '''
                                 set -e
 
-                                echo "Running Maven clean install..."
-                                ./mvnw -B -ntp clean install -DskipTests
+                                sh ./mvnw -B -ntp clean install -DskipTests
                             '''
                         }
                     }
@@ -98,85 +130,132 @@ pipeline {
             }
         }
 
+        // ==========================================
+        // 4. BUILD DOCKER IMAGES
+        // ==========================================
+
         stage('Build Docker Images') {
             steps {
                 script {
+
                     def services = [
-                        'eureka-server',
-                        'user-service',
-                        'product-service',
-                        'cart-service',
-                        'order-service',
-                        'delivery-service',
-                        'notification-service',
-                        'ticket-service',
-                        'admin-service',
-                        'api-gateway'
+                        [
+                            name: 'eureka-server',
+                            context: 'Microservices/eureka-server/eureka-server'
+                        ],
+                        [
+                            name: 'user-service',
+                            context: 'Microservices/user-service/user-service'
+                        ],
+                        [
+                            name: 'admin-service',
+                            context: 'Microservices/admin-service'
+                        ],
+                        [
+                            name: 'api-gateway',
+                            context: 'Microservices/api-gateway'
+                        ],
+                        [
+                            name: 'cart-service',
+                            context: 'Microservices/cart-service'
+                        ],
+                        [
+                            name: 'delivery-service',
+                            context: 'Microservices/delivery-service'
+                        ],
+                        [
+                            name: 'notification-service',
+                            context: 'Microservices/notification-service'
+                        ],
+                        [
+                            name: 'order-service',
+                            context: 'Microservices/order-service'
+                        ],
+                        [
+                            name: 'product-service',
+                            context: 'Microservices/product-service'
+                        ],
+                        [
+                            name: 'ticket-service',
+                            context: 'Microservices/ticket-service'
+                        ]
                     ]
 
                     for (service in services) {
-                        echo "Building Docker image for ${service}..."
+
+                        echo "Building ${service.name} Docker image..."
 
                         sh """
                             set -e
 
                             docker build \
-                                -t shoplite-${service}:latest \
-                                -t shoplite-${service}:${BUILD_NUMBER} \
-                                ./${service}
+                                -f "${service.context}/Dockerfile" \
+                                -t shoplite-${service.name}:latest \
+                                -t shoplite-${service.name}:${BUILD_NUMBER} \
+                                "${service.context}"
                         """
                     }
 
-                    echo 'Building Monitoring Server image...'
+                    // Monitoring Server
+
+                    echo "Building Monitoring Server..."
 
                     sh """
                         docker build \
+                            -f Microservices/monitoring-server/Dockerfile \
                             -t shoplite-monitoring-server:latest \
                             -t shoplite-monitoring-server:${BUILD_NUMBER} \
-                            ./monitoring-server
+                            Microservices/monitoring-server
                     """
 
-                    echo 'Building Frontend image...'
+                    // Frontend
+
+                    echo "Building Frontend..."
 
                     sh """
                         docker build \
                             --build-arg VITE_API_URL="${VITE_API_URL}" \
+                            -f FrontEnd/shoplite/Dockerfile \
                             -t shoplite-frontend:latest \
                             -t shoplite-frontend:${BUILD_NUMBER} \
-                            ./frontend
+                            FrontEnd/shoplite
                     """
                 }
             }
         }
+
+        // ==========================================
+        // 5. IMAGE VERIFICATION
+        // ==========================================
 
         stage('Docker Image Verification') {
             steps {
                 sh '''
                     set -e
 
-                    echo "Verifying all Docker images..."
-
                     IMAGES="
                     shoplite-eureka-server
-                    shoplite-monitoring-server
                     shoplite-user-service
-                    shoplite-product-service
-                    shoplite-cart-service
-                    shoplite-order-service
-                    shoplite-delivery-service
-                    shoplite-notification-service
-                    shoplite-ticket-service
                     shoplite-admin-service
                     shoplite-api-gateway
+                    shoplite-cart-service
+                    shoplite-delivery-service
+                    shoplite-notification-service
+                    shoplite-order-service
+                    shoplite-product-service
+                    shoplite-ticket-service
+                    shoplite-monitoring-server
                     shoplite-frontend
                     "
 
                     for IMAGE in $IMAGES; do
-                        echo "Checking $IMAGE..."
+
+                        echo "Verifying $IMAGE..."
 
                         docker image inspect "$IMAGE:latest" > /dev/null
 
                         echo "$IMAGE verified successfully."
+
                     done
 
                     echo "All 12 Docker images verified."
@@ -184,12 +263,16 @@ pipeline {
             }
         }
 
+        // ==========================================
+        // 6. DEPLOY LATEST CONTAINERS
+        // ==========================================
+
         stage('Deploy Latest Containers') {
             steps {
                 sh '''
                     set -e
 
-                    echo "Deploying updated ShopLite containers..."
+                    echo "Deploying latest ShopLite containers..."
 
                     docker compose \
                         -p microserviceproject \
@@ -212,19 +295,22 @@ pipeline {
                         api-gateway \
                         frontend
 
-                    echo "All application containers recreated."
+                    echo "Application containers recreated."
                 '''
             }
         }
+
+        // ==========================================
+        // 7. VERIFY CONTAINER IMAGE VERSIONS
+        // ==========================================
 
         stage('Verify Running Containers') {
             steps {
                 sh '''
                     set -e
 
-                    echo "Verifying running containers and image versions..."
-
                     verify_container() {
+
                         CONTAINER=$1
                         IMAGE=$2
 
@@ -264,23 +350,27 @@ pipeline {
                     verify_container shoplite-api-gateway shoplite-api-gateway
                     verify_container shoplite-frontend-compose shoplite-frontend
 
-                    echo "All containers are running with their latest images."
+                    echo "All container image versions verified."
                 '''
             }
         }
+
+        // ==========================================
+        // 8. APPLICATION HEALTH CHECKS
+        // ==========================================
 
         stage('Application Health Checks') {
             steps {
                 sh '''
                     set -e
 
-                    echo "Starting application health checks..."
-
                     docker run --rm \
                         --network shoplite-network \
                         busybox:1.36 \
                         sh -c '
+
                             check() {
+
                                 NAME=$1
                                 URL=$2
                                 COUNT=0
@@ -288,6 +378,7 @@ pipeline {
                                 echo "Checking $NAME..."
 
                                 until wget -q -T 5 -O /dev/null "$URL"; do
+
                                     COUNT=$((COUNT + 1))
 
                                     if [ "$COUNT" -ge 30 ]; then
@@ -297,6 +388,7 @@ pipeline {
 
                                     echo "Waiting for $NAME..."
                                     sleep 5
+
                                 done
 
                                 echo "$NAME is responding."
@@ -322,6 +414,10 @@ pipeline {
             }
         }
 
+        // ==========================================
+        // 9. DEPLOYMENT SUMMARY
+        // ==========================================
+
         stage('Deployment Summary') {
             steps {
                 sh '''
@@ -330,10 +426,9 @@ pipeline {
                     echo "========================================"
 
                     echo "Build Number: ${BUILD_NUMBER}"
-                    echo "Git Branch: ${BRANCH_NAME}"
 
                     echo ""
-                    echo "Running containers:"
+                    echo "Running Containers:"
 
                     docker compose \
                         -p microserviceproject \
@@ -341,12 +436,13 @@ pipeline {
                         ps
 
                     echo ""
-                    echo "SHOPLITE DEPLOYMENT SUCCESSFUL"
                     echo "Maven clean install completed."
-                    echo "Docker images built and verified."
+                    echo "Docker images built successfully."
                     echo "Latest containers recreated."
-                    echo "Container image versions verified."
+                    echo "Image versions verified."
                     echo "Application health checks passed."
+
+                    echo "SHOPLITE CI/CD PIPELINE SUCCESSFUL"
 
                     echo "========================================"
                 '''
@@ -354,7 +450,12 @@ pipeline {
         }
     }
 
+    // ==========================================
+    // POST ACTIONS
+    // ==========================================
+
     post {
+
         success {
             echo 'SHOPLITE CI/CD PIPELINE SUCCESSFUL!'
             echo 'Latest application containers are deployed.'
@@ -362,7 +463,7 @@ pipeline {
 
         failure {
             echo 'SHOPLITE CI/CD PIPELINE FAILED!'
-            echo 'Check the failed stage and Jenkins console output.'
+            echo 'Check Jenkins console output for the failed stage.'
         }
 
         aborted {
