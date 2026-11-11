@@ -24,33 +24,61 @@ const AdminLogin = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
 
+    // Empty field validation
+    if (!form.email.trim() && !form.password.trim()) {
+      alert("Please enter your email and password.");
+      return;
+    }
+
+    if (!form.email.trim()) {
+      alert("Please enter your email.");
+      return;
+    }
+
+    if (!form.password.trim()) {
+      alert("Please enter your password.");
+      return;
+    }
+
     try {
       const res = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/auth/login`,
+        `${import.meta.env.VITE_API_URL}/api/auth/admin/login`,
         {
-          email: form.email,
-          password: form.password,
-          role: "ADMIN",
-          provider: "LOCAL"
+          email: form.email.trim(),
+          password: form.password
         }
       );
+
+      // Additional frontend role check
+      if (res.data.role !== "ADMIN") {
+        alert("Access denied. Admin account required.");
+        return;
+      }
+
       sessionStorage.setItem("adminToken", res.data.token);
       sessionStorage.setItem("adminRole", res.data.role);
 
       navigate("/admin");
 
     } catch (err) {
-      console.error("FULL ERROR:", err);
+      console.error("ADMIN LOGIN ERROR:", err.response?.data || err);
 
-      if (err.response) {
-        console.log("STATUS:", err.response.status);
-        console.log("DATA:", err.response.data);   
+      const status = err.response?.status;
+
+      if (status === 404) {
+        alert("Admin email not found. Please check your email.");
       }
-
-      alert(err.response?.data || "Login failed");
+      else if (status === 401) {
+        alert("Incorrect password. Please try again.");
+      }
+      else if (status === 403) {
+        alert("Access denied. Admin account required.");
+      }
+      else {
+        alert(err.response?.data?.message || "Login failed. Please try again.");
+      }
     }
   };
-
   return (
     <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden bg-gradient-to-br from-[#eef2ff] via-[#f8fafc] to-[#fdf2ff]">
 

@@ -198,7 +198,8 @@ public class UserService {
         public LoginResponse login(LoginRequest request) {
 
                 User user = userRepository.findByEmail(request.getEmail())
-                                .orElseThrow(() -> new UserNotFoundException("User not found"));
+                                .orElseThrow(() -> new UserNotFoundException(
+                                                "Admin email not found. Please check your email."));
 
                 // GOOGLE ACCOUNT CHECK
                 if (user.getProvider() == Provider.GOOGLE) {
@@ -213,11 +214,12 @@ public class UserService {
 
                 // PASSWORD CHECK
                 if (!passwordEncoder.matches(request.getPassword(), storedPassword)) {
-                        throw new RuntimeException("Invalid password");
+                        throw new InvalidPasswordException("Incorrect password. Please try again.");
                 }
 
                 // GENERATE JWT TOKEN
                 String token = jwtUtil.generateToken(user.getId(), user.getEmail());
+
                 // SEND LOGIN SUCCESS EMAIL
                 notificationClient.sendLoginSuccessEmail(
                                 user.getEmail(),
@@ -492,5 +494,47 @@ public class UserService {
         // GET TOTAL USER COUNT
         public long getUserCount() {
                 return userRepository.count();
+        }
+
+        // ================= ADMIN LOGIN =================
+        public LoginResponse adminLogin(LoginRequest request) {
+
+                User user = userRepository.findByEmail(request.getEmail())
+                                .orElseThrow(() -> new UserNotFoundException(
+                                                "Admin email not found. Please check your email."));
+
+                // CHECK ADMIN ROLE
+                if (user.getRole() != Role.ADMIN) {
+                        throw new org.springframework.web.server.ResponseStatusException(
+                                        org.springframework.http.HttpStatus.FORBIDDEN,
+                                        "Access denied. Admin account required.");
+                }
+
+                // GOOGLE ACCOUNT CHECK
+                if (user.getProvider() == Provider.GOOGLE) {
+                        throw new RuntimeException("Use Google login for this account");
+                }
+
+                String storedPassword = user.getPassword();
+
+                if (storedPassword == null ||
+                                !passwordEncoder.matches(request.getPassword(), storedPassword)) {
+                        throw new InvalidPasswordException(
+                                        "Incorrect password. Please try again.");
+                }
+
+                String token = jwtUtil.generateToken(user.getId(), user.getEmail());
+
+                notificationClient.sendLoginSuccessEmail(
+                                user.getEmail(),
+                                user.getName());
+
+                return new LoginResponse(
+                                user.getId(),
+                                user.getName(),
+                                user.getEmail(),
+                                user.getRole(),
+                                user.getProvider(),
+                                token);
         }
 }

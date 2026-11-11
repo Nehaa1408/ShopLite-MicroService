@@ -94,4 +94,12 @@ public class AuthController {
                 return ResponseEntity.ok(
                                 userService.googleLogin(request.getToken()));
         }
+
+        @PostMapping("/admin/login")
+        public ResponseEntity<LoginResponse> adminLogin(
+                        @Valid @RequestBody LoginRequest request) {
+
+                return ResponseEntity.ok(
+                                userService.adminLogin(request));
+        }
 }
