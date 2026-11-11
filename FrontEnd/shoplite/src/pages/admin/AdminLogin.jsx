@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+
 const AdminLogin = () => {
   const navigate = useNavigate();
   const [form, setForm] = useState({
@@ -14,31 +15,41 @@ const AdminLogin = () => {
     if (token && role === "ADMIN") {
       navigate("/admin");
     }
-  }, []);
+  }, [navigate]);
+
+  const [errorMessage, setErrorMessage] = useState("");
+  const [loading, setLoading] = useState(false);
   const handleChange = (e) => {
     setForm({
       ...form,
       [e.target.name]: e.target.value
     });
+
+    setErrorMessage("");
   };
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    // Empty field validation
+    setErrorMessage("");
+
+    // Validate empty fields
     if (!form.email.trim() && !form.password.trim()) {
-      alert("Please enter your email and password.");
+      setErrorMessage("Please enter your email and password.");
       return;
     }
 
     if (!form.email.trim()) {
-      alert("Please enter your email.");
+      setErrorMessage("Please enter your email.");
       return;
     }
 
     if (!form.password.trim()) {
-      alert("Please enter your password.");
+      setErrorMessage("Please enter your password.");
       return;
     }
+
+    // Start loading after validation
+    setLoading(true);
 
     try {
       const res = await axios.post(
@@ -49,9 +60,8 @@ const AdminLogin = () => {
         }
       );
 
-      // Additional frontend role check
       if (res.data.role !== "ADMIN") {
-        alert("Access denied. Admin account required.");
+        setErrorMessage("Access denied. Admin account required.");
         return;
       }
 
@@ -61,22 +71,26 @@ const AdminLogin = () => {
       navigate("/admin");
 
     } catch (err) {
-      console.error("ADMIN LOGIN ERROR:", err.response?.data || err);
+      console.error("ADMIN LOGIN ERROR:", err);
 
       const status = err.response?.status;
+      const message = err.response?.data?.message;
 
       if (status === 404) {
-        alert("Admin email not found. Please check your email.");
+        setErrorMessage("Admin email not found. Please check your email.");
       }
       else if (status === 401) {
-        alert("Incorrect password. Please try again.");
+        setErrorMessage("Incorrect password. Please try again.");
       }
       else if (status === 403) {
-        alert("Access denied. Admin account required.");
+        setErrorMessage("Access denied. Admin account required.");
       }
       else {
-        alert(err.response?.data?.message || "Login failed. Please try again.");
+        setErrorMessage(message || "Login failed. Please try again.");
       }
+
+    } finally {
+      setLoading(false);
     }
   };
   return (
@@ -146,6 +160,16 @@ const AdminLogin = () => {
             </div>
           </div>
 
+          {/* ERROR MESSAGE */}
+          {errorMessage && (
+            <div
+              role="alert"
+              className="bg-red-50 border border-red-200 text-red-600 text-sm font-medium px-4 py-3 rounded-xl text-center"
+            >
+              {errorMessage}
+            </div>
+          )}
+
           {/* OPTIONS */}
           <div className="flex justify-between items-center text-xs">
             <label className="flex items-center gap-2 text-gray-500">
@@ -161,17 +185,20 @@ const AdminLogin = () => {
           {/* BUTTON */}
           <button
             type="submit"
-            className="w-full py-3.5 rounded-xl text-white font-semibold 
-    bg-gradient-to-r from-[#6366f1] via-[#7c3aed] to-[#a855f7] shadow-[0_10px_30px_rgba(124,58,237,0.45)]
-    
-    hover:shadow-[0_10px_30px_rgba(123,140,255,0.45)] 
-    hover:scale-[1.02] active:scale-[0.98] 
-    transition-all duration-200 
-    flex items-center justify-center gap-2"
+            disabled={loading}
+            className="w-full py-3.5 rounded-xl text-white font-semibold
+    bg-gradient-to-r from-[#6366f1] via-[#7c3aed] to-[#a855f7]
+    shadow-[0_10px_30px_rgba(124,58,237,0.45)]
+    hover:shadow-[0_10px_30px_rgba(123,140,255,0.45)]
+    hover:scale-[1.02] active:scale-[0.98]
+    transition-all duration-200
+    flex items-center justify-center gap-2
+    disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
           >
-            Login
+            {loading ? "Logging in..." : "Login"}
+
             <span className="material-symbols-outlined text-lg">
-              arrow_forward
+              {loading ? "hourglass_top" : "arrow_forward"}
             </span>
           </button>
         </form>
