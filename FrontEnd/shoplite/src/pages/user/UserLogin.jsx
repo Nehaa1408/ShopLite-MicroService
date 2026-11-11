@@ -14,6 +14,7 @@ const UserLogin = () => {
   const [newPassword, setNewPassword] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loginLoading, setLoginLoading] = useState(false);
   const [otpTimer, setOtpTimer] = useState(100);
   const [otpVerified, setOtpVerified] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -41,6 +42,13 @@ const UserLogin = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
 
+    if (!email.trim() || !password) {
+      toast.error("Please enter your email and password.");
+      return;
+    }
+
+    setLoginLoading(true);
+
     try {
       const res = await axios.post(
         `${import.meta.env.VITE_API_URL}/api/auth/login`,
@@ -54,10 +62,7 @@ const UserLogin = () => {
 
       await mergeGuestCartAfterLogin();
 
-      localStorage.setItem(
-        "user",
-        JSON.stringify(res.data)
-      );
+      localStorage.setItem("user", JSON.stringify(res.data));
 
       toast.success("Welcome to ShopLite ✨");
 
@@ -73,7 +78,10 @@ const UserLogin = () => {
 
         if (message?.includes("User not found")) {
           toast.error("User not registered");
-        } else if (message?.includes("Invalid password")) {
+        } else if (
+          message?.includes("Invalid password") ||
+          message?.includes("Incorrect password")
+        ) {
           toast.error("Wrong password");
         } else {
           toast.error("Invalid credentials");
@@ -81,6 +89,9 @@ const UserLogin = () => {
       } else {
         toast.error("Server error");
       }
+
+    } finally {
+      setLoginLoading(false);
     }
   };
 
@@ -404,11 +415,6 @@ const UserLogin = () => {
           {/* OPTIONS */}
           <div className="flex justify-between items-center text-xs">
 
-            <label className="flex items-center gap-2 text-gray-500">
-              <input type="checkbox" />
-              Keep me logged in
-            </label>
-
             <span
               onClick={() => setShowForgotModal(true)}
               className="cursor-pointer text-gray-400 hover:text-pink-400 transition"
@@ -422,31 +428,33 @@ const UserLogin = () => {
           <button
             type="submit"
             className="
-              w-full
-              py-3.5
-              rounded-xl
-              text-white
-              font-semibold
-              bg-gradient-to-r
-              from-[#6366f1]
-              via-[#7c3aed]
-              to-[#ec4899]
-              shadow-[0_10px_30px_rgba(124,58,237,0.45)]
-              hover:shadow-[0_10px_30px_rgba(236,72,153,0.35)]
-              hover:scale-[1.02]
-              active:scale-[0.98]
-              transition-all duration-200
-              flex items-center justify-center gap-2
-            "
+    w-full
+    py-3.5
+    rounded-xl
+    text-white
+    font-semibold
+    bg-gradient-to-r
+    from-[#6366f1]
+    via-[#7c3aed]
+    to-[#ec4899]
+    shadow-[0_10px_30px_rgba(124,58,237,0.45)]
+    hover:shadow-[0_10px_30px_rgba(236,72,153,0.35)]
+    hover:scale-[1.02]
+    active:scale-[0.98]
+    transition-all duration-200
+    flex items-center justify-center gap-2
+    disabled:opacity-60
+    disabled:cursor-not-allowed
+    disabled:hover:scale-100
+  "
+            disabled={loginLoading}
           >
-            Login
+            {loginLoading ? "Logging in..." : "Login"}
 
             <span className="material-symbols-outlined text-lg">
-              arrow_forward
+              {loginLoading ? "hourglass_top" : "arrow_forward"}
             </span>
-
           </button>
-
         </form>
 
         {/* DIVIDER */}
