@@ -4,13 +4,13 @@ import {
     MdMinimize,
     MdSend,
     MdRefresh,
-    MdSmartToy,
     MdSearch,
     MdShoppingBag,
     MdLocalShipping,
     MdSupportAgent,
 } from "react-icons/md";
 
+import mascotImage from "../../assets/shoplite-ai-mascot.png";
 import "./ShopLiteAssistant.css";
 
 const quickActions = [
@@ -19,16 +19,6 @@ const quickActions = [
     { label: "My Orders", icon: <MdLocalShipping /> },
     { label: "Customer Support", icon: <MdSupportAgent /> },
 ];
-
-const getGreeting = () => {
-    const hour = new Date().getHours();
-
-    if (hour < 12) return "Good morning!";
-    if (hour < 17) return "Good afternoon!";
-    if (hour < 21) return "Good evening!";
-
-    return "Still shopping? 🌙";
-};
 
 const ShopLiteAssistant = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -71,32 +61,24 @@ const ShopLiteAssistant = () => {
             {!isOpen && (
                 <div className="shoplite-ai-mascot-wrapper">
 
-                    <div
+                    <button
                         className="shoplite-ai-greeting"
                         onClick={() => setIsOpen(true)}
+                        aria-label="Say hello to ShopLite AI"
                     >
-                        <div className="shoplite-ai-greeting-header">
-                            <span>ShopLite AI</span>
-                            <span className="shoplite-ai-online">Online</span>
-                        </div>
-
-                        <h4>{getGreeting()} 👋</h4>
-
-                        <p>How may I help you today?</p>
-
-                        <span className="shoplite-ai-click">
-                            Click to chat →
-                        </span>
-                    </div>
+                        Hi! 👋
+                    </button>
 
                     <button
                         className="shoplite-ai-mascot"
                         onClick={() => setIsOpen(true)}
                         aria-label="Open ShopLite AI assistant"
                     >
-                        <span className="shoplite-ai-mascot-face">
-                            🤖
-                        </span>
+                        <img
+                            src={mascotImage}
+                            alt="ShopLite AI shopping assistant"
+                            className="shoplite-ai-mascot-image"
+                        />
 
                         <span className="shoplite-ai-status-dot" />
                     </button>
@@ -116,7 +98,10 @@ const ShopLiteAssistant = () => {
                         <div className="shoplite-ai-header-info">
 
                             <div className="shoplite-ai-avatar">
-                                🤖
+                                <img
+                                    src={mascotImage}
+                                    alt="ShopLite AI"
+                                />
                                 <span className="shoplite-ai-status-dot" />
                             </div>
 
@@ -180,20 +165,27 @@ const ShopLiteAssistant = () => {
 
                     <div className="shoplite-ai-messages">
 
+                        {/* Initial welcome message */}
+
                         <div className="shoplite-ai-bot-message">
 
                             <div className="shoplite-ai-message-avatar">
-                                🤖
+                                <img
+                                    src={mascotImage}
+                                    alt=""
+                                />
                             </div>
 
                             <div className="shoplite-ai-message-content">
-                                <strong>Hey! Welcome to ShopLite! 💜</strong>
+
+                                <strong>Hey there! 👋</strong>
 
                                 <p>
-                                    I'm your little shopping assistant.
-                                    Looking for something, checking an order,
-                                    or need some help? I'm here for you!
+                                    Welcome to ShopLite! 💜
+                                    How can I help you today?
+                                    I'm here to make your shopping easier.
                                 </p>
+
                             </div>
 
                         </div>
