@@ -10,6 +10,7 @@ import ProductGrid from "../../components/ProductGrid";
 import CategoryBar from "../../components/CategoryBar";
 import Footer from "../../components/Footer";
 import useProducts from "../../hooks/useProducts";
+import ShopLiteAssistant from "../../components/ai-assistant/ShopLiteAssistant";
 
 
 import {
@@ -254,6 +255,8 @@ bg-[#e9d5ff]/40 rounded-full blur-[140px] -z-10" />
 
 
       </div >
+      {/* ShopLite AI Customer Assistant */}
+      <ShopLiteAssistant />
     </div >
   );
 };
